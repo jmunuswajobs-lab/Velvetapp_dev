@@ -1,0 +1,200 @@
+“No Excuses” Prompt for Replit (Overall Quality & Robustness)
+
+After Replit finishes the first pass, paste this into the chat with the agent:
+
+The first version is NOT enough. Now do a full quality + robustness pass over this entire repo and upgrade it to AAA production grade:
+
+Zero runtime errors & zero TypeScript errors
+
+Run npm run build (or the equivalent) for frontend and backend.
+
+Fix all TS, lint, and runtime issues.
+
+Ensure the dev server starts cleanly with no red errors in console.
+
+Architecture sanity
+
+Verify /frontend, /backend, and /shared are properly separated.
+
+Ensure shared types are actually imported/used instead of duplicated.
+
+Remove dead code, unused imports, and any leftover placeholder files.
+
+Production readiness
+
+Frontend: add error boundaries, loading states, and fallback UI for network failures and disconnected sockets.
+
+Backend: validate ALL incoming data with schemas (Zod/class-validator) and return meaningful error responses.
+
+Make sure JWT + guest auth flows are correct, secure, and documented in README.
+
+Testing & commands
+
+Add at least a few real tests for:
+
+prompt selection logic
+
+room state transitions
+
+heat level updates
+
+Ensure npm test (or pnpm test/yarn test) actually runs and passes.
+
+Docs
+
+Update README.md so a competent engineer can clone, configure .env, run migrations, and start both frontend and backend without guessing.
+
+When you’re done, summarize:
+
+exact commands to run backend & frontend
+
+where the main entrypoints are
+
+any remaining limitations.
+
+This forces it into “engineer doing a pass” mode, instead of “demo generator mode”.
+
+2️⃣ Visual & Motion Upgrade Prompt (Make it Look Expensive)
+
+Once it works, now you ask it to specifically upgrade the UI/animations. Paste this:
+
+Now focus ONLY on UI/UX, graphics, and motion. The current visuals must be upgraded to look like a modern, premium, neon-velvet AAA product, NOT a basic Tailwind starter:
+
+Goals:
+
+No generic “card-with-border” look.
+
+No plain flat backgrounds.
+
+All key screens must feel cinematic, layered, and alive.
+
+Apply these changes:
+
+Global theming
+
+Create a dedicated theme file or Tailwind config extension with:
+
+multiple velvet/neon gradients
+
+reusable shadow presets (shadow-velvet, shadow-ember, etc.)
+
+text glow utilities
+
+Replace all default bg-slate-*, text-gray-* style classes with custom theme classes.
+
+Home screen
+
+Game cards:
+
+Add 3D tilt on hover (using Framer Motion whileHover + rotateX/Y).
+
+Add inner glow and light sweep animation across the card face.
+
+Use layered gradients and subtle noise texture (via CSS background image) to avoid flat color blocks.
+
+Prompt card
+
+Implement a real card flip animation with spring physics for next/previous prompt.
+
+Add a soft ambient glow behind the card that changes intensity based on the prompt’s intensity level.
+
+Use a blurred colored halo behind the card to suggest “heat”.
+
+Heat meter
+
+Replace any boring progress bar with:
+
+a rounded, neon tube
+
+an animated “liquid” fill using gradients + animated background position
+
+a pulsing outline when heat increases
+
+Add a small text label that changes copy based on heat range (e.g., “Warm”, “Blushing”, “Danger Zone”).
+
+Tools (dice, bottle, coin)
+
+Implement custom SVG or div-based shapes with:
+
+3D-ish shading (gradients and highlights)
+
+motion:
+
+dice: multi-axis rotation with easing
+
+bottle: rotation with deceleration curve
+
+coin: flip + perspective
+
+Ensure each animation runs via Framer Motion or requestAnimationFrame and feels smooth, not choppy.
+
+Page transitions
+
+Wrap routed pages in shared transition components so navigation between Home → Lobby → Game feels like a continuous, cinematic experience (fade + slide + slight blur).
+
+Polish
+
+Remove any visual elements that look like a generic admin dashboard.
+
+Add consistent spacing, alignment, and responsive behavior.
+
+Make sure mobile views are tested and visually pleasing, not squashed.
+
+Finally, show me the key updated files and explain major UI/motion changes.
+
+This should force it to go over the front-end and actually upgrade the look & feel.
+
+3️⃣ Your Manual QA Checklist (How to Know It’s Actually “AAA Enough”)
+
+In Replit:
+
+Run everything:
+
+Backend: npm run dev (or whatever it set up)
+
+Frontend: npm run dev
+
+Hit the app, open DevTools → Console must be clean (no red errors during navigation / gameplay).
+
+Try flows like a tester:
+
+Age gate → Home → Game detail → Local setup → Play → Summary
+
+Age gate → Home → Online setup → Lobby → Open second browser → Join via code → Ready both → Play sync → Summary
+
+Tools: open all (dice, bottle, coin) and try them several times.
+
+Design sanity:
+
+Does anything look like “default white card with border”? → Tell the agent: “This screen still looks generic. Upgrade visuals to match the velvet/neon brand.”
+
+Does anything animate in a jumpy/laggy way? → Tell the agent to smooth that specific interaction.
+
+Code health:
+
+If there’s a package.json in frontend/backend: run npm run build in both. If it fails, paste the error back to the agent and say:
+“Fix this build error and re-run the build until it passes.”
+
+Responsiveness:
+
+Resize in browser to narrow mobile width.
+
+Check that: header, main content, and CTA buttons don’t overlap or vanish.
+
+4️⃣ Short “Enforce No Basic Look” Prompt (for specific screens)
+
+If any specific screen still feels basic (e.g., Lobby), paste:
+
+The [Lobby / Gameplay / Tools / etc.] screen still looks too basic and generic.
+Redesign JUST this screen to feel like a modern, premium, neon-velvet AAA interface:
+
+Use a layered gradient background.
+
+Add subtle animated particles.
+
+Use custom card shapes and shadows.
+
+Integrate Framer Motion for entry transitions and micro-interactions.
+
+Remove any plain gray boxes or standard Tailwind demo-like layouts.
+Show me the new JSX/TSX for this screen.

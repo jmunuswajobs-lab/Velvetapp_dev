@@ -1,0 +1,695 @@
+You are Replit’s senior full-stack architect, UI/UX designer, and motion director.
+
+Build a fully production-ready web application called “VelvetPlay Online”:
+
+A premium 18+ couples & small-group spicy game platform
+
+Tone: spicy, steamy, flirty, bold, kink-tease, BUT non-explicit (PG-17, no sexual acts described, no nudity, no minors).
+
+Stack: modern, robust, maintainable, scalable — NO Firebase anywhere.
+
+1. Tech Stack (Lock This In)
+
+Monorepo structure (in one Replit project):
+
+/frontend – React app
+
+/backend – API + real-time server
+
+/shared – shared TypeScript types & validation
+
+Frontend:
+
+React 18 + TypeScript + Vite
+
+Tailwind CSS + a custom Velvet/Neon design system
+
+Optional: shadcn/ui primitives, but with heavily customized styling
+
+Framer Motion for:
+
+Page transitions
+
+Card flips
+
+Heat meter pulses
+
+Dice / bottle / coin animations
+
+React Router for routing
+
+TanStack Query (React Query) for API data fetching & caching
+
+PWA support (manifest + service worker; at least offline support for local mode)
+
+Backend:
+
+Node.js 20 + TypeScript
+
+Framework: NestJS or a cleanly structured Express app with modular architecture (pick one and do it well).
+
+Web server:
+
+REST API for normal operations
+
+WebSockets (Socket.io or WS) for real-time rooms & game sync
+
+Database:
+
+Prisma ORM
+
+Dev: SQLite (file) for easy Replit use
+
+Prod: designed for PostgreSQL (via env config)
+
+Auth:
+
+JWT-based auth (access + refresh tokens), plus
+
+Lightweight anonymous/guest mode with nickname for quick play
+
+Config & secrets:
+
+.env with proper typings (env.ts) and validation (Zod or similar)
+
+Logging:
+
+Basic structured logging (winston or pino)
+
+Validation:
+
+Zod or class-validator for DTOs and request payloads
+
+Infrastructure / DevOps inside the repo:
+
+Dockerfile for backend
+
+Dockerfile (or simple Docker multi-stage) for full app
+
+GitHub-style CI pipeline (YAML) for lint + test + build (even if executed outside Replit)
+
+2. Domain & Features Overview
+
+VelvetPlay Online is:
+
+An 18+ remote couples + local group game hub
+
+Focus: Truth/Dare, Never Have I Ever, Spicy Questions, Heat Meter, Tools (dice/bottle/coin)
+
+Modes:
+
+Local mode (one device)
+
+Online mode (room code + link, real-time sync via WebSockets)
+
+Style: luxury velvet + neon + ember aesthetic, cinematic motion, no basic UI.
+
+You must implement:
+
+Game catalog
+
+Local & online setup flows
+
+Online lobby (with ready states)
+
+Real-time gameplay
+
+Spicy tools (dice, bottle, coin) with rich animations
+
+Summary screens
+
+Rules library
+
+Admin panel for managing games/packs/prompts
+
+3. Visual Identity & Design System
+
+Create a unified brand system:
+
+Brand keywords:
+
+Velvet
+
+Neon
+
+Ember
+
+Silk
+
+Night lounge
+
+Desire
+
+Luxury
+
+Color palette (example, refine but stay in this space):
+
+Velvet Red: #B00F2F
+
+Noir Black: #050509
+
+Deep Plum: #3B0F5C
+
+Ember Orange: #FF5E33
+
+Neon Magenta: #FF008A
+
+Champagne Gold: #E3C089
+
+Heat Pink: #FF2E6D
+
+Typography:
+
+Headings: modern elegant sans (e.g. "Epilogue" or equivalent)
+
+Body: “Inter” or similar
+
+Accent: optional italic serif for sensual emphasis
+
+Component system (in /frontend):
+
+Button variants (primary, secondary, ghost, icon)
+
+Card component (for game cards & prompt cards)
+
+Chip / Tag (Flirty, Bold, Couple, Online, etc.)
+
+HeatMeter component (animated)
+
+Modal & bottom sheet
+
+Input & select components
+
+Layout shells: AppShell, PageHeader, PageSection
+
+Make the design bespoke, not generic “Tailwind template” UI.
+
+4. Screens & UX Flows
+
+Implement all of these screens end-to-end:
+
+4.1 Splash / 18+ Gate
+
+Confirm user is 18+
+
+Show short disclaimer:
+
+18+ only
+
+Non-explicit content
+
+Consent & comfort
+
+Responsible drinking notice
+
+Rich background:
+
+Velvet gradient
+
+Floating ember particles
+
+Smooth entrance animation (Framer Motion)
+
+4.2 Home Screen
+
+Game catalog:
+
+Grid or carousel of glowing 3D-ish cards
+
+Each card:
+
+Title, tags, spice indicator
+
+Hover/press: tilt, shadow, glow
+
+Filters:
+
+“Local only”, “Online only”
+
+Spice slider (1–5)
+
+“Couple mode” toggle
+
+Quick access to:
+
+Tools screen
+
+Rules library
+
+Settings
+
+4.3 Game Detail
+
+Game info
+
+Tags & spice indicators
+
+Play buttons:
+
+“Play locally”
+
+“Play online with partner”
+
+4.4 Local Game Setup
+
+Choose packs
+
+Set spice/intensity level (visual heat slider with animation)
+
+NSFW-ish toggle (still PG-17, just more daring)
+
+Add player nicknames
+
+Start game → creates local session state (stored in frontend, no backend required)
+
+4.5 Online Game Setup
+
+Choose game & settings (same as local)
+
+Create room (backend):
+
+POST /rooms
+
+Response: roomId, joinCode
+
+Show:
+
+Join link (e.g. /online/room/:roomId)
+
+Short join code (6-8 chars)
+
+Animate copy button, show success micro-animation
+
+4.6 Online Lobby
+
+Real-time updates via WebSockets:
+
+Players join room
+
+Players toggle “ready”
+
+Display:
+
+Room code
+
+Join link
+
+Player list with avatars & ready state
+
+Host:
+
+“Start game” button enabled when minimum players ready
+
+Background:
+
+Heat meter ambient animation rising as players ready up
+
+4.7 Gameplay Screen
+
+Center Prompt Card:
+
+Flip / slide-in animation
+
+Heat glow pulse on high-intensity prompts
+
+Controls:
+
+Next, Skip, Back, End
+
+Sidebars:
+
+Current player indicator
+
+Round & turn
+
+HeatMeter component (0–100)
+
+For online mode:
+
+All state synced via WebSocket messages
+
+Only host can advance by default (configurable)
+
+4.8 Tools Screen
+
+Three tools, each with polished animation:
+
+Heat Dice:
+
+3D roll effect, easing, random result
+
+Spin the Bottle:
+
+Rotational inertia, deceleration curve
+
+Coin Flip:
+
+3D flip illusion, shadow scaling
+
+These live in frontend only but may log events to backend for analytics.
+
+4.9 Summary Screen
+
+Stats:
+
+Rounds played
+
+“Most picked” player
+
+Distribution of prompt types
+
+CTAs:
+
+Replay with same settings
+
+Back to games
+
+4.10 Rules Library
+
+List of card/party-style rules
+
+Original descriptions
+
+Filter/search
+
+4.11 Admin Panel
+
+Auth-protected route (admin user only)
+
+Manage:
+
+Games
+
+Packs
+
+Prompts
+
+Features:
+
+Create/edit/delete items
+
+Flag prompts (flirty, bold, kinky-tease, couple-only, remote-safe, etc.)
+
+Intensity sliders
+
+Simple metrics: number of prompts per game/pack
+
+5. Game Content & Logic
+5.1 Data Model (shared TypeScript types in /shared)
+export type PromptType =
+  | "truth"
+  | "dare"
+  | "challenge"
+  | "confession"
+  | "vote"
+  | "rule";
+
+export interface PromptFlags {
+  isFlirty?: boolean;
+  isBold?: boolean;
+  isKinkyTease?: boolean; // still PG-17
+  isCoupleExclusive?: boolean;
+  isConfession?: boolean;
+  isNSFW?: boolean;
+  requiresMovement?: boolean;
+  safeForRemote?: boolean;
+}
+
+export interface Prompt {
+  id: string;
+  gameId: string;
+  packId: string | null;
+  text: string;
+  type: PromptType;
+  intensity: number; // 1–5
+  flags: PromptFlags;
+}
+
+export interface GameDefinition {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  minPlayers: number;
+  maxPlayers: number;
+  supportsOnline: boolean;
+  supportsLocal: boolean;
+  tags: string[];
+  isSpicy: boolean;
+  isCoupleFocused: boolean;
+}
+
+export type RoomStatus = "waiting" | "in-progress" | "finished";
+
+export interface Player {
+  id: string;
+  userId: string | null; // null for guests
+  nickname: string;
+  isHost: boolean;
+  isReady: boolean;
+  joinedAt: Date;
+}
+
+export interface Room {
+  id: string;
+  gameId: string;
+  hostId: string;
+  status: RoomStatus;
+  settings: {
+    intensity: number;
+    allowNSFW: boolean;
+    allowMovement: boolean;
+    coupleMode: boolean;
+    packs: string[];
+  };
+  players: Player[];
+  currentPromptId: string | null;
+  usedPromptIds: string[];
+  round: number;
+  turnIndex: number;
+  heatLevel: number; // 0–100
+}
+
+5.2 Database Schema (Prisma)
+
+User
+
+Game
+
+Pack
+
+Prompt
+
+Room
+
+RoomPlayer
+
+SessionEvent (optional, for analytics)
+
+Design a Prisma schema that matches the types above and generates efficient queries.
+
+5.3 Prompt Engine
+
+Backend service for:
+
+Selecting next prompt:
+
+No repeats in same room until pack nearly exhausted
+
+Respect filters:
+
+allowNSFW → filter flags.isNSFW
+
+allowMovement → filter requiresMovement
+
+coupleMode → prefer isCoupleExclusive
+
+safeForRemote for remote rooms
+
+Updating heatLevel based on intensity & actions
+
+Exposing endpoints:
+
+POST /rooms/:id/next
+
+POST /rooms/:id/skip
+
+POST /rooms/:id/back
+
+Use WebSocket events to broadcast updates to all clients in the room.
+
+6. Realtime Layer (WebSockets)
+
+Implement WebSockets on backend (e.g. Socket.io):
+
+Channel per room (room:<id>)
+
+Events:
+
+room_state – full state sync
+
+player_joined, player_left
+
+player_ready_changed
+
+prompt_changed
+
+heat_changed
+
+Frontend:
+
+Use a useRoomSocket(roomId) hook:
+
+Subscribe to events
+
+Update local state
+
+Re-connect on network drop
+
+Ensure:
+
+Proper validation: only players in room can emit room actions
+
+Host-only actions where necessary (starting game, ending game, next/skip/back)
+
+7. Motion System (“Velvet Motion”)
+
+Define a reusable motion system in /frontend:
+
+motionPresets.ts – export objects/functions:
+
+pageTransition
+
+cardFlip
+
+heatPulse
+
+parallaxLayer
+
+buttonPress
+
+diceRoll
+
+bottleSpin
+
+coinFlip
+
+Use Framer Motion components (motion.div) and pass these presets to keep a consistent motion language.
+
+Characteristics:
+
+Smooth transitions (250–450 ms)
+
+Spring-based scaling for cards
+
+Gentle bounce & overshoot for playful UI
+
+Particle effects via small animated elements (not heavy canvas)
+
+8. Auth & Security
+
+Auth:
+
+Basic email/password + JWT
+
+Guest/anonymous sessions:
+
+Generate a guest user record with random ID & nickname
+
+Store JWT in localStorage or cookie (httpOnly if possible)
+
+Security:
+
+Backend must validate:
+
+Room membership for room actions
+
+Host privileges for game control
+
+Never trust client for:
+
+Turn index
+
+Current prompt
+
+Heat level
+
+Use Zod/class-validator for all input DTOs.
+
+9. Testing & Quality
+
+Add unit tests (Jest or Vitest) for:
+
+Prompt selection logic
+
+Heat level calculation
+
+Room state transitions
+
+Add a few integration tests (can be minimal) for REST endpoints.
+
+10. Non-Functional & Safety Requirements
+
+All content:
+
+18+ but non-explicit
+
+No minors
+
+No explicit acts or body descriptions
+
+No illegal or abusive content
+
+Show a consent & comfort note somewhere accessible:
+
+“Skip any prompt you’re not comfortable with.”
+
+Responsiveness:
+
+Fully usable on mobile (portrait)
+
+Layout adjusts to tablet & desktop
+
+Accessibility:
+
+Good contrast
+
+Keyboard-focusable important actions
+
+Aria roles for dialogs/modals
+
+11. Deliverables (from Replit project)
+
+You must produce in this single Replit project:
+
+/frontend – complete React app with:
+
+All screens & flows implemented as described
+
+Tailwind config & design system
+
+Framer Motion animations
+
+/backend – complete Node/TypeScript server with:
+
+REST API + WebSockets
+
+Prisma schema & migrations
+
+Auth
+
+Game & room logic
+
+/shared – shared types & validation schemas
+
+README.md – setup & run instructions:
+
+How to npm install / pnpm install
+
+How to run backend & frontend in Replit
+
+How to configure .env (DB_URL, JWT_SECRET, etc.)
+
+CI config file (GitHub Actions style) for lint + test + build.
+
+This must be a fully working, advanced, production-ready app, not a minimal demo.
