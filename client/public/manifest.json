@@ -1,0 +1,23 @@
+{
+  "name": "VelvetPlay Online",
+  "short_name": "VelvetPlay",
+  "description": "Premium 18+ couples & small-group spicy games",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050509",
+  "theme_color": "#FF008A",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["games", "entertainment"]
+}

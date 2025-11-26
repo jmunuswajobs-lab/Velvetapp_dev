@@ -1,0 +1,277 @@
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import type { LocalGameState, RoomSettings, Prompt, GameStats, PromptType } from "@shared/schema";
+
+// Generate random avatar color
+export function getRandomAvatarColor(): string {
+  const colors = [
+    "#FF008A", "#FF2E6D", "#FF5E33", "#B00F2F", 
+    "#3B0F5C", "#5A1A8C", "#E3C089", "#7B2CB3"
+  ];
+  return colors[Math.floor(Math.random() * colors.length)];
+}
+
+// Generate 6-character join code
+export function generateJoinCode(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "";
+  for (let i = 0; i < 6; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return code;
+}
+
+interface AgeVerificationState {
+  isVerified: boolean;
+  verifiedAt: Date | null;
+  setVerified: () => void;
+}
+
+export const useAgeVerification = create<AgeVerificationState>()(
+  persist(
+    (set) => ({
+      isVerified: false,
+      verifiedAt: null,
+      setVerified: () => set({ isVerified: true, verifiedAt: new Date() }),
+    }),
+    {
+      name: "velvetplay-age-verified",
+    }
+  )
+);
+
+interface LocalGameStore {
+  gameState: LocalGameState | null;
+  
+  // Actions
+  initGame: (
+    gameId: string,
+    players: { nickname: string; avatarColor: string }[],
+    settings: RoomSettings,
+    prompts: Prompt[]
+  ) => void;
+  nextPrompt: () => Prompt | null;
+  previousPrompt: () => Prompt | null;
+  skipPrompt: () => void;
+  updateHeatLevel: (delta: number) => void;
+  advanceTurn: () => void;
+  endGame: () => GameStats;
+  resetGame: () => void;
+}
+
+export const useLocalGame = create<LocalGameStore>((set, get) => ({
+  gameState: null,
+
+  initGame: (gameId, players, settings, prompts) => {
+    // Shuffle prompts
+    const shuffledPrompts = [...prompts].sort(() => Math.random() - 0.5);
+    
+    set({
+      gameState: {
+        gameId,
+        players,
+        settings,
+        currentPromptIndex: 0,
+        prompts: shuffledPrompts,
+        usedPromptIds: [],
+        round: 1,
+        turnIndex: 0,
+        heatLevel: 0,
+        stats: {
+          roundsPlayed: 0,
+          promptsByType: {
+            truth: 0,
+            dare: 0,
+            challenge: 0,
+            confession: 0,
+            vote: 0,
+            rule: 0,
+          },
+          playerPicks: {},
+          skippedCount: 0,
+        },
+      },
+    });
+  },
+
+  nextPrompt: () => {
+    const { gameState } = get();
+    if (!gameState) return null;
+
+    const nextIndex = gameState.currentPromptIndex + 1;
+    if (nextIndex >= gameState.prompts.length) {
+      return null; // No more prompts
+    }
+
+    const prompt = gameState.prompts[nextIndex];
+    const currentPlayer = gameState.players[gameState.turnIndex];
+
+    set({
+      gameState: {
+        ...gameState,
+        currentPromptIndex: nextIndex,
+        usedPromptIds: [...gameState.usedPromptIds, prompt.id],
+        stats: {
+          ...gameState.stats,
+          roundsPlayed: gameState.stats.roundsPlayed + 1,
+          promptsByType: {
+            ...gameState.stats.promptsByType,
+            [prompt.type as PromptType]: (gameState.stats.promptsByType[prompt.type as PromptType] || 0) + 1,
+          },
+          playerPicks: {
+            ...gameState.stats.playerPicks,
+            [currentPlayer.nickname]: (gameState.stats.playerPicks[currentPlayer.nickname] || 0) + 1,
+          },
+        },
+      },
+    });
+
+    return prompt;
+  },
+
+  previousPrompt: () => {
+    const { gameState } = get();
+    if (!gameState) return null;
+
+    const prevIndex = Math.max(0, gameState.currentPromptIndex - 1);
+    const prompt = gameState.prompts[prevIndex];
+
+    set({
+      gameState: {
+        ...gameState,
+        currentPromptIndex: prevIndex,
+      },
+    });
+
+    return prompt;
+  },
+
+  skipPrompt: () => {
+    const { gameState } = get();
+    if (!gameState) return;
+
+    set({
+      gameState: {
+        ...gameState,
+        stats: {
+          ...gameState.stats,
+          skippedCount: gameState.stats.skippedCount + 1,
+        },
+      },
+    });
+
+    get().nextPrompt();
+  },
+
+  updateHeatLevel: (delta) => {
+    const { gameState } = get();
+    if (!gameState) return;
+
+    const newLevel = Math.min(100, Math.max(0, gameState.heatLevel + delta));
+
+    set({
+      gameState: {
+        ...gameState,
+        heatLevel: newLevel,
+      },
+    });
+  },
+
+  advanceTurn: () => {
+    const { gameState } = get();
+    if (!gameState) return;
+
+    const nextTurnIndex = (gameState.turnIndex + 1) % gameState.players.length;
+    const newRound = nextTurnIndex === 0 ? gameState.round + 1 : gameState.round;
+
+    set({
+      gameState: {
+        ...gameState,
+        turnIndex: nextTurnIndex,
+        round: newRound,
+      },
+    });
+  },
+
+  endGame: () => {
+    const { gameState } = get();
+    if (!gameState) {
+      return {
+        roundsPlayed: 0,
+        promptsByType: { truth: 0, dare: 0, challenge: 0, confession: 0, vote: 0, rule: 0 },
+        playerPicks: {},
+        skippedCount: 0,
+      };
+    }
+
+    return gameState.stats;
+  },
+
+  resetGame: () => {
+    set({ gameState: null });
+  },
+}));
+
+// Online room state (synced via WebSocket)
+interface OnlineRoomState {
+  roomId: string | null;
+  joinCode: string | null;
+  isHost: boolean;
+  isConnected: boolean;
+  players: {
+    id: string;
+    nickname: string;
+    avatarColor: string;
+    isHost: boolean;
+    isReady: boolean;
+  }[];
+  gameStarted: boolean;
+  currentPrompt: Prompt | null;
+  heatLevel: number;
+  turnIndex: number;
+  round: number;
+}
+
+interface OnlineRoomStore extends OnlineRoomState {
+  setRoom: (roomId: string, joinCode: string, isHost: boolean) => void;
+  setConnected: (connected: boolean) => void;
+  updatePlayers: (players: OnlineRoomState["players"]) => void;
+  setGameStarted: (started: boolean) => void;
+  updateGameState: (state: Partial<Pick<OnlineRoomState, "currentPrompt" | "heatLevel" | "turnIndex" | "round">>) => void;
+  reset: () => void;
+}
+
+const initialOnlineState: OnlineRoomState = {
+  roomId: null,
+  joinCode: null,
+  isHost: false,
+  isConnected: false,
+  players: [],
+  gameStarted: false,
+  currentPrompt: null,
+  heatLevel: 0,
+  turnIndex: 0,
+  round: 1,
+};
+
+export const useOnlineRoom = create<OnlineRoomStore>((set) => ({
+  ...initialOnlineState,
+
+  setRoom: (roomId, joinCode, isHost) => 
+    set({ roomId, joinCode, isHost }),
+
+  setConnected: (isConnected) => 
+    set({ isConnected }),
+
+  updatePlayers: (players) => 
+    set({ players }),
+
+  setGameStarted: (gameStarted) => 
+    set({ gameStarted }),
+
+  updateGameState: (state) => 
+    set((prev) => ({ ...prev, ...state })),
+
+  reset: () => 
+    set(initialOnlineState),
+}));
