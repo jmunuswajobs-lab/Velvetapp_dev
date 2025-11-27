@@ -46,65 +46,75 @@ export default function Lobby() {
 
     console.log('Connecting to WebSocket:', wsUrl, 'with playerId:', playerId);
     const socket = new WebSocket(wsUrl);
+    let isCleanedUp = false;
 
     socket.onopen = () => {
+      if (isCleanedUp) return;
       setConnected(true);
       console.log("WebSocket connected, joining room:", roomId);
       socket.send(JSON.stringify({ type: "join_room", roomId, playerId }));
     };
 
     socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      console.log("WebSocket message received:", data);
+      if (isCleanedUp) return;
+      try {
+        const data = JSON.parse(event.data);
+        console.log("WebSocket message received:", data);
 
-      switch (data.type) {
-        case "room_update":
-          updatePlayers(data.players);
-          if (data.gameSlug) {
-            setGameSlug(data.gameSlug);
-          }
-          break;
-        case "game_started":
-          console.log("Game started, initializing with prompts:", data.prompts);
-          initGameState(data.prompts, data.players);
-          setGameStarted(true);
-          setLocation(`/games/${data.gameSlug || gameSlug || 'truth-or-dare'}/play`);
-          break;
-        case "error":
-          toast({
-            title: "Error",
-            description: data.message,
-            variant: "destructive",
-          });
-          break;
+        switch (data.type) {
+          case "room_update":
+            updatePlayers(data.players);
+            if (data.gameSlug) {
+              setGameSlug(data.gameSlug);
+            }
+            break;
+          case "game_started":
+            console.log("Game started, initializing with prompts:", data.prompts);
+            initGameState(data.prompts, data.players);
+            setGameStarted(true);
+            setLocation(`/games/${data.gameSlug || gameSlug || 'truth-or-dare'}/play`);
+            break;
+          case "error":
+            toast({
+              title: "Error",
+              description: data.message,
+              variant: "destructive",
+            });
+            break;
+        }
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
       }
     };
 
     socket.onclose = () => {
+      if (isCleanedUp) return;
       setConnected(false);
       console.log('WebSocket disconnected');
-      // Optionally attempt to reconnect here
     };
 
     socket.onerror = (error) => {
+      if (isCleanedUp) return;
       console.error('WebSocket error:', error);
       toast({
         title: "Connection Error",
         description: "Failed to connect to game server",
         variant: "destructive",
       });
-      setConnected(false); // Ensure connected status is updated on error
+      setConnected(false);
     };
 
-    websocketRef.current = socket; // Store the socket instance in the ref
+    websocketRef.current = socket;
 
-    // Cleanup function to close the WebSocket connection when the component unmounts
+    // Cleanup function
     return () => {
-      if (socket.readyState === WebSocket.OPEN) {
+      isCleanedUp = true;
+      if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
         socket.close();
       }
+      websocketRef.current = null;
     };
-  }, [roomId, playerId, setConnected, updatePlayers, setGameStarted, setLocation, toast, initGameState]); // Added playerId to dependencies
+  }, [roomId, playerId]); // Removed functions from dependencies to prevent reconnections
 
   const copyCode = useCallback(() => {
     if (!joinCode) return;

@@ -73,9 +73,11 @@ export default function Gameplay() {
   const [showExitConfirm, setShowExitConfirm] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
+
     if (isOnlineMode) {
       // Handle online game state updates here
-      if (onlineGame.gameState && onlineGame.gameState.prompts.length > 0) {
+      if (isMounted && onlineGame.gameState && onlineGame.gameState.prompts.length > 0) {
         const prompt = onlineGame.gameState.prompts[onlineGame.gameState.currentPromptIndex];
         if (prompt) {
           setCurrentPrompt(prompt);
@@ -85,10 +87,12 @@ export default function Gameplay() {
       // Local game logic
       if (!localGame.gameState) {
         console.log("No local game state, redirecting to setup");
-        setLocation(`/games/${slug}/local`);
+        if (isMounted) {
+          setLocation(`/games/${slug}/local`);
+        }
         return;
       }
-      if (localGame.gameState.prompts.length > 0) {
+      if (isMounted && localGame.gameState.prompts.length > 0) {
         const prompt = localGame.gameState.prompts[localGame.gameState.currentPromptIndex];
         if (prompt) {
           setCurrentPrompt(prompt);
@@ -98,10 +102,10 @@ export default function Gameplay() {
     
     // Cleanup function
     return () => {
-      // Reset card flip state when component unmounts
+      isMounted = false;
       setIsCardFlipped(false);
     };
-  }, [onlineGame.gameState, localGame.gameState, slug, setLocation, isOnlineMode]);
+  }, [onlineGame.gameState?.currentPromptIndex, localGame.gameState?.currentPromptIndex, slug, setLocation, isOnlineMode]);
 
   const handleNext = useCallback(() => {
     setIsCardFlipped(false);

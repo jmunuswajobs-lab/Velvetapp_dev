@@ -15,6 +15,7 @@ import LocalSetup from "@/pages/LocalSetup";
 import OnlineSetup from "@/pages/OnlineSetup";
 import Lobby from "@/pages/Lobby";
 import Gameplay from "@/pages/Gameplay";
+import GameRouter from "@/pages/GameRouter";
 import Tools from "@/pages/Tools";
 import Summary from "@/pages/Summary";
 import Rules from "@/pages/Rules";
@@ -46,7 +47,7 @@ function Router() {
         <Route path="/games/:slug" component={GameDetail} />
         <Route path="/games/:slug/local" component={LocalSetup} />
         <Route path="/games/:slug/online" component={OnlineSetup} />
-        <Route path="/games/:slug/play" component={Gameplay} />
+        <Route path="/games/:slug/play" component={GameRouter} />
         <Route path="/games/:slug/summary" component={Summary} />
 
         {/* Online routes */}

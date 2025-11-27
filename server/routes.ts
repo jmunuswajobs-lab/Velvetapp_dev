@@ -51,6 +51,14 @@ export async function registerRoutes(
     ws.on("message", async (data) => {
       try {
         const message = JSON.parse(data.toString());
+        
+        // Validate message structure
+        if (!message || typeof message !== 'object' || !message.type) {
+          log(`Invalid message format received`);
+          ws.send(JSON.stringify({ type: "error", message: "Invalid message format" }));
+          return;
+        }
+
         log(`Received message: ${message.type} from room ${message.roomId || 'unknown'}`);
 
         switch (message.type) {

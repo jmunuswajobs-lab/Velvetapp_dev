@@ -217,6 +217,13 @@ export const useLocalGame = create<LocalGameStore>((set, get) => ({
   },
 
   resetGame: () => {
+    const state = get();
+    if (state.gameState) {
+      // Clear all arrays to free memory
+      state.gameState.prompts = [];
+      state.gameState.usedPromptIds = [];
+      state.gameState.players = [];
+    }
     set({ gameState: null });
   },
 }));
@@ -447,9 +454,23 @@ export const useOnlineRoom = create<OnlineRoomStore>((set, get) => ({
   },
 
   resetGame: () => {
+    const state = get();
+    if (state.gameState) {
+      // Clear all arrays to free memory
+      state.gameState.prompts = [];
+      state.gameState.usedPromptIds = [];
+      state.gameState.players = [];
+    }
     set({ gameState: null, gameStarted: false });
   },
 
-  reset: () => 
-    set(initialOnlineState),
+  reset: () => {
+    const state = get();
+    if (state.gameState) {
+      state.gameState.prompts = [];
+      state.gameState.usedPromptIds = [];
+      state.gameState.players = [];
+    }
+    set(initialOnlineState);
+  },
 }));
