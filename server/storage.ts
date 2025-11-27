@@ -660,6 +660,93 @@ export class MemStorage implements IStorage {
       const id = randomUUID();
       this.prompts.set(id, { ...prompt, id, createdAt: new Date() });
     });
+
+    // Add CrazyGames-inspired remix prompts
+    const couplesDuelId = games[14].id;
+    const couplesDuelPrompts: Omit<Prompt, "id" | "createdAt">[] = [
+      { gameId: couplesDuelId, packId: null, text: "CHARGE ATTACK: Winner chooses a romantic dare for loser.", type: "dare", intensity: 2, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: couplesDuelId, packId: null, text: "DEFEND SUCCESS: Defender receives a compliment from attacker.", type: "dare", intensity: 1, flags: { isCoupleExclusive: true, safeForRemote: true } },
+      { gameId: couplesDuelId, packId: null, text: "PERFECT BLOCK: Both players share a secret.", type: "confession", intensity: 3, flags: { isCoupleExclusive: true, safeForRemote: true } },
+      { gameId: couplesDuelId, packId: null, text: "COMBO BREAKER: Loser gives winner a 30-second massage.", type: "dare", intensity: 3, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: couplesDuelId, packId: null, text: "CRITICAL HIT: Winner gets a passionate kiss.", type: "dare", intensity: 4, flags: { isCoupleExclusive: true, isFlirty: true, isBold: true } },
+    ];
+    couplesDuelPrompts.forEach((prompt) => {
+      const id = randomUUID();
+      this.prompts.set(id, { ...prompt, id, createdAt: new Date() });
+    });
+
+    const neonDriftId = games[15].id;
+    const neonDriftPrompts: Omit<Prompt, "id" | "createdAt">[] = [
+      { gameId: neonDriftId, packId: null, text: "DRIFT TOGETHER: Both players must agree on next move - if you can't, kiss to resolve.", type: "dare", intensity: 2, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: neonDriftId, packId: null, text: "COLLISION: Crashed? Tell your partner why you love them.", type: "truth", intensity: 1, flags: { isCoupleExclusive: true, safeForRemote: true } },
+      { gameId: neonDriftId, packId: null, text: "PERFECT LAP: Winners choose where to take the next date.", type: "challenge", intensity: 2, flags: { isCoupleExclusive: true, safeForRemote: true } },
+      { gameId: neonDriftId, packId: null, text: "BOOST ACTIVATED: Share your wildest travel fantasy together.", type: "truth", intensity: 3, flags: { isCoupleExclusive: true, safeForRemote: true } },
+    ];
+    neonDriftPrompts.forEach((prompt) => {
+      const id = randomUUID();
+      this.prompts.set(id, { ...prompt, id, createdAt: new Date() });
+    });
+
+    const truthBombId = games[16].id;
+    const truthBombPrompts: Omit<Prompt, "id" | "createdAt">[] = [
+      { gameId: truthBombId, packId: null, text: "GATE REACHED: What's something you've never told anyone here?", type: "truth", intensity: 3, flags: { safeForRemote: true, isConfession: true } },
+      { gameId: truthBombId, packId: null, text: "OBSTACLE FAILED: Remove one accessory or reveal one secret.", type: "dare", intensity: 3, flags: { isBold: true } },
+      { gameId: truthBombId, packId: null, text: "CHECKPOINT: Who here would you most want to kiss?", type: "truth", intensity: 4, flags: { isFlirty: true, safeForRemote: true } },
+      { gameId: truthBombId, packId: null, text: "FINISH LINE: Confess your biggest turn-on to the group.", type: "confession", intensity: 5, flags: { isFlirty: true, isBold: true, safeForRemote: true } },
+    ];
+    truthBombPrompts.forEach((prompt) => {
+      const id = randomUUID();
+      this.prompts.set(id, { ...prompt, id, createdAt: new Date() });
+    });
+
+    const emotionPingPongId = games[17].id;
+    const emotionPingPongPrompts: Omit<Prompt, "id" | "createdAt">[] = [
+      { gameId: emotionPingPongId, packId: null, text: "LOVE HIT: Share what you love most about your partner.", type: "truth", intensity: 1, flags: { isCoupleExclusive: true, safeForRemote: true } },
+      { gameId: emotionPingPongId, packId: null, text: "FLIRT SERVE: Compliment your partner with a wink.", type: "dare", intensity: 2, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: emotionPingPongId, packId: null, text: "TEASE RALLY: Winner picks a playful dare for loser.", type: "dare", intensity: 3, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: emotionPingPongId, packId: null, text: "PASSION POINT: Kiss your partner passionately.", type: "dare", intensity: 4, flags: { isCoupleExclusive: true, isFlirty: true, isBold: true } },
+      { gameId: emotionPingPongId, packId: null, text: "GAME WINNER: Loser fulfills one fantasy request.", type: "dare", intensity: 5, flags: { isCoupleExclusive: true, isFlirty: true, isBold: true } },
+    ];
+    emotionPingPongPrompts.forEach((prompt) => {
+      const id = randomUUID();
+      this.prompts.set(id, { ...prompt, id, createdAt: new Date() });
+    });
+
+    const velvetMemoryId = games[18].id;
+    const velvetMemoryPrompts: Omit<Prompt, "id" | "createdAt">[] = [
+      { gameId: velvetMemoryId, packId: null, text: "SWEET MATCH: Share your favorite date memory.", type: "truth", intensity: 1, flags: { isCoupleExclusive: true, safeForRemote: true } },
+      { gameId: velvetMemoryId, packId: null, text: "FLIRTY PAIR: Give your partner a soft kiss.", type: "dare", intensity: 2, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: velvetMemoryId, packId: null, text: "SPICY COMBO: Whisper something naughty in their ear.", type: "dare", intensity: 4, flags: { isCoupleExclusive: true, isFlirty: true, isBold: true } },
+      { gameId: velvetMemoryId, packId: null, text: "PERFECT MATCH: Both choose one thing to do tonight.", type: "challenge", intensity: 3, flags: { isCoupleExclusive: true, safeForRemote: true } },
+    ];
+    velvetMemoryPrompts.forEach((prompt) => {
+      const id = randomUUID();
+      this.prompts.set(id, { ...prompt, id, createdAt: new Date() });
+    });
+
+    const neonGuessingId = games[19].id;
+    const neonGuessingPrompts: Omit<Prompt, "id" | "createdAt">[] = [
+      { gameId: neonGuessingId, packId: null, text: "CORRECT GUESS: Your partner reveals their current mood.", type: "truth", intensity: 1, flags: { isCoupleExclusive: true, safeForRemote: true } },
+      { gameId: neonGuessingId, packId: null, text: "WRONG ANSWER: Give your partner a compliment.", type: "dare", intensity: 1, flags: { isCoupleExclusive: true, safeForRemote: true } },
+      { gameId: neonGuessingId, packId: null, text: "STREAK BONUS: Both share what attracted you to each other.", type: "truth", intensity: 2, flags: { isCoupleExclusive: true, safeForRemote: true } },
+      { gameId: neonGuessingId, packId: null, text: "PERFECT READ: Your partner reveals a hidden desire.", type: "confession", intensity: 4, flags: { isCoupleExclusive: true, safeForRemote: true, isFlirty: true } },
+    ];
+    neonGuessingPrompts.forEach((prompt) => {
+      const id = randomUUID();
+      this.prompts.set(id, { ...prompt, id, createdAt: new Date() });
+    });
+
+    const duoRhythmId = games[20].id;
+    const duoRhythmPrompts: Omit<Prompt, "id" | "createdAt">[] = [
+      { gameId: duoRhythmId, packId: null, text: "PERFECT SYNC: Dance together for 30 seconds.", type: "dare", intensity: 2, flags: { isCoupleExclusive: true, requiresMovement: true } },
+      { gameId: duoRhythmId, packId: null, text: "COMBO STREAK: Share your favorite song memory together.", type: "truth", intensity: 1, flags: { isCoupleExclusive: true, safeForRemote: true } },
+      { gameId: duoRhythmId, packId: null, text: "HEAT SPARK: Kiss in rhythm to the music.", type: "dare", intensity: 3, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: duoRhythmId, packId: null, text: "HARMONY BONUS: Create a couples dance move together.", type: "challenge", intensity: 2, flags: { isCoupleExclusive: true } },
+    ];
+    duoRhythmPrompts.forEach((prompt) => {
+      const id = randomUUID();
+      this.prompts.set(id, { ...prompt, id, createdAt: new Date() });
+    });
   }
 
   // User methods

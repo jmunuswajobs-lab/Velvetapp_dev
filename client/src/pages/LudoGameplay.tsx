@@ -1,16 +1,16 @@
-import { useEffect } from "react";
+
+import { useEffect, useState } from "react";
 import { useParams, useLocation, Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Trophy, Sparkles } from "lucide-react";
+import { ArrowLeft, Trophy, Sparkles, Home, Flame, Heart, Snowflake, Zap } from "lucide-react";
 import { EmberParticles } from "@/components/velvet/EmberParticles";
 import { VelvetButton } from "@/components/velvet/VelvetButton";
-import { VelvetCard } from "@/components/velvet/VelvetCard";
+import { VelvetCard, PromptCard } from "@/components/velvet/VelvetCard";
 import { LudoBoard } from "@/components/velvet/LudoBoard";
 import { FadeIn } from "@/components/velvet/PageTransition";
 import { useLudoStore } from "@/lib/ludoState";
 
 export default function LudoGameplay() {
-  const { mode } = useParams<{ mode: string }>();
   const [, setLocation] = useLocation();
   
   const { 
@@ -20,6 +20,14 @@ export default function LudoGameplay() {
     completePrompt, 
     endGame 
   } = useLudoStore();
+
+  const [showWinner, setShowWinner] = useState(false);
+
+  useEffect(() => {
+    if (gameState?.winner) {
+      setShowWinner(true);
+    }
+  }, [gameState?.winner]);
 
   if (!gameState) {
     return (
@@ -38,48 +46,75 @@ export default function LudoGameplay() {
   }
 
   const currentPlayer = gameState.players[gameState.currentTurn];
+  const winnerPlayer = gameState.winner 
+    ? gameState.players.find(p => p.id === gameState.winner)
+    : null;
+
+  const handleEndGame = () => {
+    endGame();
+    setLocation("/games/velvet-ludo");
+  };
+
+  const getTileIcon = (type: string) => {
+    switch (type) {
+      case "heat": return <Flame className="w-8 h-8 text-red-500" />;
+      case "bond": return <Heart className="w-8 h-8 text-purple-500" />;
+      case "freeze": return <Snowflake className="w-8 h-8 text-blue-400" />;
+      case "wild": return <Zap className="w-8 h-8 text-yellow-500" />;
+      default: return <Sparkles className="w-8 h-8 text-pink-500" />;
+    }
+  };
+
+  const getTileDescription = (type: string) => {
+    switch (type) {
+      case "heat": return "Spicy challenge ahead!";
+      case "bond": return "Work together on this one";
+      case "freeze": return "You're frozen! Partner can save you next turn";
+      case "wild": return "Random surprise effect!";
+      default: return "Special romantic moment";
+    }
+  };
 
   return (
     <div className="min-h-screen relative">
+      {/* Background */}
       <div 
         className="fixed inset-0 -z-20"
         style={{
           background: `
-            radial-gradient(ellipse at 20% 30%, rgba(59, 15, 92, 0.3) 0%, transparent 50%),
-            radial-gradient(ellipse at 80% 70%, rgba(176, 15, 47, 0.2) 0%, transparent 50%),
+            radial-gradient(ellipse at 30% 20%, rgba(255, 0, 138, 0.2) 0%, transparent 50%),
+            radial-gradient(ellipse at 70% 80%, rgba(176, 15, 47, 0.25) 0%, transparent 50%),
             linear-gradient(180deg, #050509 0%, #0A0A12 100%)
           `,
         }}
       />
-      <EmberParticles count={10} />
+      <EmberParticles count={15} />
 
-      <header className="glass border-b border-plum-deep/30 sticky top-0 z-40">
+      {/* Header */}
+      <header className="glass border-b border-plum-deep/30">
         <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center justify-between">
             <Link href="/games/velvet-ludo">
               <button 
                 className="flex items-center gap-2 text-muted-foreground hover:text-white transition-colors"
-                data-testid="button-back-ludo"
+                data-testid="button-back"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span>Exit Game</span>
               </button>
             </Link>
 
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-neon-magenta" />
-              <span className="font-display font-semibold gradient-text">
-                Velvet Ludo
-              </span>
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">Velvet Ludo</p>
+              <p className="font-display font-semibold">Round {gameState.turnCount + 1}</p>
             </div>
 
-            <div className="text-sm text-muted-foreground">
-              Turn {gameState.turnCount + 1}
-            </div>
+            <div className="w-20" />
           </div>
         </div>
       </header>
 
+      {/* Main content */}
       <main className="max-w-6xl mx-auto px-4 py-8">
         <FadeIn>
           <LudoBoard
@@ -90,6 +125,7 @@ export default function LudoGameplay() {
         </FadeIn>
       </main>
 
+      {/* Prompt Modal */}
       <AnimatePresence>
         {gameState.gamePhase === "prompt" && gameState.currentPrompt && (
           <motion.div
@@ -99,107 +135,127 @@ export default function LudoGameplay() {
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
           >
             <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
+              initial={{ scale: 0.8, opacity: 0, y: 50 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.8, opacity: 0, y: 50 }}
               transition={{ type: "spring", duration: 0.5 }}
+              className="w-full max-w-md"
             >
-              <VelvetCard tiltEnabled={false} className="max-w-md p-8 text-center">
-                <div 
-                  className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
-                  style={{
-                    background: "linear-gradient(135deg, #FF008A 0%, #B00F2F 100%)",
-                    boxShadow: "0 0 30px rgba(255, 0, 138, 0.5)",
-                  }}
-                >
-                  <Sparkles className="w-8 h-8 text-white" />
+              <VelvetCard tiltEnabled={false} className="p-8">
+                <div className="text-center mb-6">
+                  <motion.div
+                    className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
+                    style={{
+                      background: "linear-gradient(135deg, #FF008A 0%, #B00F2F 100%)",
+                      boxShadow: "0 0 30px rgba(255, 0, 138, 0.5)",
+                    }}
+                    animate={{
+                      boxShadow: [
+                        "0 0 30px rgba(255, 0, 138, 0.5)",
+                        "0 0 50px rgba(255, 0, 138, 0.8)",
+                        "0 0 30px rgba(255, 0, 138, 0.5)",
+                      ],
+                    }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    {getTileIcon(gameState.velvetSpaces.find(v => 
+                      gameState.players[gameState.currentTurn].pieces.some(p => p.position === v.position)
+                    )?.type || "dare")}
+                  </motion.div>
+
+                  <h2 className="text-2xl font-display font-bold gradient-text mb-2">
+                    Special Tile!
+                  </h2>
+                  <p className="text-muted-foreground text-sm">
+                    {getTileDescription(gameState.velvetSpaces.find(v => 
+                      gameState.players[gameState.currentTurn].pieces.some(p => p.position === v.position)
+                    )?.type || "dare")}
+                  </p>
                 </div>
 
-                <h2 className="text-xl font-display font-bold gradient-text mb-2">
-                  Velvet Space!
-                </h2>
-                
-                <p className="text-muted-foreground text-sm mb-4">
-                  {currentPlayer.nickname} landed on a velvet space
-                </p>
-
-                <p className="text-lg mb-6">
-                  {gameState.currentPrompt.text}
-                </p>
+                <div className="mb-6">
+                  <PromptCard
+                    text={gameState.currentPrompt.text}
+                    type={gameState.currentPrompt.type}
+                    intensity={gameState.currentPrompt.intensity}
+                  />
+                </div>
 
                 <VelvetButton
                   velvetVariant="neon"
-                  onClick={completePrompt}
                   className="w-full"
+                  onClick={completePrompt}
                   data-testid="button-complete-prompt"
                 >
-                  Complete Challenge
+                  Continue
                 </VelvetButton>
               </VelvetCard>
             </motion.div>
           </motion.div>
         )}
+      </AnimatePresence>
 
-        {gameState.gamePhase === "finished" && (
+      {/* Winner Modal */}
+      <AnimatePresence>
+        {showWinner && winnerPlayer && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
           >
             <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: "spring", duration: 0.5 }}
+              initial={{ scale: 0.5, opacity: 0, rotateY: -180 }}
+              animate={{ scale: 1, opacity: 1, rotateY: 0 }}
+              exit={{ scale: 0.5, opacity: 0, rotateY: 180 }}
+              transition={{ type: "spring", duration: 0.8 }}
+              className="w-full max-w-md"
             >
-              <VelvetCard tiltEnabled={false} className="max-w-md p-8 text-center">
-                <motion.div 
-                  className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center"
+              <VelvetCard tiltEnabled={false} className="p-8 text-center">
+                <motion.div
+                  className="w-24 h-24 mx-auto mb-6 rounded-full flex items-center justify-center"
                   style={{
                     background: "linear-gradient(135deg, #FFD700 0%, #FFA500 100%)",
-                    boxShadow: "0 0 40px rgba(255, 215, 0, 0.5)",
+                    boxShadow: "0 0 60px rgba(255, 215, 0, 0.8)",
                   }}
                   animate={{
-                    boxShadow: [
-                      "0 0 40px rgba(255, 215, 0, 0.5)",
-                      "0 0 60px rgba(255, 215, 0, 0.7)",
-                      "0 0 40px rgba(255, 215, 0, 0.5)",
-                    ],
+                    scale: [1, 1.1, 1],
+                    rotate: [0, 360],
                   }}
-                  transition={{ duration: 2, repeat: Infinity }}
+                  transition={{
+                    scale: { duration: 2, repeat: Infinity },
+                    rotate: { duration: 3, repeat: Infinity, ease: "linear" },
+                  }}
                 >
-                  <Trophy className="w-10 h-10 text-white" />
+                  <Trophy className="w-12 h-12 text-white" />
                 </motion.div>
 
-                <h2 className="text-2xl font-display font-bold gradient-text mb-2">
-                  Game Over!
-                </h2>
-                
-                <p className="text-lg mb-6">
-                  {gameState.players.find(p => p.id === gameState.winner)?.nickname || "Someone"} wins!
+                <h1 className="text-4xl font-display font-bold gradient-text mb-4">
+                  Victory!
+                </h1>
+
+                <p className="text-2xl font-semibold mb-2">{winnerPlayer.nickname}</p>
+                <p className="text-muted-foreground mb-8">
+                  Congratulations on winning Velvet Ludo!
                 </p>
 
                 <div className="flex gap-3">
-                  <Link href="/games/velvet-ludo" className="flex-1">
-                    <VelvetButton
-                      velvetVariant="ghost-glow"
-                      onClick={endGame}
-                      className="w-full"
-                      data-testid="button-back-home-ludo"
-                    >
-                      Back to Menu
-                    </VelvetButton>
-                  </Link>
                   <VelvetButton
-                    velvetVariant="neon"
-                    onClick={() => {
-                      endGame();
-                      setLocation("/games/velvet-ludo/local");
-                    }}
+                    velvetVariant="ghost-glow"
                     className="flex-1"
-                    data-testid="button-play-again-ludo"
+                    onClick={() => setLocation("/games/velvet-ludo/local")}
+                    data-testid="button-play-again"
                   >
                     Play Again
+                  </VelvetButton>
+                  <VelvetButton
+                    velvetVariant="neon"
+                    className="flex-1"
+                    onClick={handleEndGame}
+                    data-testid="button-end-game"
+                  >
+                    <Home className="w-4 h-4 mr-2" />
+                    Exit
                   </VelvetButton>
                 </div>
               </VelvetCard>

@@ -70,8 +70,41 @@ export function LudoBoard({ gameState, onRollDice, onMovePiece, currentPlayerId 
       >
         <svg viewBox="0 0 100 100" className="w-full h-full">
           {BOARD_POSITIONS.map((pos, idx) => {
-            const isVelvetSpace = VELVET_SPACE_POSITIONS.includes(idx);
+            const velvetSpace = gameState.velvetSpaces.find(v => v.position === idx);
             const isStartSpace = Object.values(LUDO_START_POSITIONS).includes(idx);
+            
+            const getTileColor = () => {
+              if (!velvetSpace) return "rgba(255, 255, 255, 0.05)";
+              switch (velvetSpace.type) {
+                case "heat": return "rgba(255, 0, 138, 0.4)";
+                case "bond": return "rgba(138, 0, 255, 0.3)";
+                case "freeze": return "rgba(0, 200, 255, 0.3)";
+                case "wild": return "rgba(255, 200, 0, 0.3)";
+                default: return "rgba(255, 0, 138, 0.3)";
+              }
+            };
+            
+            const getTileStroke = () => {
+              if (!velvetSpace) return "rgba(255, 255, 255, 0.1)";
+              switch (velvetSpace.type) {
+                case "heat": return "#FF008A";
+                case "bond": return "#8A00FF";
+                case "freeze": return "#00C8FF";
+                case "wild": return "#FFC800";
+                default: return "#FF008A";
+              }
+            };
+            
+            const getTileIcon = () => {
+              if (!velvetSpace) return null;
+              switch (velvetSpace.type) {
+                case "heat": return "🔥";
+                case "bond": return "💕";
+                case "freeze": return "❄️";
+                case "wild": return "✨";
+                default: return "💋";
+              }
+            };
             
             return (
               <g key={idx}>
@@ -81,20 +114,19 @@ export function LudoBoard({ gameState, onRollDice, onMovePiece, currentPlayerId 
                   width={6.5}
                   height={6.5}
                   rx={1}
-                  fill={isVelvetSpace ? "rgba(255, 0, 138, 0.3)" : "rgba(255, 255, 255, 0.05)"}
-                  stroke={isVelvetSpace ? "#FF008A" : "rgba(255, 255, 255, 0.1)"}
+                  fill={getTileColor()}
+                  stroke={getTileStroke()}
                   strokeWidth={0.3}
                   className="transition-colors"
                 />
-                {isVelvetSpace && (
+                {velvetSpace && (
                   <text
                     x={pos.x + 3.25}
-                    y={pos.y + 4}
+                    y={pos.y + 4.5}
                     textAnchor="middle"
-                    fill="#FF008A"
-                    fontSize={2}
+                    fontSize={2.5}
                   >
-                    V
+                    {getTileIcon()}
                   </text>
                 )}
               </g>

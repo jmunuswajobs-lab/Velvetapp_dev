@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import type { Server as HTTPServer } from "http";
 import { storage } from "./storage";
-import { games, packs, prompts, rooms, roomPlayers, users, type InsertRoom, type InsertRoomPlayer, type RoomSettings } from "@shared/schema";
+import { games, packs, prompts, rooms, roomPlayers, users, type InsertRoom, type InsertRoomPlayer, type RoomSettings, type VelvetSpaceType, type LudoColor, LUDO_START_POSITIONS } from "@shared/schema";
 import { eq, and, inArray, sql } from "drizzle-orm";
 import { WebSocketServer, WebSocket } from "ws";
 import { nanoid } from "nanoid";
@@ -258,20 +258,53 @@ export async function registerRoutes(
 
           case "ludo_move_piece": {
             const moveRoomId = message.roomId || currentRoomId;
-            const { pieceId, newPosition, landedOnVelvet, capturedPiece } = message;
+            const { pieceId, currentPosition, diceValue } = message;
 
             if (!moveRoomId) return;
 
-            log(`Ludo piece ${pieceId} moved to position ${newPosition}`);
+            // SERVER-SIDE VALIDATION: Calculate valid position
+            let newPosition: number;
+            if (currentPosition === -1) {
+              // Coming out of home - must roll 6
+              if (diceValue !== 6) {
+                ws.send(JSON.stringify({ type: "error", message: "Must roll 6 to start" }));
+                return;
+              }
+              // Get player's start position based on piece color
+              const pieceColor = pieceId.split('-')[0] as LudoColor;
+              newPosition = LUDO_START_POSITIONS[pieceColor];
+            } else {
+              newPosition = (currentPosition + diceValue) % 52;
+            }
 
-            // If landed on velvet space, get a random prompt
+            // Check for special tiles
+            const VELVET_POSITIONS = [6, 13, 20, 27, 34, 41, 48];
+            const velvetSpaceTypes: VelvetSpaceType[] = ["heat", "dare", "truth", "bond", "kiss", "freeze", "wild"];
+            const velvetIndex = VELVET_POSITIONS.indexOf(newPosition);
+            const isVelvetSpace = velvetIndex !== -1;
+            let tileType: VelvetSpaceType | null = null;
+            
+            if (isVelvetSpace) {
+              tileType = velvetSpaceTypes[velvetIndex % velvetSpaceTypes.length];
+            }
+
+            log(`Ludo piece ${pieceId} moved from ${currentPosition} to position ${newPosition}, tile: ${tileType || 'normal'}`);
+
+            // Get prompt for special tiles
             let prompt = null;
-            if (landedOnVelvet) {
+            if (isVelvetSpace && tileType) {
               const room = await storage.getRoom(moveRoomId);
               if (room) {
                 const prompts = await storage.getPromptsByGameId(room.gameId);
                 if (prompts.length > 0) {
-                  prompt = prompts[Math.floor(Math.random() * prompts.length)];
+                  // Filter by tile type if applicable
+                  const filtered = prompts.filter(p => {
+                    if (tileType === "heat") return p.intensity >= 4;
+                    if (tileType === "bond") return p.flags?.isCoupleExclusive;
+                    return true;
+                  });
+                  const pool = filtered.length > 0 ? filtered : prompts;
+                  prompt = pool[Math.floor(Math.random() * pool.length)];
                 }
               }
             }
@@ -280,8 +313,9 @@ export async function registerRoutes(
               type: "ludo_piece_moved",
               pieceId,
               newPosition,
-              landedOnVelvet,
-              capturedPiece,
+              isValidMove: true,
+              tileType,
+              landedOnVelvet: isVelvetSpace,
               prompt,
             });
             break;

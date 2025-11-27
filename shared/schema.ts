@@ -263,9 +263,11 @@ export interface LudoPlayer {
   hasFinished: boolean;
 }
 
+export type VelvetSpaceType = "dare" | "truth" | "kiss" | "massage" | "compliment" | "heat" | "bond" | "freeze" | "wild";
+
 export interface VelvetSpace {
   position: number;
-  type: "dare" | "truth" | "kiss" | "massage" | "compliment";
+  type: VelvetSpaceType;
   description: string;
 }
 

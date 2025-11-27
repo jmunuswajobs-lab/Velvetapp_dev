@@ -23,11 +23,23 @@ interface LudoStore {
 const LUDO_COLORS: LudoColor[] = ["red", "blue", "green", "yellow"];
 
 function createVelvetSpaces(): VelvetSpace[] {
-  const types: Array<"dare" | "truth" | "kiss" | "massage" | "compliment"> = ["dare", "truth", "kiss", "massage", "compliment"];
+  const types: Array<VelvetSpaceType> = ["heat", "dare", "truth", "bond", "kiss", "freeze", "wild"];
+  const descriptions: Record<VelvetSpaceType, string> = {
+    heat: "Heat Tile - Triggers spicy prompt",
+    bond: "Bond Tile - Cooperative action",
+    freeze: "Freeze Tile - Skip turn unless partner saves you",
+    wild: "Wild Tile - Random effect",
+    dare: "Dare Tile - Bold challenge",
+    truth: "Truth Tile - Reveal secrets",
+    kiss: "Kiss Tile - Romantic moment",
+    massage: "Massage Tile - Sensual touch",
+    compliment: "Compliment Tile - Sweet words",
+  };
+  
   return VELVET_SPACE_POSITIONS.map((pos, idx) => ({
     position: pos,
     type: types[idx % types.length],
-    description: `Velvet Space ${pos}`,
+    description: descriptions[types[idx % types.length]],
   }));
 }
 
@@ -161,9 +173,8 @@ export const useLudoStore = create<LudoStore>((set, get) => ({
         type: "ludo_move_piece",
         roomId,
         pieceId,
-        newPosition,
-        landedOnVelvet,
-        capturedPiece,
+        currentPosition: piece.position,
+        diceValue,
       }));
     } else {
       let nextPhase: "rolling" | "moving" | "prompt" | "finished" = "rolling";
