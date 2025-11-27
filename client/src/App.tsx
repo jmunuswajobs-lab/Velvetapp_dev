@@ -46,6 +46,7 @@ function Router() {
         {/* Online routes */}
         <Route path="/lobby/:roomId" component={Lobby} />
         <Route path="/lobby/:roomId/play" component={Gameplay} />
+        <Route path="/lobby/:roomId/summary" component={Summary} />
         <Route path="/join/:joinCode" component={OnlineSetup} />
 
         {/* Tools & Rules */}
