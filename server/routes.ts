@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import type { Server as HTTPServer } from "http";
 import { storage } from "./storage";
-import { games, packs, prompts, rooms, roomPlayers, users, type InsertRoom, type InsertRoomPlayer, type RoomSettings, type VelvetSpaceType, type LudoColor, LUDO_START_POSITIONS } from "@shared/schema";
+import { games, packs, prompts, rooms, roomPlayers, users, type InsertRoom, type InsertRoomPlayer, type RoomSettings, type VelvetSpaceType, type LudoColor, LUDO_START_INDICES } from "@shared/schema";
 import { eq, and, inArray, sql } from "drizzle-orm";
 import { WebSocketServer, WebSocket } from "ws";
 import { nanoid } from "nanoid";
@@ -295,7 +295,7 @@ export async function registerRoutes(
               }
               // Get player's start position based on piece color
               const pieceColor = pieceId.split('-')[0] as LudoColor;
-              newPosition = LUDO_START_POSITIONS[pieceColor];
+              newPosition = LUDO_START_INDICES[pieceColor];
             } else {
               newPosition = (currentPosition + diceValue) % 52;
             }
