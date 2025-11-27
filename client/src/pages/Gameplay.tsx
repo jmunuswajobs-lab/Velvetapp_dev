@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useLocation, Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  ArrowLeft, ArrowRight, SkipForward, X, 
+  ArrowLeft, SkipForward, X, 
   Flame, Users, RotateCcw
 } from "lucide-react";
 import { EmberParticles } from "@/components/velvet/EmberParticles";
@@ -11,19 +11,38 @@ import { PromptCard } from "@/components/velvet/VelvetCard";
 import { HeatMeter } from "@/components/velvet/HeatMeter";
 import { PlayerAvatar } from "@/components/velvet/PlayerAvatar";
 import { FadeIn, SlideIn } from "@/components/velvet/PageTransition";
-import { useLocalGame } from "@/lib/gameState";
+import { useLocalGame, useOnlineRoom } from "@/lib/gameState";
 import type { Prompt } from "@shared/schema";
 
 export default function Gameplay() {
-  const { slug } = useParams<{ slug: string }>();
+  const { slug, roomId } = useParams<{ slug?: string; roomId?: string }>();
+  const isOnlineMode = !!roomId;
   const [, setLocation] = useLocation();
-  const { gameState, nextPrompt, previousPrompt, skipPrompt, updateHeatLevel, advanceTurn, endGame, resetGame } = useLocalGame();
+
+  // Use different state management based on mode
+  const localGame = useLocalGame();
+  const onlineGame = useOnlineRoom();
+
+  const gameState = isOnlineMode ? null : localGame.gameState; // For now, online mode uses WebSocket
+  const nextPrompt = isOnlineMode ? () => {} : localGame.nextPrompt;
+  const skipPrompt = isOnlineMode ? () => {} : localGame.skipPrompt;
+  const updateHeatLevel = isOnlineMode ? () => {} : localGame.updateHeatLevel;
+  const advanceTurn = isOnlineMode ? () => {} : localGame.advanceTurn;
+  const endGame = isOnlineMode ? () => ({ roundsPlayed: 0, promptsByType: {}, playerPicks: {}, skippedCount: 0 }) : localGame.endGame;
+  const resetGame = isOnlineMode ? () => {} : localGame.resetGame;
+
 
   const [currentPrompt, setCurrentPrompt] = useState<Prompt | null>(null);
   const [isCardFlipped, setIsCardFlipped] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
 
   useEffect(() => {
+    if (isOnlineMode) {
+      // TODO: Implement online game logic once WebSocket is ready
+      // For now, if online mode is detected, redirect to a placeholder loading state
+      return;
+    }
+
     if (!gameState) {
       setLocation(`/games/${slug}/local`);
       return;
@@ -32,7 +51,7 @@ export default function Gameplay() {
     if (gameState.prompts.length > 0) {
       setCurrentPrompt(gameState.prompts[gameState.currentPromptIndex]);
     }
-  }, [gameState, slug, setLocation]);
+  }, [gameState, slug, setLocation, isOnlineMode]);
 
   const handleNext = useCallback(() => {
     setIsCardFlipped(false);
@@ -45,10 +64,10 @@ export default function Gameplay() {
         updateHeatLevel(prompt.intensity * 2);
       } else {
         // No more prompts, go to summary
-        setLocation(`/games/${slug}/summary`);
+        setLocation(isOnlineMode ? `/games/${roomId}/summary` : `/games/${slug}/summary`);
       }
     }, 200);
-  }, [nextPrompt, advanceTurn, updateHeatLevel, setLocation, slug]);
+  }, [nextPrompt, advanceTurn, updateHeatLevel, setLocation, slug, isOnlineMode, roomId]);
 
   const handlePrevious = useCallback(() => {
     setIsCardFlipped(false);
@@ -69,10 +88,10 @@ export default function Gameplay() {
         setCurrentPrompt(prompt);
         advanceTurn();
       } else {
-        setLocation(`/games/${slug}/summary`);
+        setLocation(isOnlineMode ? `/games/${roomId}/summary` : `/games/${slug}/summary`);
       }
     }, 200);
-  }, [skipPrompt, gameState, advanceTurn, setLocation, slug]);
+  }, [skipPrompt, gameState, advanceTurn, setLocation, slug, isOnlineMode, roomId]);
 
   const handleExit = useCallback(() => {
     endGame();
@@ -81,17 +100,40 @@ export default function Gameplay() {
   }, [endGame, resetGame, setLocation]);
 
   const handleEndGame = useCallback(() => {
-    setLocation(`/games/${slug}/summary`);
-  }, [setLocation, slug]);
+    setLocation(isOnlineMode ? `/games/${roomId}/summary` : `/games/${slug}/summary`);
+  }, [setLocation, slug, isOnlineMode, roomId]);
 
-  if (!gameState || !currentPrompt) {
+  if (isOnlineMode) {
+    // Online mode - show placeholder for now
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <motion.div
-          className="w-16 h-16 rounded-full border-4 border-neon-magenta/30 border-t-neon-magenta"
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-        />
+        <div className="text-center">
+          <motion.div
+            className="w-16 h-16 rounded-full border-4 border-neon-magenta/30 border-t-neon-magenta mx-auto mb-4"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          />
+          <h1 className="text-2xl font-display font-bold mb-2">Loading Game...</h1>
+          <p className="text-muted-foreground">Setting up your online game</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!gameState) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Flame className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+          <h1 className="text-2xl font-display font-bold mb-2">No Active Game</h1>
+          <p className="text-muted-foreground mb-6">Start a new game to begin playing</p>
+          <Link href="/">
+            <VelvetButton velvetVariant="neon">
+              <Home className="w-4 h-4 mr-2" />
+              Go Home
+            </VelvetButton>
+          </Link>
+        </div>
       </div>
     );
   }

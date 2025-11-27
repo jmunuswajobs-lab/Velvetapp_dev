@@ -35,25 +35,26 @@ function Router() {
       <Switch location={location} key={location}>
         {/* Home */}
         <Route path="/" component={Home} />
-        
+
         {/* Game routes */}
         <Route path="/games/:slug" component={GameDetail} />
         <Route path="/games/:slug/local" component={LocalSetup} />
         <Route path="/games/:slug/online" component={OnlineSetup} />
         <Route path="/games/:slug/play" component={Gameplay} />
         <Route path="/games/:slug/summary" component={Summary} />
-        
+
         {/* Online routes */}
         <Route path="/lobby/:roomId" component={Lobby} />
+        <Route path="/lobby/:roomId/play" component={Gameplay} />
         <Route path="/join/:joinCode" component={OnlineSetup} />
-        
+
         {/* Tools & Rules */}
         <Route path="/tools" component={Tools} />
         <Route path="/rules" component={Rules} />
-        
+
         {/* Admin */}
         <Route path="/admin" component={Admin} />
-        
+
         {/* Fallback */}
         <Route component={NotFound} />
       </Switch>

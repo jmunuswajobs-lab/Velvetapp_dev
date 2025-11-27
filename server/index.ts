@@ -60,7 +60,11 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  await registerRoutes(httpServer, app);
+  // Set up Express routes and WebSocket server
+  const server = await registerRoutes(httpServer, app);
+
+  console.log(`[websocket] WebSocket server ready at ws://${process.env.HOST || "localhost"}:${process.env.PORT || 5000}/ws`);
+
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

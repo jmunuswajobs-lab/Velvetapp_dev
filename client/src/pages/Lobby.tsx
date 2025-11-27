@@ -65,7 +65,7 @@ export default function Lobby() {
           break;
         case "game_started":
           setGameStarted(true);
-          setLocation(`/games/play/${roomId}`);
+          setLocation(`/lobby/${roomId}/play`);
           break;
         case "error":
           toast({
