@@ -1,7 +1,5 @@
 import { create } from "zustand";
-import type { LudoGameState, LudoPlayer, LudoPiece, LudoColor, VelvetSpace, Prompt, GameMode } from "@shared/schema";
-import { LUDO_BOARD_SIZE, LUDO_START_POSITIONS, VELVET_SPACE_POSITIONS, LUDO_HOME_ENTRY } from "@shared/schema";
-import { nanoid } from "nanoid";
+import type { LudoGameState, LudoPlayer, GameMode, Prompt } from "@shared/schema";
 
 interface LudoStore {
   gameState: LudoGameState | null;
@@ -10,58 +8,14 @@ interface LudoStore {
   playerId: string | null;
   ws: WebSocket | null;
 
-  initLocalGame: (players: { nickname: string; avatarColor: string }[], gameMode?: GameMode) => void;
-  initOnlineGame: (roomId: string, playerId: string) => void;
+  initLocalGame: (players: { nickname: string; avatarColor: string }[], gameMode: GameMode) => void;
+  initOnlineGame: (roomId: string, playerId: string, ws: WebSocket) => void;
   rollDice: () => void;
-  movePiece: (pieceId: string) => void;
-  completePrompt: () => void;
+  selectMove: (tokenId: string, moveIndex: number) => void;
+  dismissSpecialEffect: () => void;
+  rescuePlayer: (playerId: string) => void;
   endGame: () => void;
-  setWs: (ws: WebSocket) => void;
-  handleWsMessage: (message: any) => void;
-}
-
-const LUDO_COLORS: LudoColor[] = ["red", "blue", "green", "yellow"];
-
-type VelvetSpaceType = "heat" | "dare" | "truth" | "bond" | "kiss" | "freeze" | "wild";
-
-function createVelvetSpaces(): VelvetSpace[] {
-  const types: VelvetSpaceType[] = ["heat", "dare", "truth", "bond", "kiss", "freeze", "wild"];
-  const descriptions: Record<VelvetSpaceType, string> = {
-    heat: "Heat Tile - Triggers spicy prompt",
-    bond: "Bond Tile - Cooperative action",
-    freeze: "Freeze Tile - Skip turn unless partner saves you",
-    wild: "Wild Tile - Random effect",
-    dare: "Dare Tile - Bold challenge",
-    truth: "Truth Tile - Reveal secrets",
-    kiss: "Kiss Tile - Romantic moment",
-    massage: "Massage Tile - Sensual touch",
-    compliment: "Compliment Tile - Sweet words",
-  };
-
-  return VELVET_SPACE_POSITIONS.map((pos, idx) => ({
-    position: pos,
-    type: types[idx % types.length],
-    description: descriptions[types[idx % types.length]],
-  }));
-}
-
-function createPlayer(nickname: string, avatarColor: string, color: LudoColor, index: number): LudoPlayer {
-  const pieces: LudoPiece[] = Array.from({ length: 4 }, (_, i) => ({
-    id: `${color}-${i}`,
-    color,
-    position: -1,
-    player: `player-${index}`,
-    isHome: false,
-  }));
-
-  return {
-    id: `player-${index}`,
-    nickname,
-    avatarColor,
-    color,
-    pieces,
-    hasFinished: false,
-  };
+  setGameState: (state: LudoGameState) => void;
 }
 
 export const useLudoStore = create<LudoStore>((set, get) => ({
@@ -71,239 +25,119 @@ export const useLudoStore = create<LudoStore>((set, get) => ({
   playerId: null,
   ws: null,
 
-  initLocalGame: (players, gameMode?: GameMode) => {
-    const ludoPlayers: LudoPlayer[] = players.map((p, idx) => 
-      createPlayer(p.nickname, p.avatarColor, LUDO_COLORS[idx], idx)
-    );
+  initLocalGame: async (players, gameMode) => {
+    try {
+      const response = await fetch("/api/ludo/init-local", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ players, gameMode }),
+      });
 
-    set({
-      gameState: {
-        boardSize: LUDO_BOARD_SIZE,
-        players: ludoPlayers,
-        currentTurn: 0,
-        diceValue: null,
-        canRollAgain: false,
-        velvetSpaces: createVelvetSpaces(),
-        currentPrompt: null,
-        winner: null,
-        gamePhase: "rolling",
-        turnCount: 0,
-        gameMode: gameMode || "couple",
-      },
-      isOnline: false,
-    });
+      if (!response.ok) {
+        throw new Error("Failed to initialize local game");
+      }
+
+      const state: LudoGameState = await response.json();
+      set({
+        gameState: {
+          ...state,
+          frozenPlayers: new Set(state.frozenPlayers),
+        },
+        isOnline: false,
+        roomId: state.roomId,
+      });
+    } catch (error) {
+      console.error("Error initializing local game:", error);
+    }
   },
 
-  initOnlineGame: (roomId, playerId) => {
-    set({ roomId, playerId, isOnline: true });
+  initOnlineGame: (roomId, playerId, ws) => {
+    set({ roomId, playerId, isOnline: true, ws });
+
+    // Request initial state
+    ws.send(JSON.stringify({ type: "ludo:get-state", roomId }));
   },
 
   rollDice: () => {
-    const { gameState, isOnline, ws, roomId, playerId } = get();
-    if (!gameState || gameState.gamePhase !== "rolling") return;
+    const { isOnline, ws, roomId, playerId, gameState } = get();
 
-    if (isOnline && ws) {
-      ws.send(JSON.stringify({ type: "ludo_roll_dice", roomId, playerId }));
-    } else {
-      const diceValue = Math.floor(Math.random() * 6) + 1;
-      const canRollAgain = diceValue === 6;
+    if (!gameState || gameState.winnerId) return;
 
-      set({
-        gameState: {
-          ...gameState,
-          diceValue,
-          canRollAgain,
-          gamePhase: "moving",
-        },
-      });
+    if (isOnline && ws && roomId) {
+      ws.send(JSON.stringify({ type: "ludo:roll", roomId, playerId }));
+    } else if (!isOnline && roomId) {
+      fetch("/api/ludo/roll", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ roomId }),
+      })
+        .then(res => res.json())
+        .then(state => set({ gameState: { ...state, frozenPlayers: new Set(state.frozenPlayers) } }));
     }
   },
 
-  movePiece: (pieceId) => {
-    const { gameState, isOnline, ws, roomId } = get();
-    if (!gameState || gameState.gamePhase !== "moving" || !gameState.diceValue) return;
+  selectMove: (tokenId, moveIndex) => {
+    const { isOnline, ws, roomId, playerId, gameState } = get();
 
-    const currentPlayer = gameState.players[gameState.currentTurn];
-    const piece = currentPlayer.pieces.find(p => p.id === pieceId);
-    if (!piece) return;
+    if (!gameState || !gameState.canMove) return;
 
-    const diceValue = gameState.diceValue;
-    let newPosition: number;
-    let canMove = false;
-
-    if (piece.position === -1) {
-      if (diceValue === 6) {
-        newPosition = LUDO_START_POSITIONS[currentPlayer.color];
-        canMove = true;
-      } else {
-        return;
-      }
-    } else {
-      newPosition = piece.position + diceValue;
-      if (newPosition >= LUDO_BOARD_SIZE) {
-        return;
-      }
-      canMove = true;
-    }
-
-    if (!canMove) return;
-
-    const landedOnVelvet = VELVET_SPACE_POSITIONS.includes(newPosition);
-    const velvetSpace = gameState.velvetSpaces.find(v => v.position === newPosition);
-
-    let capturedPiece: string | null = null;
-    const updatedPlayers = gameState.players.map((player, pIdx) => {
-      if (pIdx === gameState.currentTurn) {
-        return {
-          ...player,
-          pieces: player.pieces.map(p => 
-            p.id === pieceId ? { ...p, position: newPosition } : p
-          ),
-        };
-      } else {
-        const captured = player.pieces.find(p => p.position === newPosition && p.position !== -1);
-        if (captured) {
-          capturedPiece = captured.id;
-          return {
-            ...player,
-            pieces: player.pieces.map(p =>
-              p.id === captured.id ? { ...p, position: -1 } : p
-            ),
-          };
-        }
-        return player;
-      }
-    });
-
-    if (isOnline && ws) {
-      ws.send(JSON.stringify({
-        type: "ludo_move_piece",
-        roomId,
-        pieceId,
-        currentPosition: piece.position,
-        diceValue,
-      }));
-    } else {
-      let nextPhase: "rolling" | "moving" | "prompt" | "finished" = "rolling";
-      let nextTurn = gameState.currentTurn;
-      let shouldRollAgain = gameState.canRollAgain;
-      let prompt = null;
-
-      if (landedOnVelvet && velvetSpace) {
-        // Generate a prompt for this velvet space
-        const prompts = [
-          { text: `${velvetSpace.description} - Share a romantic memory together!`, type: "truth" as const, intensity: 2, flags: {} },
-          { text: `${velvetSpace.description} - Give your partner a sweet kiss!`, type: "dare" as const, intensity: 3, flags: {} },
-          { text: `${velvetSpace.description} - Whisper something loving to your partner.`, type: "dare" as const, intensity: 2, flags: {} },
-        ];
-        prompt = prompts[Math.floor(Math.random() * prompts.length)];
-        nextPhase = "prompt";
-      } else if (!gameState.canRollAgain) {
-        nextTurn = (gameState.currentTurn + 1) % gameState.players.length;
-        shouldRollAgain = false;
-      } else {
-        shouldRollAgain = false;
-      }
-
-      set({
-        gameState: {
-          ...gameState,
-          players: updatedPlayers,
-          diceValue: null,
-          canRollAgain: shouldRollAgain,
-          gamePhase: nextPhase,
-          currentTurn: nextTurn,
-          currentPrompt: prompt,
-          turnCount: gameState.turnCount + 1,
-        },
-      });
+    if (isOnline && ws && roomId) {
+      ws.send(JSON.stringify({ type: "ludo:move", roomId, playerId, tokenId, moveIndex }));
+    } else if (!isOnline && roomId) {
+      fetch("/api/ludo/move", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ roomId, tokenId, moveIndex }),
+      })
+        .then(res => res.json())
+        .then(state => set({ gameState: { ...state, frozenPlayers: new Set(state.frozenPlayers) } }));
     }
   },
 
-  completePrompt: () => {
-    const { gameState, isOnline, ws, roomId } = get();
-    if (!gameState) return;
+  dismissSpecialEffect: () => {
+    const { isOnline, ws, roomId, playerId, gameState } = get();
 
-    if (isOnline && ws) {
-      ws.send(JSON.stringify({ type: "ludo_prompt_complete", roomId }));
-    } else {
-      const nextTurn = gameState.canRollAgain 
-        ? gameState.currentTurn 
-        : (gameState.currentTurn + 1) % gameState.players.length;
+    if (!gameState || !gameState.specialEffect) return;
 
-      set({
-        gameState: {
-          ...gameState,
-          gamePhase: "rolling",
-          currentPrompt: null,
-          currentTurn: nextTurn,
-        },
-      });
+    if (isOnline && ws && roomId) {
+      ws.send(JSON.stringify({ type: "ludo:dismiss-effect", roomId, playerId }));
+    } else if (!isOnline && roomId) {
+      fetch("/api/ludo/dismiss-effect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ roomId }),
+      })
+        .then(res => res.json())
+        .then(state => set({ gameState: { ...state, frozenPlayers: new Set(state.frozenPlayers) } }));
+    }
+  },
+
+  rescuePlayer: (rescuedPlayerId) => {
+    const { isOnline, ws, roomId, playerId } = get();
+
+    if (isOnline && ws && roomId) {
+      ws.send(JSON.stringify({ type: "ludo:rescue", roomId, playerId, rescuedPlayerId }));
+    } else if (!isOnline && roomId) {
+      fetch("/api/ludo/rescue", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ roomId, rescuedPlayerId }),
+      })
+        .then(res => res.json())
+        .then(state => set({ gameState: { ...state, frozenPlayers: new Set(state.frozenPlayers) } }));
     }
   },
 
   endGame: () => {
-    set({ gameState: null, isOnline: false, roomId: null, playerId: null });
+    set({ gameState: null, isOnline: false, roomId: null, playerId: null, ws: null });
   },
 
-  setWs: (ws) => set({ ws }),
-
-  handleWsMessage: (message) => {
-    const { gameState } = get();
-    if (!gameState) return;
-
-    switch (message.type) {
-      case "ludo_dice_result":
-        set({
-          gameState: {
-            ...gameState,
-            diceValue: message.diceValue,
-            canRollAgain: message.canRollAgain,
-            gamePhase: "moving",
-          },
-        });
-        break;
-
-      case "ludo_piece_moved":
-        set({
-          gameState: {
-            ...gameState,
-            gamePhase: message.landedOnVelvet ? "prompt" : "rolling",
-            currentPrompt: message.prompt || null,
-          },
-        });
-        break;
-
-      case "ludo_turn_changed":
-        set({
-          gameState: {
-            ...gameState,
-            currentTurn: message.currentTurn,
-            gamePhase: "rolling",
-            diceValue: null,
-          },
-        });
-        break;
-
-      case "ludo_prompt_done":
-        set({
-          gameState: {
-            ...gameState,
-            gamePhase: "rolling",
-            currentPrompt: null,
-          },
-        });
-        break;
-
-      case "ludo_winner":
-        set({
-          gameState: {
-            ...gameState,
-            winner: message.winnerId,
-            gamePhase: "finished",
-          },
-        });
-        break;
-    }
+  setGameState: (state) => {
+    set({ 
+      gameState: {
+        ...state,
+        frozenPlayers: new Set(state.frozenPlayers),
+      }
+    });
   },
 }));

@@ -1,3 +1,4 @@
+
 import { sql } from "drizzle-orm";
 import { pgTable, text, varchar, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
@@ -242,64 +243,99 @@ export const loginSchema = z.object({
   password: z.string().min(6),
 });
 
-// ===== VELVET LUDO TYPES =====
+export type GameMode = "couple" | "friends";
+
+// ===== VELVET LUDO - COMPLETE REBUILD =====
 
 export type LudoColor = "red" | "blue" | "green" | "yellow";
 
-export interface LudoPiece {
+export type LudoTileId = string; // Format: "main_0" | "safe_red_0" | "home" | "finished"
+
+export type TileType = "normal" | "start" | "safe" | "heat" | "bond" | "freeze";
+
+export interface LudoTile {
+  id: LudoTileId;
+  type: TileType;
+  color?: LudoColor; // For start tiles and safe zones
+  pathIndex: number; // Position in the overall path
+}
+
+export interface LudoToken {
   id: string;
+  playerId: string;
   color: LudoColor;
-  position: number; // -1 = home base, 0-51 = board, 52-57 = home stretch
-  player: string;
-  isHome: boolean;
+  position: LudoTileId; // "home", "finished", or actual tile ID
+  pathProgress: number; // 0-56 (52 main + 5 safe + finish)
 }
 
 export interface LudoPlayer {
   id: string;
   nickname: string;
-  avatarColor: string;
   color: LudoColor;
-  pieces: LudoPiece[];
-  hasFinished: boolean;
+  avatarColor: string;
+  tokens: LudoToken[];
+  finishedTokens: number; // Count of tokens that reached home
 }
 
-export type VelvetSpaceType = "dare" | "truth" | "kiss" | "massage" | "compliment" | "heat" | "bond" | "freeze" | "wild";
+export interface ValidMove {
+  tokenId: string;
+  targetTileId: LudoTileId;
+  targetProgress: number;
+  willCapture: boolean;
+  capturedTokenId?: string;
+}
 
-export interface VelvetSpace {
-  position: number;
-  type: VelvetSpaceType;
-  description: string;
+export interface LudoSpecialEffect {
+  type: "heat" | "bond" | "freeze";
+  tileId: LudoTileId;
+  playerId: string;
+  prompt?: Prompt;
 }
 
 export interface LudoGameState {
-  boardSize: number;
+  roomId: string;
   players: LudoPlayer[];
-  currentTurn: number;
+  currentPlayerIndex: number;
   diceValue: number | null;
-  canRollAgain: boolean;
-  velvetSpaces: VelvetSpace[];
-  currentPrompt: Prompt | null;
-  winner: string | null;
-  gamePhase: "rolling" | "moving" | "prompt" | "finished";
-  turnCount: number;
-  gameMode?: "couple" | "friends";
+  canRoll: boolean;
+  canMove: boolean;
+  validMoves: ValidMove[];
+  specialEffect: LudoSpecialEffect | null;
+  winnerId: string | null;
+  turnNumber: number;
+  gameMode: GameMode;
+  frozenPlayers: Set<string>; // Player IDs who are frozen
 }
 
-export const LUDO_BOARD_SIZE = 52;
-export const LUDO_HOME_STRETCH_SIZE = 6;
+// Board layout constants
+export const LUDO_MAIN_PATH_LENGTH = 52;
+export const LUDO_SAFE_PATH_LENGTH = 5;
+export const LUDO_TOKENS_PER_PLAYER = 4;
 
-export const VELVET_SPACE_POSITIONS = [6, 13, 20, 27, 34, 41, 48]; // Every 7th space
-
-export const LUDO_START_POSITIONS: Record<LudoColor, number> = {
+// Starting positions on main path for each color
+export const LUDO_START_INDICES: Record<LudoColor, number> = {
   red: 0,
   blue: 13,
   green: 26,
   yellow: 39,
 };
 
-export const LUDO_HOME_ENTRY: Record<LudoColor, number> = {
-  red: 51,
-  blue: 12,
-  green: 25,
-  yellow: 38,
+// Where each color enters their safe zone
+export const LUDO_SAFE_ENTRY_INDICES: Record<LudoColor, number> = {
+  red: 50,
+  blue: 11,
+  green: 24,
+  yellow: 37,
 };
+
+// Special tiles on main path (heat, bond, freeze)
+export const LUDO_SPECIAL_TILES: { index: number; type: TileType }[] = [
+  { index: 5, type: "heat" },
+  { index: 12, type: "bond" },
+  { index: 18, type: "freeze" },
+  { index: 25, type: "heat" },
+  { index: 31, type: "bond" },
+  { index: 38, type: "freeze" },
+  { index: 44, type: "heat" },
+  { index: 51, type: "bond" },
+];
