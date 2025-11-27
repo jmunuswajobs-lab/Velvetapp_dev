@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
-import { Flame, Users, Globe, Heart, Zap, MessageCircle, HelpCircle, Scale } from "lucide-react";
-import { VelvetCard } from "./VelvetCard";
-import { SpiceIndicator, SpicyBadge } from "./SpicyBadge";
+import { Link } from "wouter";
+import { Play, Users, Flame, Heart, Zap, MessageSquare, Globe, Scale } from "lucide-react";
 import type { Game } from "@shared/schema";
+import { VelvetButton } from "./VelvetButton";
+import { SpicyBadge } from "./SpicyBadge";
 
 interface GameCardProps {
   game: Game;
@@ -15,7 +16,7 @@ const gameIcons: Record<string, typeof Flame> = {
   globe: Globe,
   heart: Heart,
   zap: Zap,
-  message: MessageCircle,
+  message: MessageSquare,
   question: HelpCircle,
   scale: Scale,
 };
@@ -60,7 +61,7 @@ export function GameCard({ game, onClick }: GameCardProps) {
           >
             <Icon className="w-7 h-7 text-neon-magenta" />
           </motion.div>
-          
+
           <div className="flex-1 min-w-0">
             <h3 className="font-display font-semibold text-lg text-white truncate">
               {game.name}

@@ -38,14 +38,15 @@ export default function LocalSetup() {
     packs: [],
   });
 
-  const { data: game, isLoading: gameLoading } = useQuery<Game>({
+  const { data: game, isLoading: gameLoading, error: gameError } = useQuery<Game>({
     queryKey: [`/api/games/${slug}`],
     enabled: !!slug,
   });
 
-  const { data: prompts } = useQuery<Prompt[]>({
+  const { data: prompts, isLoading: promptsLoading } = useQuery<Prompt[]>({
     queryKey: [`/api/prompts?gameId=${game?.id}&intensity=${settings.intensity}`],
     enabled: !!game?.id,
+    staleTime: 0, // Always fetch fresh prompts
   });
 
   const addPlayer = () => {
@@ -75,7 +76,8 @@ export default function LocalSetup() {
 
   const isValid = players.every((p) => p.nickname.trim().length > 0) && 
                   players.length >= 2 &&
-                  prompts && prompts.length > 0;
+                  prompts && prompts.length > 0 &&
+                  !promptsLoading;
 
   const startGame = () => {
     if (!isValid || !game || !prompts) return;
@@ -93,7 +95,7 @@ export default function LocalSetup() {
     }, 100);
   };
 
-  if (gameLoading) {
+  if (gameLoading || !game) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <motion.div
@@ -101,6 +103,20 @@ export default function LocalSetup() {
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
         />
+      </div>
+    );
+  }
+
+  if (gameError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-display font-bold mb-2">Game Not Found</h1>
+          <p className="text-muted-foreground mb-6">The game you're looking for doesn't exist.</p>
+          <Link href="/">
+            <VelvetButton velvetVariant="neon">Go Home</VelvetButton>
+          </Link>
+        </div>
       </div>
     );
   }
@@ -310,7 +326,11 @@ export default function LocalSetup() {
             <p className="text-center text-sm text-muted-foreground mt-2">
               {players.some((p) => !p.nickname.trim()) 
                 ? "Enter nicknames for all players"
-                : "Loading prompts..."}
+                : promptsLoading
+                ? "Loading prompts..."
+                : !prompts || prompts.length === 0
+                ? "No prompts available for this game"
+                : "Loading..."}
             </p>
           )}
         </SlideIn>

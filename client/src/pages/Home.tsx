@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { Link, navigate } from "wouter";
 import { 
   Flame, Users, Heart, Dices, BookOpen, Settings,
   Filter, Search, ChevronRight
@@ -123,7 +123,7 @@ export default function Home() {
                 Premium party games for couples and groups. Truth or Dare, Never Have I Ever, 
                 and more intimate challenges await.
               </p>
-              
+
               <div className="flex flex-wrap gap-3">
                 <Link href="/games/truth-or-dare/local">
                   <VelvetButton velvetVariant="velvet" data-testid="button-quick-play-local">

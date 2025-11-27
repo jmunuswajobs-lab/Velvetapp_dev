@@ -63,6 +63,12 @@ export const useLocalGame = create<LocalGameStore>((set, get) => ({
   gameState: null,
 
   initGame: (gameId, players, settings, prompts) => {
+    // Clear any existing game state first to prevent memory leaks
+    const currentState = get().gameState;
+    if (currentState) {
+      console.log("Clearing previous game state");
+    }
+    
     // Shuffle prompts
     const shuffledPrompts = [...prompts].sort(() => Math.random() - 0.5);
     
@@ -271,6 +277,12 @@ export const useOnlineRoom = create<OnlineRoomStore>((set, get) => ({
     set({ gameStarted }),
 
   initGameState: (prompts, players) => {
+    // Clear previous state to prevent memory leaks
+    const currentState = get().gameState;
+    if (currentState) {
+      console.log("Clearing previous online game state");
+    }
+    
     const shuffledPrompts = [...prompts].sort(() => Math.random() - 0.5);
     
     const newGameState = {

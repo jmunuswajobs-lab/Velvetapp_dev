@@ -29,20 +29,33 @@ export default function Gameplay() {
   // Redirect if no game state
   useEffect(() => {
     if (!currentGameState) {
+      console.log("No game state found, redirecting to home");
       setLocation("/");
     }
   }, [currentGameState, setLocation]);
 
+  // Early return with loading state
   if (!currentGameState) {
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <motion.div
+            className="w-16 h-16 rounded-full border-4 border-neon-magenta/30 border-t-neon-magenta mx-auto mb-4"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          />
+          <h1 className="text-2xl font-display font-bold mb-2">Loading Game...</h1>
+        </div>
+      </div>
+    );
   }
 
-  const currentRound = currentGameState?.round || 1;
-  const currentHeatLevel = currentGameState?.heatLevel || 0;
-  const currentPrompts = currentGameState?.prompts || [];
-  const currentPlayerIndex = currentGameState?.turnIndex || 0;
-  const currentPlayer = currentGameState?.players[currentPlayerIndex];
-  const promptsRemaining = currentGameState ? currentGameState.prompts.length - currentGameState.currentPromptIndex - 1 : 0;
+  const currentRound = currentGameState.round;
+  const currentHeatLevel = currentGameState.heatLevel;
+  const currentPrompts = currentGameState.prompts;
+  const currentPlayerIndex = currentGameState.turnIndex;
+  const currentPlayer = currentGameState.players[currentPlayerIndex];
+  const promptsRemaining = currentGameState.prompts.length - currentGameState.currentPromptIndex - 1;
 
   // Actions that differ between modes
   const nextPromptAction = isOnlineMode ? onlineGame.nextPrompt : localGame.nextPrompt;
@@ -62,18 +75,31 @@ export default function Gameplay() {
     if (isOnlineMode) {
       // Handle online game state updates here
       if (onlineGame.gameState && onlineGame.gameState.prompts.length > 0) {
-        setCurrentPrompt(onlineGame.gameState.prompts[onlineGame.gameState.currentPromptIndex]);
+        const prompt = onlineGame.gameState.prompts[onlineGame.gameState.currentPromptIndex];
+        if (prompt) {
+          setCurrentPrompt(prompt);
+        }
       }
     } else {
       // Local game logic
       if (!localGame.gameState) {
+        console.log("No local game state, redirecting to setup");
         setLocation(`/games/${slug}/local`);
         return;
       }
       if (localGame.gameState.prompts.length > 0) {
-        setCurrentPrompt(localGame.gameState.prompts[localGame.gameState.currentPromptIndex]);
+        const prompt = localGame.gameState.prompts[localGame.gameState.currentPromptIndex];
+        if (prompt) {
+          setCurrentPrompt(prompt);
+        }
       }
     }
+    
+    // Cleanup function
+    return () => {
+      // Reset card flip state when component unmounts
+      setIsCardFlipped(false);
+    };
   }, [onlineGame.gameState, localGame.gameState, slug, setLocation, isOnlineMode]);
 
   const handleNext = useCallback(() => {
