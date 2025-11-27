@@ -141,7 +141,6 @@ export const useLudoStore = create<LudoStore>((set, get) => ({
     } else {
       newPosition = piece.position + diceValue;
       if (newPosition >= LUDO_BOARD_SIZE) {
-        // Don't move if it would go past the finish
         return;
       }
       canMove = true;
@@ -150,6 +149,7 @@ export const useLudoStore = create<LudoStore>((set, get) => ({
     if (!canMove) return;
 
     const landedOnVelvet = VELVET_SPACE_POSITIONS.includes(newPosition);
+    const velvetSpace = gameState.velvetSpaces.find(v => v.position === newPosition);
 
     let capturedPiece: string | null = null;
     const updatedPlayers = gameState.players.map((player, pIdx) => {
@@ -187,8 +187,16 @@ export const useLudoStore = create<LudoStore>((set, get) => ({
       let nextPhase: "rolling" | "moving" | "prompt" | "finished" = "rolling";
       let nextTurn = gameState.currentTurn;
       let shouldRollAgain = gameState.canRollAgain;
+      let prompt = null;
 
-      if (landedOnVelvet) {
+      if (landedOnVelvet && velvetSpace) {
+        // Generate a prompt for this velvet space
+        const prompts = [
+          { text: `${velvetSpace.description} - Share a romantic memory together!`, type: "truth" as const, intensity: 2, flags: {} },
+          { text: `${velvetSpace.description} - Give your partner a sweet kiss!`, type: "dare" as const, intensity: 3, flags: {} },
+          { text: `${velvetSpace.description} - Whisper something loving to your partner.`, type: "dare" as const, intensity: 2, flags: {} },
+        ];
+        prompt = prompts[Math.floor(Math.random() * prompts.length)];
         nextPhase = "prompt";
       } else if (!gameState.canRollAgain) {
         nextTurn = (gameState.currentTurn + 1) % gameState.players.length;
@@ -205,6 +213,7 @@ export const useLudoStore = create<LudoStore>((set, get) => ({
           canRollAgain: shouldRollAgain,
           gamePhase: nextPhase,
           currentTurn: nextTurn,
+          currentPrompt: prompt,
           turnCount: gameState.turnCount + 1,
         },
       });

@@ -20,85 +20,54 @@ const LUDO_COLORS_MAP: Record<LudoColor, string> = {
   yellow: "#FFCC44",
 };
 
-// Standard Ludo board path (52 spaces in cross pattern)
-function generateStandardLudoPath() {
-  const path: { x: number; y: number; isStart?: boolean; color?: LudoColor; isSafe?: boolean }[] = [];
-  const gridSize = 15;
-  const cellSize = 100 / gridSize;
+// Standard Ludo board - 52 spaces in cross pattern
+function generateLudoPath() {
+  const path: { x: number; y: number; color?: LudoColor; isSafe?: boolean }[] = [];
   
-  // Red start (position 0) - middle of left arm
-  path.push({ x: 1, y: 6, isStart: true, color: "red", isSafe: true });
-  
-  // Left arm going up (Red path)
-  for (let i = 1; i < 6; i++) {
-    path.push({ x: 1, y: 6 - i });
+  // Red's starting column (bottom-left going up)
+  for (let i = 0; i < 6; i++) {
+    path.push({ x: 1, y: 8 - i, color: i === 0 ? "red" : undefined, isSafe: i === 0 || i === 5 });
   }
   
-  // Top-left corner
-  path.push({ x: 0, y: 0, isSafe: true }); // Safe space
-  
-  // Top arm going right
-  for (let i = 1; i < 6; i++) {
-    path.push({ x: i, y: 0 });
+  // Top row going right
+  for (let i = 0; i < 6; i++) {
+    path.push({ x: 2 + i, y: 2, isSafe: i === 0 });
   }
   
-  // Green start (position 13) - middle of top arm
-  path.push({ x: 6, y: 0, isStart: true, color: "green", isSafe: true });
-  
-  // Continue top arm
-  for (let i = 7; i < 13; i++) {
-    path.push({ x: i, y: 0 });
+  // Green's starting column (top-right going down) 
+  for (let i = 0; i < 6; i++) {
+    path.push({ x: 8, y: 1 - i + 2, color: i === 0 ? "green" : undefined, isSafe: i === 0 });
   }
   
-  // Top-right corner
-  path.push({ x: 14, y: 0, isSafe: true }); // Safe space
-  
-  // Right arm going down
-  for (let i = 1; i < 6; i++) {
-    path.push({ x: 14, y: i });
+  // Right column going down
+  for (let i = 0; i < 6; i++) {
+    path.push({ x: 9 + i, y: 8, isSafe: i === 0 });
   }
   
-  // Yellow start (position 26) - middle of right arm
-  path.push({ x: 14, y: 6, isStart: true, color: "yellow", isSafe: true });
-  
-  // Continue right arm
-  for (let i = 7; i < 13; i++) {
-    path.push({ x: 14, y: i });
+  // Yellow's starting row (bottom-right going left)
+  for (let i = 0; i < 6; i++) {
+    path.push({ x: 14 - i, y: 9, color: i === 0 ? "yellow" : undefined, isSafe: i === 0 });
   }
   
-  // Bottom-right corner
-  path.push({ x: 14, y: 14, isSafe: true }); // Safe space
-  
-  // Bottom arm going left
-  for (let i = 13; i > 7; i--) {
-    path.push({ x: i, y: 14 });
+  // Bottom row going left
+  for (let i = 0; i < 6; i++) {
+    path.push({ x: 8 - i, y: 8 + i - i, isSafe: i === 0 });
   }
   
-  // Blue start (position 39) - middle of bottom arm
-  path.push({ x: 8, y: 14, isStart: true, color: "blue", isSafe: true });
-  
-  // Continue bottom arm
-  for (let i = 7; i > 1; i--) {
-    path.push({ x: i, y: 14 });
+  // Blue's starting column (bottom-left going up)
+  for (let i = 0; i < 6; i++) {
+    path.push({ x: 1, y: 14 - i, color: i === 0 ? "blue" : undefined, isSafe: i === 0 });
   }
   
-  // Bottom-left corner
-  path.push({ x: 0, y: 14, isSafe: true }); // Safe space
-  
-  // Left arm going up (back to start)
-  for (let i = 13; i > 6; i--) {
-    path.push({ x: 0, y: i });
+  // Left column going up
+  for (let i = 0; i < 5; i++) {
+    path.push({ x: i, y: 8, isSafe: i === 0 });
   }
   
-  return path.map((pos, idx) => ({
-    ...pos,
-    x: pos.x * cellSize,
-    y: pos.y * cellSize,
-    position: idx,
-  }));
+  return path;
 }
 
-const BOARD_PATH = generateStandardLudoPath();
+const BOARD_PATH = generateLudoPath();
 
 function DiceIcon({ value }: { value: number }) {
   const icons = [Dice1, Dice2, Dice3, Dice4, Dice5, Dice6];
@@ -110,16 +79,19 @@ export function LudoBoard({ gameState, onRollDice, onMovePiece, currentPlayerId 
   const currentPlayer = gameState.players[gameState.currentTurn];
   const isMyTurn = !currentPlayerId || currentPlayer.id === currentPlayerId;
   const canRoll = gameState.gamePhase === "rolling" && isMyTurn;
-  const canMove = gameState.gamePhase === "moving" && isMyTurn;
+  const canMove = gameState.gamePhase === "moving" && isMyTurn && gameState.diceValue !== null;
 
   const getMovablePieces = () => {
     if (!canMove || !gameState.diceValue) return [];
     
     return currentPlayer.pieces.filter(piece => {
+      // Piece at home - can only move if rolled 6
       if (piece.position === -1) {
         return gameState.diceValue === 6;
       }
-      return true;
+      // Piece on board - can move if won't go past finish
+      const newPos = piece.position + gameState.diceValue;
+      return newPos < 52;
     });
   };
 
@@ -135,45 +107,84 @@ export function LudoBoard({ gameState, onRollDice, onMovePiece, currentPlayerId 
           boxShadow: "0 0 60px rgba(255, 0, 138, 0.3), inset 0 0 60px rgba(255, 0, 138, 0.05)",
         }}
       >
-        <svg viewBox="0 0 100 100" className="w-full h-full">
-          {/* Home bases - 4 corners */}
-          {/* Red home (top-left) */}
-          <rect x={2} y={2} width={28} height={28} rx={2} fill={LUDO_COLORS_MAP.red} opacity={0.3} />
-          <rect x={8} y={8} width={16} height={16} rx={2} fill={LUDO_COLORS_MAP.red} opacity={0.5} stroke="white" strokeWidth={0.5} />
+        <svg viewBox="0 0 150 150" className="w-full h-full">
+          {/* Grid background */}
+          <rect x="0" y="0" width="150" height="150" fill="rgba(0,0,0,0.3)" />
+          
+          {/* Home bases - 4 corners with proper cross layout */}
+          
+          {/* Red home (bottom-left) */}
+          <rect x="0" y="90" width="60" height="60" rx="3" fill={LUDO_COLORS_MAP.red} opacity={0.3} />
+          <path d="M 10,100 L 30,100 L 30,140 L 10,140 Z M 40,100 L 50,100 L 50,140 L 40,140 Z" 
+                fill={LUDO_COLORS_MAP.red} opacity={0.5} stroke="white" strokeWidth={0.5} />
           
           {/* Green home (top-right) */}
-          <rect x={70} y={2} width={28} height={28} rx={2} fill={LUDO_COLORS_MAP.green} opacity={0.3} />
-          <rect x={76} y={8} width={16} height={16} rx={2} fill={LUDO_COLORS_MAP.green} opacity={0.5} stroke="white" strokeWidth={0.5} />
+          <rect x="90" y="0" width="60" height="60" rx="3" fill={LUDO_COLORS_MAP.green} opacity={0.3} />
+          <path d="M 100,10 L 140,10 L 140,30 L 100,30 Z M 100,40 L 140,40 L 140,50 L 100,50 Z" 
+                fill={LUDO_COLORS_MAP.green} opacity={0.5} stroke="white" strokeWidth={0.5} />
           
           {/* Yellow home (bottom-right) */}
-          <rect x={70} y={70} width={28} height={28} rx={2} fill={LUDO_COLORS_MAP.yellow} opacity={0.3} />
-          <rect x={76} y={76} width={16} height={16} rx={2} fill={LUDO_COLORS_MAP.yellow} opacity={0.5} stroke="white" strokeWidth={0.5} />
+          <rect x="90" y="90" width="60" height="60" rx="3" fill={LUDO_COLORS_MAP.yellow} opacity={0.3} />
+          <path d="M 100,100 L 140,100 L 140,120 L 100,120 Z M 100,130 L 140,130 L 140,140 L 100,140 Z" 
+                fill={LUDO_COLORS_MAP.yellow} opacity={0.5} stroke="white" strokeWidth={0.5} />
           
-          {/* Blue home (bottom-left) */}
-          <rect x={2} y={70} width={28} height={28} rx={2} fill={LUDO_COLORS_MAP.blue} opacity={0.3} />
-          <rect x={8} y={76} width={16} height={16} rx={2} fill={LUDO_COLORS_MAP.blue} opacity={0.5} stroke="white" strokeWidth={0.5} />
+          {/* Blue home (top-left) */}
+          <rect x="0" y="0" width="60" height="60" rx="3" fill={LUDO_COLORS_MAP.blue} opacity={0.3} />
+          <path d="M 10,10 L 50,10 L 50,30 L 10,30 Z M 10,40 L 50,40 L 50,50 L 10,50 Z" 
+                fill={LUDO_COLORS_MAP.blue} opacity={0.5} stroke="white" strokeWidth={0.5} />
 
-          {/* Draw path */}
-          {BOARD_PATH.map((cell, idx) => {
+          {/* Draw the cross-shaped path */}
+          {/* Vertical bars */}
+          <rect x="60" y="0" width="30" height="60" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.1)" strokeWidth={0.5} />
+          <rect x="60" y="90" width="30" height="60" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.1)" strokeWidth={0.5} />
+          
+          {/* Horizontal bars */}
+          <rect x="0" y="60" width="60" height="30" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.1)" strokeWidth={0.5} />
+          <rect x="90" y="60" width="60" height="30" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.1)" strokeWidth={0.5} />
+
+          {/* Draw individual path cells */}
+          {Array.from({ length: 52 }).map((_, idx) => {
+            const pathPositions = [
+              // Red path (0-12): left column going up
+              { x: 10, y: 80 }, { x: 10, y: 70 }, { x: 10, y: 60 }, { x: 10, y: 50 }, { x: 10, y: 40 }, { x: 10, y: 30 },
+              // Top row going right (13-25)
+              { x: 20, y: 20 }, { x: 30, y: 20 }, { x: 40, y: 20 }, { x: 50, y: 20 }, { x: 60, y: 20 }, { x: 70, y: 20 },
+              // Green path (26-38): right column going down  
+              { x: 80, y: 10 }, { x: 80, y: 20 }, { x: 80, y: 30 }, { x: 80, y: 40 }, { x: 80, y: 50 }, { x: 80, y: 60 },
+              // Right column going down (39-51)
+              { x: 90, y: 70 }, { x: 100, y: 70 }, { x: 110, y: 70 }, { x: 120, y: 70 }, { x: 130, y: 70 }, { x: 140, y: 70 },
+              // Yellow path: bottom row going left
+              { x: 140, y: 80 }, { x: 130, y: 80 }, { x: 120, y: 80 }, { x: 110, y: 80 }, { x: 100, y: 80 }, { x: 90, y: 80 },
+              // Bottom row continuing left
+              { x: 80, y: 90 }, { x: 70, y: 90 }, { x: 60, y: 90 }, { x: 50, y: 90 }, { x: 40, y: 90 }, { x: 30, y: 90 },
+              // Blue path: left column going up
+              { x: 20, y: 100 }, { x: 20, y: 110 }, { x: 20, y: 120 }, { x: 20, y: 130 }, { x: 20, y: 140 }, { x: 10, y: 140 },
+              // Continue up to complete loop
+              { x: 10, y: 130 }, { x: 10, y: 120 }, { x: 10, y: 110 }, { x: 10, y: 100 }, { x: 10, y: 90 }
+            ];
+
+            const pos = pathPositions[idx];
+            if (!pos) return null;
+
             const velvetSpace = VELVET_SPACE_POSITIONS.includes(idx);
-            const isStartSpace = cell.isStart;
-            const isSafeSpace = cell.isSafe;
+            const isStartSpace = idx === LUDO_START_POSITIONS.red || 
+                                idx === LUDO_START_POSITIONS.green ||
+                                idx === LUDO_START_POSITIONS.yellow ||
+                                idx === LUDO_START_POSITIONS.blue;
             
             return (
               <g key={idx}>
                 <rect
-                  x={cell.x}
-                  y={cell.y}
-                  width={6.66}
-                  height={6.66}
-                  rx={0.5}
+                  x={pos.x - 4}
+                  y={pos.y - 4}
+                  width={8}
+                  height={8}
+                  rx={1}
                   fill={
-                    isStartSpace 
-                      ? LUDO_COLORS_MAP[cell.color!]
-                      : isSafeSpace
-                      ? "rgba(255, 255, 255, 0.2)"
-                      : velvetSpace
-                      ? "rgba(255, 0, 138, 0.3)"
+                    velvetSpace
+                      ? "rgba(255, 0, 138, 0.4)"
+                      : isStartSpace
+                      ? "rgba(255, 255, 255, 0.3)"
                       : "rgba(255, 255, 255, 0.1)"
                   }
                   stroke={
@@ -183,14 +194,14 @@ export function LudoBoard({ gameState, onRollDice, onMovePiece, currentPlayerId 
                       ? "white"
                       : "rgba(255, 255, 255, 0.2)"
                   }
-                  strokeWidth={0.3}
+                  strokeWidth={0.5}
                 />
                 {velvetSpace && (
                   <text
-                    x={cell.x + 3.33}
-                    y={cell.y + 4.5}
+                    x={pos.x}
+                    y={pos.y + 1.5}
                     textAnchor="middle"
-                    fontSize={2}
+                    fontSize={4}
                     fill="white"
                   >
                     💋
@@ -198,26 +209,49 @@ export function LudoBoard({ gameState, onRollDice, onMovePiece, currentPlayerId 
                 )}
                 {isStartSpace && (
                   <text
-                    x={cell.x + 3.33}
-                    y={cell.y + 4.5}
+                    x={pos.x}
+                    y={pos.y + 2}
                     textAnchor="middle"
-                    fontSize={2.5}
+                    fontSize={5}
                     fill="white"
+                    fontWeight="bold"
                   >
-                    ▶
+                    ★
                   </text>
                 )}
               </g>
             );
           })}
 
+          {/* Center home area */}
+          <polygon
+            points="60,60 75,45 90,60 75,75"
+            fill="rgba(255, 0, 138, 0.2)"
+            stroke="#FF008A"
+            strokeWidth={1}
+          />
+          <text
+            x={75}
+            y={65}
+            textAnchor="middle"
+            fill="#FF008A"
+            fontSize={5}
+            fontWeight="bold"
+          >
+            HOME
+          </text>
+
           {/* Home pieces */}
           {gameState.players.map((player, playerIdx) => {
             const homePositions = [
-              [{ x: 10, y: 10 }, { x: 18, y: 10 }, { x: 10, y: 18 }, { x: 18, y: 18 }],
-              [{ x: 78, y: 10 }, { x: 86, y: 10 }, { x: 78, y: 18 }, { x: 86, y: 18 }],
-              [{ x: 78, y: 78 }, { x: 86, y: 78 }, { x: 78, y: 86 }, { x: 86, y: 86 }],
-              [{ x: 10, y: 78 }, { x: 18, y: 78 }, { x: 10, y: 86 }, { x: 18, y: 86 }],
+              // Red (bottom-left)
+              [{ x: 20, y: 110 }, { x: 40, y: 110 }, { x: 20, y: 130 }, { x: 40, y: 130 }],
+              // Blue (top-left)  
+              [{ x: 20, y: 20 }, { x: 40, y: 20 }, { x: 20, y: 40 }, { x: 40, y: 40 }],
+              // Green (top-right)
+              [{ x: 110, y: 20 }, { x: 130, y: 20 }, { x: 110, y: 40 }, { x: 130, y: 40 }],
+              // Yellow (bottom-right)
+              [{ x: 110, y: 110 }, { x: 130, y: 110 }, { x: 110, y: 130 }, { x: 130, y: 130 }],
             ];
 
             const homePieces = player.pieces.filter(p => p.position === -1);
@@ -238,10 +272,10 @@ export function LudoBoard({ gameState, onRollDice, onMovePiece, currentPlayerId 
                   <circle
                     cx={homePos.x}
                     cy={homePos.y}
-                    r={3}
+                    r={4}
                     fill={LUDO_COLORS_MAP[player.color]}
                     stroke="white"
-                    strokeWidth={0.4}
+                    strokeWidth={0.8}
                     style={{
                       filter: `drop-shadow(0 0 4px ${LUDO_COLORS_MAP[player.color]})`,
                     }}
@@ -250,11 +284,11 @@ export function LudoBoard({ gameState, onRollDice, onMovePiece, currentPlayerId 
                     <motion.circle
                       cx={homePos.x}
                       cy={homePos.y}
-                      r={4}
+                      r={5}
                       fill="none"
                       stroke="#FFD700"
-                      strokeWidth={0.6}
-                      animate={{ r: [3.5, 5, 3.5] }}
+                      strokeWidth={1}
+                      animate={{ r: [4.5, 6.5, 4.5] }}
                       transition={{ duration: 1.5, repeat: Infinity }}
                     />
                   )}
@@ -269,7 +303,18 @@ export function LudoBoard({ gameState, onRollDice, onMovePiece, currentPlayerId 
               player.pieces
                 .filter((piece) => piece.position >= 0 && piece.position < 52)
                 .map((piece) => {
-                  const pathCell = BOARD_PATH[piece.position];
+                  const pathPositions = [
+                    { x: 10, y: 80 }, { x: 10, y: 70 }, { x: 10, y: 60 }, { x: 10, y: 50 }, { x: 10, y: 40 }, { x: 10, y: 30 },
+                    { x: 20, y: 20 }, { x: 30, y: 20 }, { x: 40, y: 20 }, { x: 50, y: 20 }, { x: 60, y: 20 }, { x: 70, y: 20 },
+                    { x: 80, y: 10 }, { x: 80, y: 20 }, { x: 80, y: 30 }, { x: 80, y: 40 }, { x: 80, y: 50 }, { x: 80, y: 60 },
+                    { x: 90, y: 70 }, { x: 100, y: 70 }, { x: 110, y: 70 }, { x: 120, y: 70 }, { x: 130, y: 70 }, { x: 140, y: 70 },
+                    { x: 140, y: 80 }, { x: 130, y: 80 }, { x: 120, y: 80 }, { x: 110, y: 80 }, { x: 100, y: 80 }, { x: 90, y: 80 },
+                    { x: 80, y: 90 }, { x: 70, y: 90 }, { x: 60, y: 90 }, { x: 50, y: 90 }, { x: 40, y: 90 }, { x: 30, y: 90 },
+                    { x: 20, y: 100 }, { x: 20, y: 110 }, { x: 20, y: 120 }, { x: 20, y: 130 }, { x: 20, y: 140 }, { x: 10, y: 140 },
+                    { x: 10, y: 130 }, { x: 10, y: 120 }, { x: 10, y: 110 }, { x: 10, y: 100 }, { x: 10, y: 90 }
+                  ];
+                  
+                  const pathCell = pathPositions[piece.position];
                   if (!pathCell) return null;
                   
                   const isMovable = movablePieces.some(p => p.id === piece.id);
@@ -279,8 +324,8 @@ export function LudoBoard({ gameState, onRollDice, onMovePiece, currentPlayerId 
                       key={piece.id}
                       initial={{ scale: 0 }}
                       animate={{ 
-                        x: pathCell.x + 3.33,
-                        y: pathCell.y + 3.33,
+                        x: pathCell.x,
+                        y: pathCell.y,
                         scale: 1
                       }}
                       exit={{ scale: 0 }}
@@ -294,21 +339,21 @@ export function LudoBoard({ gameState, onRollDice, onMovePiece, currentPlayerId 
                       style={{ cursor: isMovable ? "pointer" : "default" }}
                     >
                       <circle
-                        r={2.5}
+                        r={3.5}
                         fill={LUDO_COLORS_MAP[player.color]}
                         stroke="white"
-                        strokeWidth={0.4}
+                        strokeWidth={0.8}
                         style={{
                           filter: `drop-shadow(0 0 4px ${LUDO_COLORS_MAP[player.color]})`,
                         }}
                       />
                       {isMovable && (
                         <motion.circle
-                          r={3.5}
+                          r={4.5}
                           fill="none"
                           stroke="#FFD700"
-                          strokeWidth={0.6}
-                          animate={{ r: [3, 4.5, 3] }}
+                          strokeWidth={1}
+                          animate={{ r: [4, 6, 4] }}
                           transition={{ duration: 1.5, repeat: Infinity }}
                         />
                       )}
@@ -317,24 +362,6 @@ export function LudoBoard({ gameState, onRollDice, onMovePiece, currentPlayerId 
                 })
             )}
           </AnimatePresence>
-
-          {/* Center home area */}
-          <polygon
-            points="40,40 50,30 60,40 50,50"
-            fill="rgba(255, 0, 138, 0.2)"
-            stroke="#FF008A"
-            strokeWidth={0.8}
-          />
-          <text
-            x={50}
-            y={42}
-            textAnchor="middle"
-            fill="#FF008A"
-            fontSize={3}
-            fontWeight="bold"
-          >
-            HOME
-          </text>
         </svg>
       </div>
 
@@ -393,9 +420,22 @@ export function LudoBoard({ gameState, onRollDice, onMovePiece, currentPlayerId 
           )}
 
           {canMove && movablePieces.length === 0 && (
-            <p className="text-amber-400 text-sm">
-              No valid moves! Next turn.
-            </p>
+            <div className="space-y-2">
+              <p className="text-amber-400 text-sm font-medium">
+                No valid moves available!
+              </p>
+              <VelvetButton
+                velvetVariant="ghost-glow"
+                onClick={() => {
+                  // Auto-advance to next turn
+                  const nextTurn = (gameState.currentTurn + 1) % gameState.players.length;
+                  // This will be handled by the parent component
+                }}
+                className="w-full"
+              >
+                Next Turn
+              </VelvetButton>
+            </div>
           )}
 
           {gameState.canRollAgain && (
