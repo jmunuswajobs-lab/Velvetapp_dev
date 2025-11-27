@@ -273,41 +273,41 @@ export const useOnlineRoom = create<OnlineRoomStore>((set, get) => ({
   initGameState: (prompts, players) => {
     const shuffledPrompts = [...prompts].sort(() => Math.random() - 0.5);
     
-    set({
-      gameState: {
-        gameId: get().roomId || "",
-        players: players.map(p => ({
-          nickname: p.nickname,
-          avatarColor: p.avatarColor,
-        })),
-        settings: {
-          intensity: 3,
-          allowNSFW: false,
-          allowMovement: true,
-          coupleMode: false,
-          packs: [],
-        },
-        currentPromptIndex: 0,
-        prompts: shuffledPrompts,
-        usedPromptIds: [],
-        round: 1,
-        turnIndex: 0,
-        heatLevel: 0,
-        stats: {
-          roundsPlayed: 0,
-          promptsByType: {
-            truth: 0,
-            dare: 0,
-            challenge: 0,
-            confession: 0,
-            vote: 0,
-            rule: 0,
-          },
-          playerPicks: {},
-          skippedCount: 0,
-        },
+    const newGameState = {
+      gameId: get().roomId || "",
+      players: players.map(p => ({
+        nickname: p.nickname,
+        avatarColor: p.avatarColor,
+      })),
+      settings: {
+        intensity: 3,
+        allowNSFW: false,
+        allowMovement: true,
+        coupleMode: false,
+        packs: [],
       },
-    });
+      currentPromptIndex: 0,
+      prompts: shuffledPrompts,
+      usedPromptIds: [],
+      round: 1,
+      turnIndex: 0,
+      heatLevel: 0,
+      stats: {
+        roundsPlayed: 0,
+        promptsByType: {
+          truth: 0,
+          dare: 0,
+          challenge: 0,
+          confession: 0,
+          vote: 0,
+          rule: 0,
+        },
+        playerPicks: {},
+        skippedCount: 0,
+      },
+    };
+    
+    set({ gameState: newGameState, gameStarted: true });
   },
 
   nextPrompt: () => {

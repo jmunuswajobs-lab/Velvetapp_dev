@@ -15,36 +15,34 @@ export default function Lobby() {
   const { roomId } = useParams<{ roomId: string }>();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { 
+  const {
     joinCode, isHost, isConnected, players, gameStarted,
-    setConnected, updatePlayers, setGameStarted, initGameState
+    setConnected, updatePlayers, setGameStarted, initGameState, room // Added room to destructure
   } = useOnlineRoom();
 
   // Add a ref for the WebSocket instance
-  const websocketRef = useRef<WebSocket | null>(null);
+  const websocketRef = useRef<WebSocket | null>(null); // Renamed ws to websocketRef for clarity
 
   // Retrieve playerId from localStorage or generate one if it doesn't exist
   const storedPlayerId = localStorage.getItem(`playerId_${roomId}`);
+  const playerId = storedPlayerId || crypto.randomUUID(); // Use playerId directly
   if (!storedPlayerId) {
-    const newPlayerId = crypto.randomUUID();
-    localStorage.setItem(`playerId_${roomId}`, newPlayerId);
-    // Note: This might cause a re-render if used directly in state, but it's fine here for initial setup.
+    localStorage.setItem(`playerId_${roomId}`, playerId);
   }
 
   const [copied, setCopied] = useState(false);
-  // Removed ws state, using websocketRef instead
 
   // WebSocket connection
   useEffect(() => {
-    // Ensure roomId and a playerId are available before attempting to connect
-    const playerId = localStorage.getItem(`playerId_${roomId}`);
+    // Ensure roomId and playerId are available before attempting to connect
     if (!roomId || !playerId) {
       console.error("Missing roomId or playerId for WebSocket connection", { roomId, playerId });
       return;
     }
 
-    const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const host = window.location.host;
+    const wsUrl = `${protocol}//${host}/ws`;
 
     console.log('Connecting to WebSocket:', wsUrl, 'with playerId:', playerId);
     const socket = new WebSocket(wsUrl);
@@ -65,9 +63,10 @@ export default function Lobby() {
           break;
         case "game_started":
           console.log("Game started, initializing with prompts:", data.prompts);
-          initGameState(data.prompts, players);
+          initGameState(data.prompts, data.players); // Pass players to initGameState
           setGameStarted(true);
-          setLocation(`/lobby/${roomId}/play`);
+          // Navigate to the game play route. Use a default slug if not provided.
+          setLocation(`/games/${data.gameSlug || 'truth-or-dare'}/play`);
           break;
         case "error":
           toast({
@@ -103,7 +102,7 @@ export default function Lobby() {
         socket.close();
       }
     };
-  }, [roomId, setConnected, updatePlayers, setGameStarted, setLocation, toast]); // Dependencies for useEffect
+  }, [roomId, playerId, setConnected, updatePlayers, setGameStarted, setLocation, toast, initGameState]); // Added playerId to dependencies
 
   const copyCode = useCallback(() => {
     if (!joinCode) return;
@@ -121,19 +120,20 @@ export default function Lobby() {
 
   const toggleReady = useCallback(() => {
     const currentWs = websocketRef.current;
-    const playerId = localStorage.getItem(`playerId_${roomId}`); // Re-fetch playerId for safety
+    // Re-fetch playerId from localStorage to ensure it's up-to-date
+    const currentPlayerId = localStorage.getItem(`playerId_${roomId}`);
 
-    if (currentWs?.readyState === WebSocket.OPEN && roomId && playerId) {
-      console.log("Toggling ready state for player:", playerId, "in room:", roomId);
-      currentWs.send(JSON.stringify({ 
+    if (currentWs?.readyState === WebSocket.OPEN && roomId && currentPlayerId) {
+      console.log("Toggling ready state for player:", currentPlayerId, "in room:", roomId);
+      currentWs.send(JSON.stringify({
         type: "toggle_ready",
         roomId,
-        playerId
+        playerId: currentPlayerId
       }));
     } else {
       console.error("Cannot toggle ready - WebSocket not ready or missing data", {
         wsState: currentWs?.readyState,
-        playerId: playerId,
+        playerId: currentPlayerId,
         roomId
       });
       toast({
@@ -148,10 +148,17 @@ export default function Lobby() {
     const currentWs = websocketRef.current;
     if (currentWs?.readyState === WebSocket.OPEN && roomId) {
       console.log("Starting game in room:", roomId);
-      currentWs.send(JSON.stringify({ 
+      currentWs.send(JSON.stringify({
         type: "start_game",
-        roomId
+        roomId,
+        playerId: localStorage.getItem(`playerId_${roomId}`), // Ensure playerId is included
       }));
+
+      // Navigate after a short delay to ensure state is updated
+      setTimeout(() => {
+        // Use room.game.slug from the state if available, otherwise default
+        setLocation(`/games/${room?.game?.slug || 'truth-or-dare'}/play`);
+      }, 500);
     } else {
       console.error("Cannot start game - WebSocket not ready or missing roomId", {
         wsState: currentWs?.readyState,
@@ -163,7 +170,8 @@ export default function Lobby() {
         variant: "destructive",
       });
     }
-  }, [roomId, toast]); // Dependencies
+  }, [roomId, toast, setLocation, room?.game?.slug]); // Added setLocation and room?.game?.slug to dependencies
+
 
   const allReady = players.length >= 2 && players.every((p) => p.isReady || p.isHost);
   const readyCount = players.filter((p) => p.isReady || p.isHost).length;
@@ -172,7 +180,7 @@ export default function Lobby() {
   return (
     <div className="min-h-screen relative">
       {/* Background */}
-      <div 
+      <div
         className="fixed inset-0 -z-20"
         style={{
           background: `
@@ -188,7 +196,7 @@ export default function Lobby() {
       <header className="glass border-b border-plum-deep/30">
         <div className="max-w-2xl mx-auto px-4 py-4">
           <Link href="/">
-            <button 
+            <button
               className="flex items-center gap-2 text-muted-foreground hover:text-white transition-colors"
               data-testid="button-back"
             >

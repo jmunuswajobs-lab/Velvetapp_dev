@@ -33,15 +33,15 @@ export async function registerRoutes(
   app: Express
 ): Promise<HTTPServer> {
 
-  // WebSocket server
+  // Set up WebSocket server
   const wss = new WebSocketServer({ 
     server: httpServer, 
-    path: "/ws",
-    verifyClient: (info) => {
-      log(`New WebSocket connection attempt from ${info.req.socket.remoteAddress}`);
-      return true;
-    }
+    path: "/ws"
   });
+
+  const protocol = process.env.NODE_ENV === 'production' ? 'wss' : 'ws';
+  const host = process.env.REPL_SLUG ? `${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co` : 'localhost:5000';
+  log(`WebSocket server ready at ${protocol}://${host}/ws`);
 
   wss.on("connection", (ws, req) => {
     log(`WebSocket connected from ${req.socket.remoteAddress}`);
@@ -103,7 +103,7 @@ export async function registerRoutes(
           case "toggle_ready": {
             const toggleRoomId = message.roomId || currentRoomId;
             const togglePlayerId = message.playerId || currentPlayerId;
-            
+
             if (!toggleRoomId || !togglePlayerId) {
               log(`Cannot toggle ready: roomId=${toggleRoomId}, playerId=${togglePlayerId}`);
               ws.send(JSON.stringify({
@@ -136,7 +136,7 @@ export async function registerRoutes(
 
             // Broadcast the updated player list
             const updatedPlayers = await storage.getRoomPlayers(toggleRoomId);
-            
+
             broadcastToRoom(toggleRoomId, {
               type: "room_update",
               players: updatedPlayers.map((p) => ({

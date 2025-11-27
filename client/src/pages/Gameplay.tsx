@@ -25,6 +25,18 @@ export default function Gameplay() {
 
   // Determine which game state to use based on mode
   const currentGameState = isOnlineMode ? onlineGame.gameState : localGame.gameState;
+  
+  // Redirect if no game state
+  useEffect(() => {
+    if (!currentGameState) {
+      setLocation("/");
+    }
+  }, [currentGameState, setLocation]);
+
+  if (!currentGameState) {
+    return null;
+  }
+
   const currentRound = currentGameState?.round || 1;
   const currentHeatLevel = currentGameState?.heatLevel || 0;
   const currentPrompts = currentGameState?.prompts || [];
@@ -150,7 +162,7 @@ export default function Gameplay() {
   }
 
   const activePlayer = currentGameState.players[currentPlayerIndex];
-  
+
 
   return (
     <div className="min-h-screen relative flex flex-col">

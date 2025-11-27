@@ -86,7 +86,11 @@ export default function LocalSetup() {
     }));
 
     initGame(game.id, validPlayers, settings, prompts);
-    setLocation(`/games/${slug}/play`);
+    
+    // Use setTimeout to ensure state is updated before navigation
+    setTimeout(() => {
+      setLocation(`/games/${slug}/play`);
+    }, 100);
   };
 
   if (gameLoading) {

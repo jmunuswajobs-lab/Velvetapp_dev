@@ -33,10 +33,19 @@ export function GameCard({ game, onClick }: GameCardProps) {
     <VelvetCard
       onClick={onClick}
       glowColor={getGlowColor()}
-      className="h-full"
+      className="h-full relative overflow-hidden"
       testId={`game-card-${game.slug}`}
     >
-      <div className="p-5 flex flex-col h-full">
+      {/* Decorative gradient background */}
+      <div 
+        className="absolute inset-0 opacity-10"
+        style={{
+          background: game.isCoupleFocused 
+            ? "radial-gradient(circle at 20% 30%, rgba(255, 46, 109, 0.4) 0%, transparent 60%), radial-gradient(circle at 80% 70%, rgba(176, 15, 47, 0.3) 0%, transparent 60%)"
+            : "radial-gradient(circle at 30% 20%, rgba(255, 0, 138, 0.4) 0%, transparent 60%), radial-gradient(circle at 70% 80%, rgba(59, 15, 92, 0.3) 0%, transparent 60%)"
+        }}
+      />
+      <div className="p-5 flex flex-col h-full relative z-10">
         {/* Icon and title */}
         <div className="flex items-start gap-4 mb-4">
           <motion.div
