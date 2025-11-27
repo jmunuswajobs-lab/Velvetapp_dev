@@ -33,7 +33,9 @@ export default function Lobby() {
 
     socket.onopen = () => {
       setConnected(true);
-      socket.send(JSON.stringify({ type: "join_room", roomId }));
+      // Get playerId from localStorage if it exists (set during room creation/join)
+      const playerId = localStorage.getItem(`playerId_${roomId}`);
+      socket.send(JSON.stringify({ type: "join_room", roomId, playerId }));
     };
 
     socket.onmessage = (event) => {
@@ -227,18 +229,24 @@ export default function Lobby() {
               </div>
             ) : (
               <StaggerChildren className="space-y-3">
-                {players.map((player) => (
-                  <motion.div key={player.id} variants={staggerChildVariants}>
-                    <PlayerListItem
-                      nickname={player.nickname}
-                      color={player.avatarColor}
-                      isHost={player.isHost}
-                      isReady={player.isReady}
-                      showReadyButton={!player.isHost && player.id === players.find((p) => !p.isHost)?.id}
-                      onReadyToggle={toggleReady}
-                    />
-                  </motion.div>
-                ))}
+                {players.map((player) => {
+                  // Get current playerId from localStorage
+                  const currentPlayerId = localStorage.getItem(`playerId_${roomId}`);
+                  const isCurrentPlayer = player.id === currentPlayerId;
+                  
+                  return (
+                    <motion.div key={player.id} variants={staggerChildVariants}>
+                      <PlayerListItem
+                        nickname={player.nickname}
+                        color={player.avatarColor}
+                        isHost={player.isHost}
+                        isReady={player.isReady}
+                        showReadyButton={isCurrentPlayer && !player.isHost}
+                        onReadyToggle={toggleReady}
+                      />
+                    </motion.div>
+                  );
+                })}
               </StaggerChildren>
             )}
           </VelvetCard>
@@ -268,7 +276,11 @@ export default function Lobby() {
               onClick={toggleReady}
               data-testid="button-ready"
             >
-              {players.find((p) => !p.isHost)?.isReady ? "Ready!" : "Ready Up"}
+              {(() => {
+                const currentPlayerId = localStorage.getItem(`playerId_${roomId}`);
+                const currentPlayer = players.find((p) => p.id === currentPlayerId);
+                return currentPlayer?.isReady ? "Ready!" : "Ready Up";
+              })()}
             </VelvetButton>
           </SlideIn>
         )}

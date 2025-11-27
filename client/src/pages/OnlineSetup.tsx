@@ -50,6 +50,7 @@ export default function OnlineSetup() {
     },
     onSuccess: (data) => {
       setRoom(data.roomId, data.joinCode, true);
+      localStorage.setItem(`playerId_${data.roomId}`, data.playerId);
       setLocation(`/lobby/${data.roomId}`);
     },
     onError: (error) => {
@@ -71,6 +72,7 @@ export default function OnlineSetup() {
     },
     onSuccess: (data) => {
       setRoom(data.roomId, joinCode.toUpperCase(), false);
+      localStorage.setItem(`playerId_${data.roomId}`, data.playerId);
       setLocation(`/lobby/${data.roomId}`);
     },
     onError: (error) => {
