@@ -282,6 +282,7 @@ export interface LudoGameState {
   winner: string | null;
   gamePhase: "rolling" | "moving" | "prompt" | "finished";
   turnCount: number;
+  gameMode?: "couple" | "friends";
 }
 
 export const LUDO_BOARD_SIZE = 52;

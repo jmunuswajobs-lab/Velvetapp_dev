@@ -638,23 +638,35 @@ export class MemStorage implements IStorage {
     // Add Velvet Ludo prompts (games[13])
     const velvetLudoId = games[13].id;
     const velvetLudoPrompts: Omit<Prompt, "id" | "createdAt">[] = [
-      // Velvet Space Challenges
-      { gameId: velvetLudoId, packId: null, text: "VELVET KISS: Give your partner a soft kiss on the cheek.", type: "dare", intensity: 1, flags: { isCoupleExclusive: true } },
-      { gameId: velvetLudoId, packId: null, text: "VELVET COMPLIMENT: Tell your partner something you love about them.", type: "dare", intensity: 1, flags: { isCoupleExclusive: true, safeForRemote: true } },
-      { gameId: velvetLudoId, packId: null, text: "VELVET TRUTH: Share your favorite memory of your relationship.", type: "truth", intensity: 1, flags: { isCoupleExclusive: true, safeForRemote: true } },
-      { gameId: velvetLudoId, packId: null, text: "VELVET EMBRACE: Hold your partner close for 30 seconds.", type: "dare", intensity: 2, flags: { isCoupleExclusive: true } },
-      { gameId: velvetLudoId, packId: null, text: "VELVET WHISPER: Whisper something sweet in your partner's ear.", type: "dare", intensity: 2, flags: { isCoupleExclusive: true, isFlirty: true } },
-      { gameId: velvetLudoId, packId: null, text: "VELVET TOUCH: Gently trace your fingers along your partner's arm.", type: "dare", intensity: 2, flags: { isCoupleExclusive: true, isFlirty: true } },
-      { gameId: velvetLudoId, packId: null, text: "VELVET MASSAGE: Give your partner a short shoulder massage.", type: "dare", intensity: 3, flags: { isCoupleExclusive: true, isFlirty: true } },
-      { gameId: velvetLudoId, packId: null, text: "VELVET DEEP: Kiss your partner slowly and deeply.", type: "dare", intensity: 3, flags: { isCoupleExclusive: true, isFlirty: true } },
-      { gameId: velvetLudoId, packId: null, text: "VELVET CONFESSION: Share a secret desire with your partner.", type: "confession", intensity: 4, flags: { isCoupleExclusive: true, isFlirty: true, isConfession: true } },
-      { gameId: velvetLudoId, packId: null, text: "VELVET TEASE: Give your partner a playful tease.", type: "dare", intensity: 4, flags: { isCoupleExclusive: true, isFlirty: true, isBold: true } },
-      { gameId: velvetLudoId, packId: null, text: "VELVET PASSION: Kiss your partner on the neck for 10 seconds.", type: "dare", intensity: 4, flags: { isCoupleExclusive: true, isFlirty: true, isBold: true } },
-      { gameId: velvetLudoId, packId: null, text: "VELVET FIRE: Show your partner exactly how you want to be kissed.", type: "dare", intensity: 5, flags: { isCoupleExclusive: true, isFlirty: true, isBold: true } },
-      // Bonus moves
-      { gameId: velvetLudoId, packId: null, text: "BONUS ROLL: You landed on a lucky space! Roll again.", type: "rule", intensity: 1, flags: { safeForRemote: true } },
-      { gameId: velvetLudoId, packId: null, text: "SWITCH: Swap positions with one of your partner's pieces.", type: "rule", intensity: 2, flags: { safeForRemote: true } },
-      { gameId: velvetLudoId, packId: null, text: "SHIELD: Protect one of your pieces from being captured next turn.", type: "rule", intensity: 2, flags: { safeForRemote: true } },
+      // Couple Mode - Romantic Challenges
+      { gameId: velvetLudoId, packId: null, text: "💋 VELVET KISS: Give your partner a soft kiss on the cheek.", type: "dare", intensity: 1, flags: { isCoupleExclusive: true } },
+      { gameId: velvetLudoId, packId: null, text: "💕 VELVET COMPLIMENT: Tell your partner something you love about them.", type: "dare", intensity: 1, flags: { isCoupleExclusive: true, safeForRemote: true } },
+      { gameId: velvetLudoId, packId: null, text: "✨ VELVET TRUTH: Share your favorite memory of your relationship.", type: "truth", intensity: 1, flags: { isCoupleExclusive: true, safeForRemote: true } },
+      { gameId: velvetLudoId, packId: null, text: "🫂 VELVET EMBRACE: Hold your partner close for 30 seconds.", type: "dare", intensity: 2, flags: { isCoupleExclusive: true } },
+      { gameId: velvetLudoId, packId: null, text: "🌹 VELVET WHISPER: Whisper something sweet in your partner's ear.", type: "dare", intensity: 2, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: velvetLudoId, packId: null, text: "🤚 VELVET TOUCH: Gently trace your fingers along your partner's arm.", type: "dare", intensity: 2, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: velvetLudoId, packId: null, text: "💆 VELVET MASSAGE: Give your partner a short shoulder massage.", type: "dare", intensity: 3, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: velvetLudoId, packId: null, text: "💏 VELVET DEEP: Kiss your partner slowly and deeply.", type: "dare", intensity: 3, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: velvetLudoId, packId: null, text: "🔥 VELVET CONFESSION: Share a secret desire with your partner.", type: "confession", intensity: 4, flags: { isCoupleExclusive: true, isFlirty: true, isConfession: true } },
+      { gameId: velvetLudoId, packId: null, text: "😈 VELVET TEASE: Give your partner a playful tease.", type: "dare", intensity: 4, flags: { isCoupleExclusive: true, isFlirty: true, isBold: true } },
+      { gameId: velvetLudoId, packId: null, text: "💋 VELVET PASSION: Kiss your partner on the neck for 10 seconds.", type: "dare", intensity: 4, flags: { isCoupleExclusive: true, isFlirty: true, isBold: true } },
+      { gameId: velvetLudoId, packId: null, text: "🔥 VELVET FIRE: Show your partner exactly how you want to be kissed.", type: "dare", intensity: 5, flags: { isCoupleExclusive: true, isFlirty: true, isBold: true } },
+      
+      // Friends Mode - Fun Challenges
+      { gameId: velvetLudoId, packId: null, text: "🎭 IMPROV: Do your best celebrity impression!", type: "dare", intensity: 1, flags: {} },
+      { gameId: velvetLudoId, packId: null, text: "🎤 SING IT: Sing the chorus of your favorite song.", type: "dare", intensity: 2, flags: {} },
+      { gameId: velvetLudoId, packId: null, text: "🕺 DANCE MOVE: Show us your signature dance move!", type: "dare", intensity: 2, flags: { requiresMovement: true } },
+      { gameId: velvetLudoId, packId: null, text: "🤣 JOKE TIME: Tell your best joke to make everyone laugh.", type: "dare", intensity: 1, flags: {} },
+      { gameId: velvetLudoId, packId: null, text: "🎨 TRUTH: What's your hidden talent?", type: "truth", intensity: 1, flags: { safeForRemote: true } },
+      { gameId: velvetLudoId, packId: null, text: "🌟 CONFESSION: Share your most embarrassing moment.", type: "confession", intensity: 3, flags: { isConfession: true, safeForRemote: true } },
+      { gameId: velvetLudoId, packId: null, text: "🎯 CHALLENGE: Name 5 things in the room that are blue!", type: "challenge", intensity: 1, flags: {} },
+      { gameId: velvetLudoId, packId: null, text: "🧠 TRIVIA: What's the capital of Australia?", type: "challenge", intensity: 2, flags: { safeForRemote: true } },
+      
+      // Bonus moves (both modes)
+      { gameId: velvetLudoId, packId: null, text: "🎲 BONUS ROLL: You landed on a lucky space! Roll again.", type: "rule", intensity: 1, flags: { safeForRemote: true } },
+      { gameId: velvetLudoId, packId: null, text: "🔄 SWITCH: Swap positions with one of opponent's pieces.", type: "rule", intensity: 2, flags: { safeForRemote: true } },
+      { gameId: velvetLudoId, packId: null, text: "🛡️ SHIELD: Protect one of your pieces from being captured next turn.", type: "rule", intensity: 2, flags: { safeForRemote: true } },
+      { gameId: velvetLudoId, packId: null, text: "⚡ SPEED: Move an extra 2 spaces with your next move!", type: "rule", intensity: 2, flags: { safeForRemote: true } },
     ];
     velvetLudoPrompts.forEach((prompt) => {
       const id = randomUUID();

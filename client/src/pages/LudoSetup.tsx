@@ -21,6 +21,7 @@ export default function LudoSetup() {
   const [, setLocation] = useLocation();
   const { initLocalGame } = useLudoStore();
 
+  const [gameMode, setGameMode] = useState<"couple" | "friends">("couple");
   const [players, setPlayers] = useState<PlayerInput[]>([
     { id: "1", nickname: "", avatarColor: LUDO_COLORS[0] },
     { id: "2", nickname: "", avatarColor: LUDO_COLORS[1] },
@@ -62,7 +63,7 @@ export default function LudoSetup() {
       avatarColor: p.avatarColor,
     }));
 
-    initLocalGame(validPlayers);
+    initLocalGame(validPlayers, gameMode);
     
     setTimeout(() => {
       setLocation("/games/velvet-ludo/play");
@@ -106,9 +107,39 @@ export default function LudoSetup() {
             </h1>
           </div>
           <p className="text-muted-foreground">
-            Add 2-4 players to start the game
+            Choose your game mode and add players
           </p>
         </FadeIn>
+
+        <VelvetCard className="p-6 mb-6">
+          <h2 className="text-xl font-display font-semibold mb-4 text-center">
+            🎮 Game Mode
+          </h2>
+          <div className="grid grid-cols-2 gap-4">
+            <VelvetButton
+              velvetVariant={gameMode === "couple" ? "neon" : "ghost-glow"}
+              onClick={() => setGameMode("couple")}
+              className="py-6 flex flex-col items-center gap-2"
+            >
+              <span className="text-3xl">💑</span>
+              <span className="font-semibold">Couple Mode</span>
+              <span className="text-xs text-muted-foreground">
+                Romantic challenges
+              </span>
+            </VelvetButton>
+            <VelvetButton
+              velvetVariant={gameMode === "friends" ? "neon" : "ghost-glow"}
+              onClick={() => setGameMode("friends")}
+              className="py-6 flex flex-col items-center gap-2"
+            >
+              <span className="text-3xl">👥</span>
+              <span className="font-semibold">Friends Mode</span>
+              <span className="text-xs text-muted-foreground">
+                Fun challenges
+              </span>
+            </VelvetButton>
+          </div>
+        </VelvetCard>
 
         <SlideIn direction="up" delay={0.1} className="mb-8">
           <VelvetCard tiltEnabled={false} className="p-6">

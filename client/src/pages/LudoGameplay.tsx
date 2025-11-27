@@ -133,6 +133,7 @@ export default function LudoGameplay() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+            onClick={(e) => e.stopPropagation()}
           >
             <motion.div
               initial={{ scale: 0.8, opacity: 0, y: 50 }}

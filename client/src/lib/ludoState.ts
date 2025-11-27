@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { LudoGameState, LudoPlayer, LudoPiece, LudoColor, VelvetSpace, Prompt } from "@shared/schema";
+import type { LudoGameState, LudoPlayer, LudoPiece, LudoColor, VelvetSpace, Prompt, GameMode } from "@shared/schema";
 import { LUDO_BOARD_SIZE, LUDO_START_POSITIONS, VELVET_SPACE_POSITIONS, LUDO_HOME_ENTRY } from "@shared/schema";
 import { nanoid } from "nanoid";
 
@@ -9,8 +9,8 @@ interface LudoStore {
   roomId: string | null;
   playerId: string | null;
   ws: WebSocket | null;
-  
-  initLocalGame: (players: { nickname: string; avatarColor: string }[]) => void;
+
+  initLocalGame: (players: { nickname: string; avatarColor: string }[], gameMode?: GameMode) => void;
   initOnlineGame: (roomId: string, playerId: string) => void;
   rollDice: () => void;
   movePiece: (pieceId: string) => void;
@@ -22,8 +22,10 @@ interface LudoStore {
 
 const LUDO_COLORS: LudoColor[] = ["red", "blue", "green", "yellow"];
 
+type VelvetSpaceType = "heat" | "dare" | "truth" | "bond" | "kiss" | "freeze" | "wild";
+
 function createVelvetSpaces(): VelvetSpace[] {
-  const types: Array<VelvetSpaceType> = ["heat", "dare", "truth", "bond", "kiss", "freeze", "wild"];
+  const types: VelvetSpaceType[] = ["heat", "dare", "truth", "bond", "kiss", "freeze", "wild"];
   const descriptions: Record<VelvetSpaceType, string> = {
     heat: "Heat Tile - Triggers spicy prompt",
     bond: "Bond Tile - Cooperative action",
@@ -35,7 +37,7 @@ function createVelvetSpaces(): VelvetSpace[] {
     massage: "Massage Tile - Sensual touch",
     compliment: "Compliment Tile - Sweet words",
   };
-  
+
   return VELVET_SPACE_POSITIONS.map((pos, idx) => ({
     position: pos,
     type: types[idx % types.length],
@@ -69,7 +71,7 @@ export const useLudoStore = create<LudoStore>((set, get) => ({
   playerId: null,
   ws: null,
 
-  initLocalGame: (players) => {
+  initLocalGame: (players, gameMode?: GameMode) => {
     const ludoPlayers: LudoPlayer[] = players.map((p, idx) => 
       createPlayer(p.nickname, p.avatarColor, LUDO_COLORS[idx], idx)
     );
@@ -86,6 +88,7 @@ export const useLudoStore = create<LudoStore>((set, get) => ({
         winner: null,
         gamePhase: "rolling",
         turnCount: 0,
+        gameMode: gameMode || "couple",
       },
       isOnline: false,
     });
@@ -136,7 +139,11 @@ export const useLudoStore = create<LudoStore>((set, get) => ({
         return;
       }
     } else {
-      newPosition = (piece.position + diceValue) % LUDO_BOARD_SIZE;
+      newPosition = piece.position + diceValue;
+      if (newPosition >= LUDO_BOARD_SIZE) {
+        // Don't move if it would go past the finish
+        return;
+      }
       canMove = true;
     }
 
@@ -179,11 +186,15 @@ export const useLudoStore = create<LudoStore>((set, get) => ({
     } else {
       let nextPhase: "rolling" | "moving" | "prompt" | "finished" = "rolling";
       let nextTurn = gameState.currentTurn;
+      let shouldRollAgain = gameState.canRollAgain;
 
       if (landedOnVelvet) {
         nextPhase = "prompt";
       } else if (!gameState.canRollAgain) {
         nextTurn = (gameState.currentTurn + 1) % gameState.players.length;
+        shouldRollAgain = false;
+      } else {
+        shouldRollAgain = false;
       }
 
       set({
@@ -191,6 +202,7 @@ export const useLudoStore = create<LudoStore>((set, get) => ({
           ...gameState,
           players: updatedPlayers,
           diceValue: null,
+          canRollAgain: shouldRollAgain,
           gamePhase: nextPhase,
           currentTurn: nextTurn,
           turnCount: gameState.turnCount + 1,
