@@ -341,3 +341,22 @@ export const LUDO_SPECIAL_TILES: { index: number; type: TileType }[] = [
   { index: 44, type: "heat" },
   { index: 51, type: "bond" },
 ];
+
+// Velvet (special/heat) space positions for backward compatibility
+export const VELVET_SPACE_POSITIONS = LUDO_SPECIAL_TILES
+  .filter(t => t.type === "heat")
+  .map(t => t.index);
+
+// Legacy type aliases for backward compatibility
+export interface LudoPiece {
+  id: string;
+  position: number;
+}
+
+export interface LegacyLudoGameState {
+  players: Array<LudoPlayer & { pieces: LudoPiece[] }>;
+  currentTurn: number;
+  gamePhase: "rolling" | "moving";
+  diceValue: number | null;
+  canRollAgain: boolean;
+}

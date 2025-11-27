@@ -1,7 +1,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { Dice1, Dice2, Dice3, Dice4, Dice5, Dice6 } from "lucide-react";
-import type { LudoGameState, LudoPlayer, LudoPiece, LudoColor } from "@shared/schema";
+import type { LudoGameState, LudoPlayer, LudoColor, LudoToken } from "@shared/schema";
 import { VELVET_SPACE_POSITIONS, LUDO_START_POSITIONS } from "@shared/schema";
 import { VelvetButton } from "./VelvetButton";
 import { VelvetCard } from "./VelvetCard";
@@ -76,26 +76,21 @@ function DiceIcon({ value }: { value: number }) {
 }
 
 export function LudoBoard({ gameState, onRollDice, onMovePiece, currentPlayerId }: LudoBoardProps) {
-  const currentPlayer = gameState.players[gameState.currentTurn];
+  const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const isMyTurn = !currentPlayerId || currentPlayer.id === currentPlayerId;
-  const canRoll = gameState.gamePhase === "rolling" && isMyTurn;
-  const canMove = gameState.gamePhase === "moving" && isMyTurn && gameState.diceValue !== null;
+  const canRollDice = gameState.canRoll && isMyTurn;
+  const canMovePiece = gameState.canMove && isMyTurn;
 
-  const getMovablePieces = () => {
-    if (!canMove || !gameState.diceValue) return [];
+  const getMovableTokens = () => {
+    if (!canMovePiece || !gameState.diceValue) return [];
     
-    return currentPlayer.pieces.filter(piece => {
-      // Piece at home - can only move if rolled 6
-      if (piece.position === -1) {
-        return gameState.diceValue === 6;
-      }
-      // Piece on board - can move if won't go past finish
-      const newPos = piece.position + gameState.diceValue;
-      return newPos < 52;
+    return currentPlayer.tokens.filter(token => {
+      // Check if this token has a valid move
+      return gameState.validMoves.some(move => move.tokenId === token.id);
     });
   };
 
-  const movablePieces = getMovablePieces();
+  const movableTokens = getMovableTokens();
 
   return (
     <div className="flex flex-col lg:flex-row gap-6 items-center justify-center w-full max-w-6xl mx-auto">
@@ -254,19 +249,19 @@ export function LudoBoard({ gameState, onRollDice, onMovePiece, currentPlayerId 
               [{ x: 110, y: 110 }, { x: 130, y: 110 }, { x: 110, y: 130 }, { x: 130, y: 130 }],
             ];
 
-            const homePieces = player.pieces.filter(p => p.position === -1);
+            const homeTokens = player.tokens.filter(t => t.position === "home");
             
-            return homePieces.map((piece, pieceIdx) => {
-              const homePos = homePositions[playerIdx][pieceIdx];
-              const isMovable = movablePieces.some(p => p.id === piece.id);
+            return homeTokens.map((token, tokenIdx) => {
+              const homePos = homePositions[playerIdx][tokenIdx];
+              const isMovable = movableTokens.some(t => t.id === token.id);
               
               return (
                 <motion.g
-                  key={`home-${piece.id}`}
+                  key={`home-${token.id}`}
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   whileHover={isMovable ? { scale: 1.3 } : {}}
-                  onClick={() => isMovable && onMovePiece(piece.id)}
+                  onClick={() => isMovable && onMovePiece(token.id)}
                   style={{ cursor: isMovable ? "pointer" : "default" }}
                 >
                   <circle
@@ -300,9 +295,9 @@ export function LudoBoard({ gameState, onRollDice, onMovePiece, currentPlayerId 
           {/* Board pieces */}
           <AnimatePresence>
             {gameState.players.map((player) =>
-              player.pieces
-                .filter((piece) => piece.position >= 0 && piece.position < 52)
-                .map((piece) => {
+              player.tokens
+                .filter((token) => token.position !== "home" && token.position !== "finished" && token.pathProgress < 52)
+                .map((token) => {
                   const pathPositions = [
                     { x: 10, y: 80 }, { x: 10, y: 70 }, { x: 10, y: 60 }, { x: 10, y: 50 }, { x: 10, y: 40 }, { x: 10, y: 30 },
                     { x: 20, y: 20 }, { x: 30, y: 20 }, { x: 40, y: 20 }, { x: 50, y: 20 }, { x: 60, y: 20 }, { x: 70, y: 20 },
@@ -314,14 +309,14 @@ export function LudoBoard({ gameState, onRollDice, onMovePiece, currentPlayerId 
                     { x: 10, y: 130 }, { x: 10, y: 120 }, { x: 10, y: 110 }, { x: 10, y: 100 }, { x: 10, y: 90 }
                   ];
                   
-                  const pathCell = pathPositions[piece.position];
+                  const pathCell = pathPositions[token.pathProgress];
                   if (!pathCell) return null;
                   
-                  const isMovable = movablePieces.some(p => p.id === piece.id);
+                  const isMovable = movableTokens.some(t => t.id === token.id);
                   
                   return (
                     <motion.g
-                      key={piece.id}
+                      key={token.id}
                       initial={{ scale: 0 }}
                       animate={{ 
                         x: pathCell.x,
@@ -335,7 +330,7 @@ export function LudoBoard({ gameState, onRollDice, onMovePiece, currentPlayerId 
                         damping: 25
                       }}
                       whileHover={isMovable ? { scale: 1.3 } : {}}
-                      onClick={() => isMovable && onMovePiece(piece.id)}
+                      onClick={() => isMovable && onMovePiece(token.id)}
                       style={{ cursor: isMovable ? "pointer" : "default" }}
                     >
                       <circle
@@ -397,7 +392,7 @@ export function LudoBoard({ gameState, onRollDice, onMovePiece, currentPlayerId 
             </motion.div>
           )}
 
-          {canRoll && (
+          {canRollDice && (
             <VelvetButton
               velvetVariant="neon"
               onClick={onRollDice}
@@ -408,18 +403,18 @@ export function LudoBoard({ gameState, onRollDice, onMovePiece, currentPlayerId 
             </VelvetButton>
           )}
 
-          {canMove && movablePieces.length > 0 && (
+          {canMovePiece && movableTokens.length > 0 && (
             <div className="space-y-2">
               <p className="text-muted-foreground text-sm">
-                Click a highlighted piece to move it {gameState.diceValue} spaces
+                Click a highlighted token to move it {gameState.diceValue} spaces
               </p>
               <p className="text-neon-magenta text-xs">
-                {movablePieces.length} piece{movablePieces.length > 1 ? 's' : ''} available
+                {movableTokens.length} token{movableTokens.length > 1 ? 's' : ''} available
               </p>
             </div>
           )}
 
-          {canMove && movablePieces.length === 0 && (
+          {canMovePiece && movableTokens.length === 0 && (
             <div className="space-y-2">
               <p className="text-amber-400 text-sm font-medium">
                 No valid moves available!
@@ -427,9 +422,7 @@ export function LudoBoard({ gameState, onRollDice, onMovePiece, currentPlayerId 
               <VelvetButton
                 velvetVariant="ghost-glow"
                 onClick={() => {
-                  // Auto-advance to next turn
-                  const nextTurn = (gameState.currentTurn + 1) % gameState.players.length;
-                  // This will be handled by the parent component
+                  // Auto-advance to next turn - handled by parent
                 }}
                 className="w-full"
               >
@@ -438,7 +431,7 @@ export function LudoBoard({ gameState, onRollDice, onMovePiece, currentPlayerId 
             </div>
           )}
 
-          {gameState.canRollAgain && (
+          {gameState.diceValue === 6 && (
             <p className="text-neon-magenta text-sm font-medium">
               🎉 You rolled a 6! Roll again after moving.
             </p>
@@ -451,7 +444,7 @@ export function LudoBoard({ gameState, onRollDice, onMovePiece, currentPlayerId 
                 <div 
                   key={player.id}
                   className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
-                    idx === gameState.currentTurn ? "ring-2 ring-neon-magenta" : ""
+                    idx === gameState.currentPlayerIndex ? "ring-2 ring-neon-magenta" : ""
                   }`}
                   style={{ backgroundColor: `${LUDO_COLORS_MAP[player.color]}22` }}
                 >
