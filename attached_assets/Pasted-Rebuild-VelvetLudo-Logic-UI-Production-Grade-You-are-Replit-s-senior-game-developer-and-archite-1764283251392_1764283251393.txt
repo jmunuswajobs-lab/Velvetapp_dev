@@ -1,0 +1,326 @@
+Rebuild VelvetLudo Logic + UI (Production-Grade)
+
+You are Replit’s senior game developer and architect.
+Focus only on the VelvetLudo feature inside this repo (do not break other games).
+
+The current VelvetLudo board is partially implemented visually, but:
+
+The Ludo rules & turn logic are incorrect/incomplete
+
+Token paths / movement are unreliable
+
+The UI is confusing, not clearly showing whose turn it is, valid moves, or when the game ends.
+
+Your job is to rebuild VelvetLudo end-to-end into a correct, clean, robust, adult-themed Ludo variant that works 100% reliably in both local and online modes.
+
+1. Analyze Existing VelvetLudo Code & Isolate It
+
+Find all files related to VelvetLudo (routes, components, hooks, backend handlers, schemas).
+
+Do not remove or break other games/features.
+
+Refactor so VelvetLudo logic lives in a clear structure, for example:
+
+frontend/src/games/velvetLudo/
+
+VelvetLudoBoard.tsx
+
+VelvetLudoGameScreen.tsx
+
+useVelvetLudoClient.ts
+
+types.ts
+
+constants.ts (board layout)
+
+backend/src/games/velvetLudo/
+
+velvetLudoEngine.ts
+
+velvetLudoController.ts (REST/WebSocket handlers)
+
+velvetLudoTypes.ts
+
+2. Implement Correct Ludo Core Rules (Authoritative on the Backend)
+
+Implement a proper Ludo rules engine (with your adult twists, but rules must be consistent):
+
+Base rules:
+
+2–4 players (optimize for 2-player couples)
+
+Each player has 4 tokens.
+
+Tokens start in “home” and must roll a 6 to enter the board.
+
+Tokens move along a defined path of tiles.
+
+Landing on an opponent’s token “captures” it back to home.
+
+Reaching the full lap and entering the final stretch leads to “safe tiles” and eventually the “goal” area.
+
+First player to bring all tokens to goal wins.
+
+Implementation requirements:
+
+All rules live in a pure engine module, e.g. velvetLudoEngine.ts with functions like:
+
+getInitialState(players)
+
+rollDice(state, playerId)
+
+getValidMoves(state, playerId, diceResult)
+
+applyMove(state, playerId, tokenId, diceResult)
+
+checkWinCondition(state)
+
+Engine must be deterministic and stateless (always return new state; don’t mutate global variables).
+
+Backend must be the source of truth:
+
+Frontend sends intents: rollDice, selectToken.
+
+Backend validates, updates state, broadcasts updated state via WebSocket.
+
+3. Data Model for VelvetLudo
+
+Define strong types (shared between frontend & backend) for the Ludo game:
+
+LudoTileId – unique id per tile in the path.
+
+LudoToken – { id, ownerId, position: "home" | "finished" | LudoTileId }.
+
+LudoPlayer – { id, color, name }.
+
+LudoState object, e.g.:
+
+interface LudoState {
+  roomId: string;
+  players: LudoPlayer[];
+  tokens: LudoToken[]; // 4 per player
+  currentPlayerId: string;
+  diceValue: number | null;
+  canRoll: boolean;
+  canMove: boolean;
+  validMoves: { tokenId: string; targetTile: LudoTileId }[];
+  winnerId: string | null;
+  turnNumber: number;
+}
+
+
+Store this state in backend memory + DB (or DB snapshot) and send it to clients via WebSocket messages.
+
+4. Board Layout & Token Paths
+
+Define a single source of truth for the board layout and player paths in constants.ts:
+
+Array of tile IDs in order for each player’s path.
+
+Indexes for:
+
+starting tiles
+
+safe tiles
+
+special tiles (see adult mechanics below)
+
+Map tiles onto the rendered board so there is a correct mapping between visual squares and engine tile IDs.
+
+Ensure:
+
+Moving a token from path index i to i + diceValue always lands on the correct tile on screen.
+
+Path wrapping (if any) is handled.
+
+5. Adult Velvet Mechanics (Non-Explicit)
+
+Keep VelvetLudo PG-17, but add couples twists:
+
+Heat Tiles – when a token lands here, backend emits an event that triggers a spicy prompt on the frontend.
+
+Bond Tiles – cooperative or emotional cards.
+
+Freeze Tiles – skip next turn unless partner chooses to “rescue” via a small challenge.
+
+Implement these as extra effects in the engine:
+
+After applyMove, determine if the tile has a special effect.
+
+Attach effects: LudoEffect[] to the resulting state or emit a separate event like specialTileHit.
+
+Let frontend show modal/card with the related prompt.
+
+6. VelvetLudo UI – Rebuild for Clarity & Polish
+
+The current board is not clear. Rebuild the UI so Ludo is readable, interactive, and beautiful:
+
+Board:
+
+Render tiles as a neon glowing board, but:
+
+Each tile must show:
+
+Which color path it belongs to
+
+Icon/marker for Heat / Bond / Freeze tiles
+
+Use consistent sizes and spacing.
+
+Highlight:
+
+Current player’s tokens
+
+Valid tiles when a dice is rolled (e.g., glow effect around possible target tiles)
+
+Tokens:
+
+Use distinct shapes/colors per player (e.g., glowing discs).
+
+Tokens must animate smoothly between tiles:
+
+Use Framer Motion for position transitions.
+
+E.g. transition={{ duration: 0.3, ease: "easeInOut" }}.
+
+Controls:
+
+Show a clear dice component and a prominent “Roll” action only when canRoll === true.
+
+Once a dice is rolled:
+
+Highlight movable tokens.
+
+Allow clicking only on tokens in validMoves.
+
+Display:
+
+Current player name + color
+
+Dice result
+
+Turn indicator
+
+Winner banner when game is over.
+
+Responsiveness:
+
+On desktop: board centered with side panel on the right.
+
+On mobile: board scales to width; controls stacked below; text remains readable.
+
+7. Online vs Local Ludo
+
+Local mode: all logic still goes through the engine, but only one client; no WebSockets needed.
+
+Online mode:
+
+Use existing WebSocket infrastructure:
+
+ludo:join-room
+
+ludo:state
+
+ludo:roll
+
+ludo:move
+
+Only current player can roll or move on their turn.
+
+All other players see updates in real time.
+
+Handle disconnect/reconnect:
+
+On reconnect, client requests latest LudoState and resyncs.
+
+Game must not crash or corrupt state if a player disconnects mid-game.
+
+8. Robustness, No Memory Leaks, No Performance Issues
+
+Frontend:
+
+All hooks (like useVelvetLudoClient) must:
+
+Clean up WebSocket listeners in useEffect cleanup.
+
+Avoid recreating listeners in every render.
+
+Don’t store giant objects in unneeded state; use minimal slices of state.
+
+Use React.memo and useMemo for heavy board/token components to avoid unnecessary re-renders.
+
+Backend:
+
+Ensure:
+
+No global mutable state shared across rooms without segregation.
+
+Per-room state is properly keyed.
+
+Room state updates are atomic.
+
+Validate all incoming messages:
+
+Check if player belongs to room.
+
+Check if it’s their turn.
+
+Check if move is valid.
+
+9. Testing & QA for VelvetLudo
+
+Add real tests focused on VelvetLudo:
+
+Unit tests for the engine:
+
+Entering board from home on roll 6.
+
+Normal moves.
+
+Capture logic.
+
+Win condition.
+
+Special tiles effects.
+
+Integration tests (backend):
+
+Simulate sequence of valid turns and assert state.
+
+Manual QA path (document in README):
+
+2-player game from start → midgame → finish, both local and online.
+
+10. Final Deliverables for VelvetLudo
+
+When you finish:
+
+The VelvetLudo game must:
+
+Work perfectly in local mode.
+
+Work perfectly in online mode with 2 browser windows.
+
+Have correct rules and win detection.
+
+Have clear, readable UI and animations.
+
+Have adult PG-17 special tiles integrated with prompts.
+
+npm run build for frontend and backend must pass with zero errors.
+
+Update README with:
+
+How to launch/try VelvetLudo locally.
+
+Explanation of VelvetLudo rules.
+
+Explanation of special tiles and adult mechanics.
+
+Summarize in the Assistant chat:
+
+Files modified/added.
+
+How the Ludo engine works.
+
+Any remaining limitations (if any).
