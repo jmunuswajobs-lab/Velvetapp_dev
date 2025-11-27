@@ -1,4 +1,3 @@
-
 import { sql } from "drizzle-orm";
 import { pgTable, text, varchar, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
@@ -312,13 +311,16 @@ export const LUDO_MAIN_PATH_LENGTH = 52;
 export const LUDO_SAFE_PATH_LENGTH = 5;
 export const LUDO_TOKENS_PER_PLAYER = 4;
 
-// Starting positions on main path for each color
+// Ludo start indices for each color (where they enter the main path)
 export const LUDO_START_INDICES: Record<LudoColor, number> = {
   red: 0,
   blue: 13,
-  green: 26,
-  yellow: 39,
+  yellow: 26,
+  green: 39,
 };
+
+// Alias for backward compatibility
+export const LUDO_START_POSITIONS = LUDO_START_INDICES;
 
 // Where each color enters their safe zone
 export const LUDO_SAFE_ENTRY_INDICES: Record<LudoColor, number> = {

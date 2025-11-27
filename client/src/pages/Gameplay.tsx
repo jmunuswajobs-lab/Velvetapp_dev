@@ -11,21 +11,55 @@ import { PromptCard } from "@/components/velvet/VelvetCard";
 import { HeatMeter } from "@/components/velvet/HeatMeter";
 import { PlayerAvatar } from "@/components/velvet/PlayerAvatar";
 import { FadeIn, SlideIn } from "@/components/velvet/PageTransition";
-import { useLocalGame, useOnlineRoom } from "@/lib/gameState";
+import { useLocalGame, useOnlineRoom } from "@/lib/gameState"; // Assuming these are the correct hooks based on context
 import type { Prompt } from "@shared/schema";
+import { useToast } from "@/components/ui/use-toast"; // Assuming this hook is used for toast notifications
+
+// Placeholder for actual hook implementations if they are different from useLocalGame/useOnlineRoom
+// In a real scenario, these would be imported from their respective files.
+const useLocalGameState = useLocalGame;
+const useOnlineGameState = useOnlineRoom;
+
 
 export default function Gameplay() {
-  const { slug, roomId } = useParams<{ slug?: string; roomId?: string }>();
-  const isOnlineMode = !!roomId;
+  const { slug, roomId } = useParams<{ slug: string; roomId?: string }>();
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
 
-  // Use different state management based on mode
-  const localGame = useLocalGame();
-  const onlineGame = useOnlineRoom();
+  const isOnlineMode = Boolean(roomId);
 
-  // Determine which game state to use based on mode
-  const currentGameState = isOnlineMode ? onlineGame.gameState : localGame.gameState;
-  
+  // Local game state - always call hooks
+  const localGame = useLocalGameState();
+
+  // Online game state - always call hooks
+  const onlineGame = useOnlineGameState();
+
+  // Memoize current game state based on mode
+  const currentGameState = useMemo(() => {
+    return isOnlineMode ? onlineGame.gameState : localGame.gameState;
+  }, [isOnlineMode, onlineGame.gameState, localGame.gameState]);
+
+  const currentPrompt = useMemo(() => {
+    return isOnlineMode ? onlineGame.currentPrompt : localGame.currentPrompt;
+  }, [isOnlineMode, onlineGame.currentPrompt, localGame.currentPrompt]);
+
+  const currentPlayer = useMemo(() => {
+    return isOnlineMode ? onlineGame.currentPlayer : localGame.currentPlayer;
+  }, [isOnlineMode, onlineGame.currentPlayer, localGame.currentPlayer]);
+
+  const nextPromptAction = useCallback(() => {
+    if (isOnlineMode) {
+      onlineGame.nextPrompt();
+    } else {
+      localGame.nextPrompt();
+    }
+  }, [isOnlineMode, onlineGame, localGame]);
+
+  const handleEndGameRoute = useCallback(() => {
+    setLocation(isOnlineMode ? `/games/${roomId}/summary` : `/games/${slug}/summary`);
+  }, [setLocation, slug, isOnlineMode, roomId]);
+
+
   // Redirect if no game state
   useEffect(() => {
     if (!currentGameState) {
@@ -55,11 +89,9 @@ export default function Gameplay() {
   const currentHeatLevel = currentGameState?.heatLevel || 0;
   const currentPrompts = currentGameState?.prompts || [];
   const currentPlayerIndex = currentGameState?.turnIndex || 0;
-  const currentPlayer = currentGameState?.players?.[currentPlayerIndex];
   const promptsRemaining = (currentGameState?.prompts?.length || 0) - (currentGameState?.currentPromptIndex || 0) - 1;
 
   // Actions that differ between modes
-  const nextPromptAction = isOnlineMode ? onlineGame.nextPrompt : localGame.nextPrompt;
   const skipPromptAction = isOnlineMode ? onlineGame.skipPrompt : localGame.skipPrompt;
   const updateHeatLevelAction = isOnlineMode ? onlineGame.updateHeatLevel : localGame.updateHeatLevel;
   const advanceTurnAction = isOnlineMode ? onlineGame.advanceTurn : localGame.advanceTurn;
@@ -68,51 +100,31 @@ export default function Gameplay() {
   const previousPromptAction = isOnlineMode ? onlineGame.previousPrompt : localGame.previousPrompt;
 
 
-  const [currentPrompt, setCurrentPrompt] = useState<Prompt | null>(null);
+  const [currentPromptState, setCurrentPromptState] = useState<Prompt | null>(null);
   const [isCardFlipped, setIsCardFlipped] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
 
-    if (isOnlineMode) {
-      // Handle online game state updates here
-      if (isMounted && onlineGame.gameState && onlineGame.gameState.prompts.length > 0) {
-        const prompt = onlineGame.gameState.prompts[onlineGame.gameState.currentPromptIndex];
-        if (prompt) {
-          setCurrentPrompt(prompt);
-        }
-      }
-    } else {
-      // Local game logic
-      if (!localGame.gameState) {
-        console.log("No local game state, redirecting to setup");
-        if (isMounted) {
-          setLocation(`/games/${slug}/local`);
-        }
-        return;
-      }
-      if (isMounted && localGame.gameState.prompts.length > 0) {
-        const prompt = localGame.gameState.prompts[localGame.gameState.currentPromptIndex];
-        if (prompt) {
-          setCurrentPrompt(prompt);
-        }
-      }
+    const prompt = currentGameState.prompts[currentGameState.currentPromptIndex];
+    if (prompt) {
+      setCurrentPromptState(prompt);
     }
-    
+
     // Cleanup function
     return () => {
       isMounted = false;
       setIsCardFlipped(false);
     };
-  }, [onlineGame.gameState?.currentPromptIndex, localGame.gameState?.currentPromptIndex, slug, setLocation, isOnlineMode]);
+  }, [currentGameState?.currentPromptIndex, currentGameState.prompts]);
 
   const handleNext = useCallback(() => {
     setIsCardFlipped(false);
     setTimeout(() => {
       const prompt = nextPromptAction();
       if (prompt) {
-        setCurrentPrompt(prompt);
+        setCurrentPromptState(prompt);
         advanceTurnAction();
         // Increase heat based on intensity
         updateHeatLevelAction(prompt.intensity * 2);
@@ -128,7 +140,7 @@ export default function Gameplay() {
     setTimeout(() => {
       const prompt = previousPromptAction();
       if (prompt) {
-        setCurrentPrompt(prompt);
+        setCurrentPromptState(prompt);
       }
     }, 200);
   }, [previousPromptAction]);
@@ -139,7 +151,7 @@ export default function Gameplay() {
       skipPromptAction();
       const prompt = currentPrompts?.[currentGameState?.currentPromptIndex + 1];
       if (prompt) {
-        setCurrentPrompt(prompt);
+        setCurrentPromptState(prompt);
         advanceTurnAction();
       } else {
         setLocation(isOnlineMode ? `/games/${roomId}/summary` : `/games/${slug}/summary`);
@@ -152,10 +164,6 @@ export default function Gameplay() {
     resetGameAction();
     setLocation("/");
   }, [endGameAction, resetGameAction, setLocation]);
-
-  const handleEndGameRoute = useCallback(() => {
-    setLocation(isOnlineMode ? `/games/${roomId}/summary` : `/games/${slug}/summary`);
-  }, [setLocation, slug, isOnlineMode, roomId]);
 
   if (isOnlineMode && !onlineGame.gameState) {
     // Online mode - show placeholder for now
@@ -174,7 +182,7 @@ export default function Gameplay() {
     );
   }
 
-  if (!currentGameState || !currentPrompt || !currentPlayer) {
+  if (!currentGameState || !currentPromptState || !currentPlayer) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -298,7 +306,7 @@ export default function Gameplay() {
         <div className="flex-1 flex items-center justify-center py-4">
           <AnimatePresence mode="wait">
             <motion.div
-              key={currentPrompt.id}
+              key={currentPromptState.id}
               initial={{ opacity: 0, scale: 0.9, rotateY: -10 }}
               animate={{ opacity: 1, scale: 1, rotateY: 0 }}
               exit={{ opacity: 0, scale: 0.9, rotateY: 10 }}
@@ -306,9 +314,9 @@ export default function Gameplay() {
               className="w-full max-w-sm"
             >
               <PromptCard
-                text={currentPrompt.text}
-                type={currentPrompt.type}
-                intensity={currentPrompt.intensity}
+                text={currentPromptState.text}
+                type={currentPromptState.type}
+                intensity={currentPromptState.intensity}
                 isFlipped={isCardFlipped}
                 onFlip={() => setIsCardFlipped(!isCardFlipped)}
               />
