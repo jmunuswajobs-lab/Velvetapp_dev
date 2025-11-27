@@ -1,8 +1,8 @@
-import { Input, type InputProps } from "@/components/ui/input";
-import { forwardRef, useState } from "react";
+import { Input } from "@/components/ui/input";
+import { forwardRef, useState, type ComponentProps } from "react";
 import { motion } from "framer-motion";
 
-interface VelvetInputProps extends InputProps {
+export interface VelvetInputProps extends ComponentProps<"input"> {
   glowColor?: string;
 }
 

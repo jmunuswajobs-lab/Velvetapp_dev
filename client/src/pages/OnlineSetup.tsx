@@ -49,7 +49,7 @@ export default function OnlineSetup() {
       return res.json();
     },
     onSuccess: (data) => {
-      setRoom(data.roomId, data.joinCode, true);
+      setRoom(data.roomId, data.joinCode, true, slug);
       localStorage.setItem(`playerId_${data.roomId}`, data.playerId);
       setLocation(`/lobby/${data.roomId}`);
     },

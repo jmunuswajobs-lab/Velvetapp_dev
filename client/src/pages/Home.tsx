@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
-import { Link, navigate } from "wouter";
+import { Link } from "wouter";
 import { 
   Flame, Users, Heart, Dices, BookOpen, Settings,
   Filter, Search, ChevronRight

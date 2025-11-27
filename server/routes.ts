@@ -210,6 +210,102 @@ export async function registerRoutes(
             });
             break;
           }
+
+          // ===== VELVET LUDO EVENTS =====
+          case "ludo_roll_dice": {
+            const ludoRoomId = message.roomId || currentRoomId;
+            const ludoPlayerId = message.playerId || currentPlayerId;
+            if (!ludoRoomId) return;
+
+            const diceValue = Math.floor(Math.random() * 6) + 1;
+            const canRollAgain = diceValue === 6;
+
+            log(`Ludo dice rolled: ${diceValue} by player ${ludoPlayerId}`);
+
+            broadcastToRoom(ludoRoomId, {
+              type: "ludo_dice_result",
+              diceValue,
+              playerId: ludoPlayerId,
+              canRollAgain,
+            });
+            break;
+          }
+
+          case "ludo_move_piece": {
+            const moveRoomId = message.roomId || currentRoomId;
+            const { pieceId, newPosition, landedOnVelvet, capturedPiece } = message;
+
+            if (!moveRoomId) return;
+
+            log(`Ludo piece ${pieceId} moved to position ${newPosition}`);
+
+            // If landed on velvet space, get a random prompt
+            let prompt = null;
+            if (landedOnVelvet) {
+              const room = await storage.getRoom(moveRoomId);
+              if (room) {
+                const prompts = await storage.getPromptsByGameId(room.gameId);
+                if (prompts.length > 0) {
+                  prompt = prompts[Math.floor(Math.random() * prompts.length)];
+                }
+              }
+            }
+
+            broadcastToRoom(moveRoomId, {
+              type: "ludo_piece_moved",
+              pieceId,
+              newPosition,
+              landedOnVelvet,
+              capturedPiece,
+              prompt,
+            });
+            break;
+          }
+
+          case "ludo_next_turn": {
+            const turnRoomId = message.roomId || currentRoomId;
+            const { nextPlayerIndex } = message;
+
+            if (!turnRoomId) return;
+
+            log(`Ludo next turn: player index ${nextPlayerIndex}`);
+
+            broadcastToRoom(turnRoomId, {
+              type: "ludo_turn_changed",
+              currentTurn: nextPlayerIndex,
+            });
+            break;
+          }
+
+          case "ludo_prompt_complete": {
+            const promptRoomId = message.roomId || currentRoomId;
+            if (!promptRoomId) return;
+
+            log(`Ludo prompt completed`);
+
+            broadcastToRoom(promptRoomId, {
+              type: "ludo_prompt_done",
+            });
+            break;
+          }
+
+          case "ludo_game_over": {
+            const overRoomId = message.roomId || currentRoomId;
+            const { winnerId, winnerName } = message;
+
+            if (!overRoomId) return;
+
+            log(`Ludo game over - winner: ${winnerName}`);
+
+            await storage.updateRoom(overRoomId, { status: "finished" });
+
+            broadcastToRoom(overRoomId, {
+              type: "ludo_winner",
+              winnerId,
+              winnerName,
+            });
+            break;
+          }
         }
       } catch (error) {
         log(`Error processing message: ${error}`);
@@ -230,7 +326,8 @@ export async function registerRoutes(
             connections.delete(currentPlayerId);
           } else {
             // Fallback: remove by ws reference
-            for (const [key, value] of connections.entries()) {
+            const entries = Array.from(connections.entries());
+            for (const [key, value] of entries) {
               if (value === ws) {
                 connections.delete(key);
                 break;

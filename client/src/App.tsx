@@ -19,6 +19,8 @@ import Tools from "@/pages/Tools";
 import Summary from "@/pages/Summary";
 import Rules from "@/pages/Rules";
 import Admin from "@/pages/Admin";
+import LudoSetup from "@/pages/LudoSetup";
+import LudoGameplay from "@/pages/LudoGameplay";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -35,6 +37,10 @@ function Router() {
       <Switch location={location} key={location}>
         {/* Home */}
         <Route path="/" component={Home} />
+
+        {/* Velvet Ludo specific routes */}
+        <Route path="/games/velvet-ludo/local" component={LudoSetup} />
+        <Route path="/games/velvet-ludo/play" component={LudoGameplay} />
 
         {/* Game routes */}
         <Route path="/games/:slug" component={GameDetail} />

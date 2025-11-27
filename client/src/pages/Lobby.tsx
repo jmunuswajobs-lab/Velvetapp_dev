@@ -16,8 +16,8 @@ export default function Lobby() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const {
-    joinCode, isHost, isConnected, players, gameStarted,
-    setConnected, updatePlayers, setGameStarted, initGameState, room // Added room to destructure
+    joinCode, isHost, isConnected, players, gameStarted, gameSlug,
+    setConnected, updatePlayers, setGameStarted, initGameState
   } = useOnlineRoom();
 
   // Add a ref for the WebSocket instance
@@ -156,8 +156,8 @@ export default function Lobby() {
 
       // Navigate after a short delay to ensure state is updated
       setTimeout(() => {
-        // Use room.game.slug from the state if available, otherwise default
-        setLocation(`/games/${room?.game?.slug || 'truth-or-dare'}/play`);
+        // Use gameSlug from the state if available, otherwise default
+        setLocation(`/games/${gameSlug || 'truth-or-dare'}/play`);
       }, 500);
     } else {
       console.error("Cannot start game - WebSocket not ready or missing roomId", {
@@ -170,7 +170,7 @@ export default function Lobby() {
         variant: "destructive",
       });
     }
-  }, [roomId, toast, setLocation, room?.game?.slug]); // Added setLocation and room?.game?.slug to dependencies
+  }, [roomId, toast, setLocation, gameSlug]);
 
 
   const allReady = players.length >= 2 && players.every((p) => p.isReady || p.isHost);

@@ -175,6 +175,128 @@ export class MemStorage implements IStorage {
         iconName: "scale",
         createdAt: new Date(),
       },
+      // NEW COUPLES GAMES
+      {
+        id: randomUUID(),
+        slug: "deep-sync",
+        name: "Deep Sync",
+        description: "Build emotional intimacy through meaningful questions and heartfelt confessions. Perfect for couples who want to connect on a deeper level.",
+        minPlayers: 2,
+        maxPlayers: 2,
+        supportsOnline: true,
+        supportsLocal: true,
+        tags: ["couples", "emotional", "connection", "intimate"],
+        isSpicy: true,
+        isCoupleFocused: true,
+        iconName: "sparkles",
+        createdAt: new Date(),
+      },
+      {
+        id: randomUUID(),
+        slug: "temptation-trails",
+        name: "Temptation Trails",
+        description: "A progressive journey of escalating dares and sensual challenges. Each round brings you closer together.",
+        minPlayers: 2,
+        maxPlayers: 2,
+        supportsOnline: true,
+        supportsLocal: true,
+        tags: ["couples", "dares", "progressive", "sensual"],
+        isSpicy: true,
+        isCoupleFocused: true,
+        iconName: "route",
+        createdAt: new Date(),
+      },
+      {
+        id: randomUUID(),
+        slug: "fantasy-signals",
+        name: "Fantasy Signals",
+        description: "Communicate desires without words. Use gestures, looks, and touches to express your deepest fantasies.",
+        minPlayers: 2,
+        maxPlayers: 2,
+        supportsOnline: false,
+        supportsLocal: true,
+        tags: ["couples", "nonverbal", "sensual", "intimate"],
+        isSpicy: true,
+        isCoupleFocused: true,
+        iconName: "eye",
+        createdAt: new Date(),
+      },
+      {
+        id: randomUUID(),
+        slug: "dare-or-devotion",
+        name: "Dare or Devotion",
+        description: "Choose between bold dares or sweet acts of devotion. Balance playfulness with romance.",
+        minPlayers: 2,
+        maxPlayers: 2,
+        supportsOnline: true,
+        supportsLocal: true,
+        tags: ["couples", "choice", "romantic", "dares"],
+        isSpicy: true,
+        isCoupleFocused: true,
+        iconName: "heart-handshake",
+        createdAt: new Date(),
+      },
+      {
+        id: randomUUID(),
+        slug: "heat-check",
+        name: "Heat Check",
+        description: "Watch the temperature rise as you complete increasingly heated challenges. How hot can you handle?",
+        minPlayers: 2,
+        maxPlayers: 2,
+        supportsOnline: true,
+        supportsLocal: true,
+        tags: ["couples", "intensity", "progressive", "spicy"],
+        isSpicy: true,
+        isCoupleFocused: true,
+        iconName: "thermometer",
+        createdAt: new Date(),
+      },
+      {
+        id: randomUUID(),
+        slug: "velvet-roulette",
+        name: "Velvet Roulette",
+        description: "Spin the wheel of desire! Random romantic activities await. From sweet gestures to daring moments.",
+        minPlayers: 2,
+        maxPlayers: 2,
+        supportsOnline: false,
+        supportsLocal: true,
+        tags: ["couples", "random", "romantic", "exciting"],
+        isSpicy: true,
+        isCoupleFocused: true,
+        iconName: "circle-dot",
+        createdAt: new Date(),
+      },
+      {
+        id: randomUUID(),
+        slug: "neon-conspiracy",
+        name: "Neon Conspiracy",
+        description: "Work together on secret missions of love. Complete romantic objectives as a team.",
+        minPlayers: 2,
+        maxPlayers: 2,
+        supportsOnline: true,
+        supportsLocal: true,
+        tags: ["couples", "cooperative", "missions", "team"],
+        isSpicy: true,
+        isCoupleFocused: true,
+        iconName: "target",
+        createdAt: new Date(),
+      },
+      // VELVET LUDO
+      {
+        id: randomUUID(),
+        slug: "velvet-ludo",
+        name: "Velvet Ludo",
+        description: "A romantic twist on the classic board game. Race your pieces home while landing on special velvet spaces for intimate challenges.",
+        minPlayers: 2,
+        maxPlayers: 4,
+        supportsOnline: true,
+        supportsLocal: true,
+        tags: ["couples", "board-game", "strategy", "romantic"],
+        isSpicy: true,
+        isCoupleFocused: true,
+        iconName: "dice-5",
+        createdAt: new Date(),
+      },
     ];
 
     games.forEach((game) => this.games.set(game.id, game));
@@ -269,6 +391,169 @@ export class MemStorage implements IStorage {
       const id = randomUUID();
       this.prompts.set(id, { ...prompt, id, createdAt: new Date() });
     });
+
+    // Add Deep Sync prompts (games[6])
+    const deepSyncId = games[6].id;
+    const deepSyncPrompts: Omit<Prompt, "id" | "createdAt">[] = [
+      { gameId: deepSyncId, packId: null, text: "Share a moment when you felt most connected to your partner.", type: "truth", intensity: 1, flags: { isCoupleExclusive: true, safeForRemote: true } },
+      { gameId: deepSyncId, packId: null, text: "What's something your partner does that makes you feel truly loved?", type: "truth", intensity: 1, flags: { isCoupleExclusive: true, safeForRemote: true } },
+      { gameId: deepSyncId, packId: null, text: "Describe your partner using only positive adjectives for 30 seconds.", type: "challenge", intensity: 1, flags: { isCoupleExclusive: true, safeForRemote: true } },
+      { gameId: deepSyncId, packId: null, text: "What's a fear you haven't shared with your partner yet?", type: "confession", intensity: 3, flags: { isCoupleExclusive: true, safeForRemote: true, isConfession: true } },
+      { gameId: deepSyncId, packId: null, text: "Share a childhood memory that shaped who you are today.", type: "truth", intensity: 2, flags: { isCoupleExclusive: true, safeForRemote: true } },
+      { gameId: deepSyncId, packId: null, text: "What's the most romantic thing your partner has ever done for you?", type: "truth", intensity: 2, flags: { isCoupleExclusive: true, safeForRemote: true, isFlirty: true } },
+      { gameId: deepSyncId, packId: null, text: "Look into your partner's eyes and tell them three things you've never said before.", type: "dare", intensity: 3, flags: { isCoupleExclusive: true, isConfession: true } },
+      { gameId: deepSyncId, packId: null, text: "What's a dream you want to achieve together?", type: "truth", intensity: 2, flags: { isCoupleExclusive: true, safeForRemote: true } },
+      { gameId: deepSyncId, packId: null, text: "Describe the moment you knew you were falling in love.", type: "confession", intensity: 2, flags: { isCoupleExclusive: true, safeForRemote: true, isConfession: true } },
+      { gameId: deepSyncId, packId: null, text: "What's something you admire about your partner that you've never told them?", type: "confession", intensity: 3, flags: { isCoupleExclusive: true, safeForRemote: true, isConfession: true } },
+      { gameId: deepSyncId, packId: null, text: "Share your deepest desire for your relationship's future.", type: "truth", intensity: 4, flags: { isCoupleExclusive: true, safeForRemote: true, isBold: true } },
+      { gameId: deepSyncId, packId: null, text: "What's a vulnerability you're still working on sharing?", type: "confession", intensity: 5, flags: { isCoupleExclusive: true, safeForRemote: true, isConfession: true, isBold: true } },
+    ];
+    deepSyncPrompts.forEach((prompt) => {
+      const id = randomUUID();
+      this.prompts.set(id, { ...prompt, id, createdAt: new Date() });
+    });
+
+    // Add Temptation Trails prompts (games[7])
+    const temptationId = games[7].id;
+    const temptationPrompts: Omit<Prompt, "id" | "createdAt">[] = [
+      { gameId: temptationId, packId: null, text: "Hold your partner's hand and trace slow circles on their palm for 30 seconds.", type: "dare", intensity: 1, flags: { isCoupleExclusive: true } },
+      { gameId: temptationId, packId: null, text: "Whisper something sweet in your partner's ear.", type: "dare", intensity: 1, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: temptationId, packId: null, text: "Give your partner a gentle neck massage.", type: "dare", intensity: 2, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: temptationId, packId: null, text: "Kiss your partner's neck softly three times.", type: "dare", intensity: 3, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: temptationId, packId: null, text: "Slowly run your fingers through your partner's hair.", type: "dare", intensity: 2, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: temptationId, packId: null, text: "Give your partner a slow, lingering kiss.", type: "dare", intensity: 3, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: temptationId, packId: null, text: "Trace your finger slowly down your partner's arm.", type: "dare", intensity: 2, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: temptationId, packId: null, text: "Give your partner butterfly kisses on their face.", type: "dare", intensity: 2, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: temptationId, packId: null, text: "Whisper your favorite thing about your partner's body in their ear.", type: "dare", intensity: 4, flags: { isCoupleExclusive: true, isFlirty: true, isBold: true } },
+      { gameId: temptationId, packId: null, text: "Give your partner a back massage for 2 minutes.", type: "dare", intensity: 3, flags: { isCoupleExclusive: true, isFlirty: true, requiresMovement: true } },
+      { gameId: temptationId, packId: null, text: "Kiss your partner's shoulder and collarbone area.", type: "dare", intensity: 4, flags: { isCoupleExclusive: true, isFlirty: true, isBold: true } },
+      { gameId: temptationId, packId: null, text: "Let your partner blindfold you and guide your hands where they want.", type: "dare", intensity: 5, flags: { isCoupleExclusive: true, isFlirty: true, isBold: true, isKinkyTease: true } },
+    ];
+    temptationPrompts.forEach((prompt) => {
+      const id = randomUUID();
+      this.prompts.set(id, { ...prompt, id, createdAt: new Date() });
+    });
+
+    // Add Fantasy Signals prompts (games[8])
+    const fantasySignalsId = games[8].id;
+    const fantasyPrompts: Omit<Prompt, "id" | "createdAt">[] = [
+      { gameId: fantasySignalsId, packId: null, text: "Without speaking, show your partner how you like to be kissed.", type: "dare", intensity: 2, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: fantasySignalsId, packId: null, text: "Use only your eyes to communicate 'I want you'.", type: "challenge", intensity: 3, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: fantasySignalsId, packId: null, text: "Guide your partner's hand to where you want to be touched (over clothes).", type: "dare", intensity: 3, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: fantasySignalsId, packId: null, text: "Communicate a fantasy using only gestures. Partner guesses.", type: "challenge", intensity: 4, flags: { isCoupleExclusive: true, isFlirty: true, isBold: true } },
+      { gameId: fantasySignalsId, packId: null, text: "Show your partner your favorite way to be held.", type: "dare", intensity: 2, flags: { isCoupleExclusive: true } },
+      { gameId: fantasySignalsId, packId: null, text: "Use body language to express how you felt on your first date.", type: "challenge", intensity: 2, flags: { isCoupleExclusive: true } },
+      { gameId: fantasySignalsId, packId: null, text: "Give your partner a look that says 'I love you' without speaking.", type: "challenge", intensity: 1, flags: { isCoupleExclusive: true } },
+      { gameId: fantasySignalsId, packId: null, text: "Demonstrate your favorite type of embrace.", type: "dare", intensity: 2, flags: { isCoupleExclusive: true } },
+      { gameId: fantasySignalsId, packId: null, text: "Use only touches to tell your partner they're beautiful/handsome.", type: "dare", intensity: 3, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: fantasySignalsId, packId: null, text: "Silently show your partner the pace you enjoy.", type: "dare", intensity: 5, flags: { isCoupleExclusive: true, isFlirty: true, isBold: true } },
+    ];
+    fantasyPrompts.forEach((prompt) => {
+      const id = randomUUID();
+      this.prompts.set(id, { ...prompt, id, createdAt: new Date() });
+    });
+
+    // Add Dare or Devotion prompts (games[9])
+    const dareDevotionId = games[9].id;
+    const dareDevotionPrompts: Omit<Prompt, "id" | "createdAt">[] = [
+      { gameId: dareDevotionId, packId: null, text: "DARE: Kiss your partner in a spot you've never kissed before. DEVOTION: Write a love note to your partner.", type: "dare", intensity: 2, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: dareDevotionId, packId: null, text: "DARE: Give your partner a 30-second lap dance. DEVOTION: Slow dance together to your song.", type: "dare", intensity: 3, flags: { isCoupleExclusive: true, isFlirty: true, requiresMovement: true } },
+      { gameId: dareDevotionId, packId: null, text: "DARE: Feed your partner something sensually. DEVOTION: Cook something special together.", type: "dare", intensity: 2, flags: { isCoupleExclusive: true } },
+      { gameId: dareDevotionId, packId: null, text: "DARE: Whisper something naughty. DEVOTION: Whisper your wedding vows (or make them up).", type: "dare", intensity: 4, flags: { isCoupleExclusive: true, isFlirty: true, isBold: true } },
+      { gameId: dareDevotionId, packId: null, text: "DARE: Remove one piece of your partner's clothing. DEVOTION: Dress your partner in something special.", type: "dare", intensity: 4, flags: { isCoupleExclusive: true, isFlirty: true, isBold: true } },
+      { gameId: dareDevotionId, packId: null, text: "DARE: Kiss your partner passionately for 1 minute. DEVOTION: Hold hands and share your dreams.", type: "dare", intensity: 3, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: dareDevotionId, packId: null, text: "DARE: Blindfold your partner and tease them. DEVOTION: Plan your next date night together.", type: "dare", intensity: 4, flags: { isCoupleExclusive: true, isFlirty: true, isBold: true } },
+      { gameId: dareDevotionId, packId: null, text: "DARE: Act out a romantic movie scene. DEVOTION: Recreate your first kiss.", type: "dare", intensity: 3, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: dareDevotionId, packId: null, text: "DARE: Give a sensual massage. DEVOTION: Give a loving foot rub.", type: "dare", intensity: 4, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: dareDevotionId, packId: null, text: "DARE: Describe your hottest fantasy. DEVOTION: Share your favorite memory of us.", type: "truth", intensity: 5, flags: { isCoupleExclusive: true, isFlirty: true, isBold: true, safeForRemote: true } },
+    ];
+    dareDevotionPrompts.forEach((prompt) => {
+      const id = randomUUID();
+      this.prompts.set(id, { ...prompt, id, createdAt: new Date() });
+    });
+
+    // Add Heat Check prompts (games[10])
+    const heatCheckId = games[10].id;
+    const heatCheckPrompts: Omit<Prompt, "id" | "createdAt">[] = [
+      { gameId: heatCheckId, packId: null, text: "WARM: Give your partner a forehead kiss.", type: "dare", intensity: 1, flags: { isCoupleExclusive: true } },
+      { gameId: heatCheckId, packId: null, text: "WARM: Hold your partner close for 30 seconds.", type: "dare", intensity: 1, flags: { isCoupleExclusive: true } },
+      { gameId: heatCheckId, packId: null, text: "TOASTY: Kiss your partner's hand like royalty.", type: "dare", intensity: 2, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: heatCheckId, packId: null, text: "TOASTY: Whisper three things you find attractive about your partner.", type: "dare", intensity: 2, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: heatCheckId, packId: null, text: "HOT: Kiss your partner's neck for 10 seconds.", type: "dare", intensity: 3, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: heatCheckId, packId: null, text: "HOT: Give your partner a slow, deep kiss.", type: "dare", intensity: 3, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: heatCheckId, packId: null, text: "SIZZLING: Trace your lips across your partner's shoulders.", type: "dare", intensity: 4, flags: { isCoupleExclusive: true, isFlirty: true, isBold: true } },
+      { gameId: heatCheckId, packId: null, text: "SIZZLING: Give your partner a teasing massage.", type: "dare", intensity: 4, flags: { isCoupleExclusive: true, isFlirty: true, isBold: true } },
+      { gameId: heatCheckId, packId: null, text: "ON FIRE: Pin your partner against the wall and kiss them passionately.", type: "dare", intensity: 5, flags: { isCoupleExclusive: true, isFlirty: true, isBold: true } },
+      { gameId: heatCheckId, packId: null, text: "ON FIRE: Take control and show your partner exactly what you want.", type: "dare", intensity: 5, flags: { isCoupleExclusive: true, isFlirty: true, isBold: true, isKinkyTease: true } },
+    ];
+    heatCheckPrompts.forEach((prompt) => {
+      const id = randomUUID();
+      this.prompts.set(id, { ...prompt, id, createdAt: new Date() });
+    });
+
+    // Add Velvet Roulette prompts (games[11])
+    const velvetRouletteId = games[11].id;
+    const velvetRoulettePrompts: Omit<Prompt, "id" | "createdAt">[] = [
+      { gameId: velvetRouletteId, packId: null, text: "Spin landed on: SWEET GESTURE - Give your partner an unexpected compliment.", type: "dare", intensity: 1, flags: { isCoupleExclusive: true } },
+      { gameId: velvetRouletteId, packId: null, text: "Spin landed on: COZY MOMENT - Cuddle for 2 minutes without phones.", type: "dare", intensity: 1, flags: { isCoupleExclusive: true } },
+      { gameId: velvetRouletteId, packId: null, text: "Spin landed on: KISS CHALLENGE - Give 5 different types of kisses.", type: "dare", intensity: 2, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: velvetRouletteId, packId: null, text: "Spin landed on: MEMORY LANE - Reenact how you first met.", type: "challenge", intensity: 2, flags: { isCoupleExclusive: true } },
+      { gameId: velvetRouletteId, packId: null, text: "Spin landed on: TEASE TIME - Give your partner a 30-second tease.", type: "dare", intensity: 3, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: velvetRouletteId, packId: null, text: "Spin landed on: CONFESSION CORNER - Share a secret desire.", type: "confession", intensity: 4, flags: { isCoupleExclusive: true, isFlirty: true, isConfession: true } },
+      { gameId: velvetRouletteId, packId: null, text: "Spin landed on: MASSAGE PARLOR - 3-minute back massage.", type: "dare", intensity: 3, flags: { isCoupleExclusive: true } },
+      { gameId: velvetRouletteId, packId: null, text: "Spin landed on: ROLE PLAY - Act out your partner's favorite movie scene.", type: "dare", intensity: 3, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: velvetRouletteId, packId: null, text: "Spin landed on: WILD CARD - Partner's choice of any romantic activity.", type: "dare", intensity: 4, flags: { isCoupleExclusive: true, isFlirty: true, isBold: true } },
+      { gameId: velvetRouletteId, packId: null, text: "Spin landed on: JACKPOT - Fulfill one of your partner's fantasies (within comfort).", type: "dare", intensity: 5, flags: { isCoupleExclusive: true, isFlirty: true, isBold: true } },
+    ];
+    velvetRoulettePrompts.forEach((prompt) => {
+      const id = randomUUID();
+      this.prompts.set(id, { ...prompt, id, createdAt: new Date() });
+    });
+
+    // Add Neon Conspiracy prompts (games[12])
+    const neonConspiracyId = games[12].id;
+    const neonConspiracyPrompts: Omit<Prompt, "id" | "createdAt">[] = [
+      { gameId: neonConspiracyId, packId: null, text: "MISSION: Exchange a secret code phrase only you two understand.", type: "challenge", intensity: 1, flags: { isCoupleExclusive: true, safeForRemote: true } },
+      { gameId: neonConspiracyId, packId: null, text: "MISSION: Plan a surprise date for each other within 2 minutes.", type: "challenge", intensity: 1, flags: { isCoupleExclusive: true, safeForRemote: true } },
+      { gameId: neonConspiracyId, packId: null, text: "MISSION: Create a secret handshake with romantic elements.", type: "dare", intensity: 2, flags: { isCoupleExclusive: true } },
+      { gameId: neonConspiracyId, packId: null, text: "MISSION: Together, come up with a romantic bucket list (3 items).", type: "challenge", intensity: 2, flags: { isCoupleExclusive: true, safeForRemote: true } },
+      { gameId: neonConspiracyId, packId: null, text: "MISSION: Agree on a 'signal' that means 'I want you' in public.", type: "challenge", intensity: 3, flags: { isCoupleExclusive: true, isFlirty: true, safeForRemote: true } },
+      { gameId: neonConspiracyId, packId: null, text: "MISSION: Create a 5-step seduction plan together.", type: "challenge", intensity: 4, flags: { isCoupleExclusive: true, isFlirty: true, isBold: true, safeForRemote: true } },
+      { gameId: neonConspiracyId, packId: null, text: "MISSION: Write each other love notes to be opened later.", type: "dare", intensity: 2, flags: { isCoupleExclusive: true, safeForRemote: true } },
+      { gameId: neonConspiracyId, packId: null, text: "MISSION: Plan a romantic getaway together (hypothetical or real).", type: "challenge", intensity: 2, flags: { isCoupleExclusive: true, safeForRemote: true } },
+      { gameId: neonConspiracyId, packId: null, text: "MISSION: Create matching playlist songs for 'your song'.", type: "challenge", intensity: 1, flags: { isCoupleExclusive: true, safeForRemote: true } },
+      { gameId: neonConspiracyId, packId: null, text: "MISSION: Design your dream bedroom together (describe it in detail).", type: "challenge", intensity: 3, flags: { isCoupleExclusive: true, isFlirty: true, safeForRemote: true } },
+    ];
+    neonConspiracyPrompts.forEach((prompt) => {
+      const id = randomUUID();
+      this.prompts.set(id, { ...prompt, id, createdAt: new Date() });
+    });
+
+    // Add Velvet Ludo prompts (games[13])
+    const velvetLudoId = games[13].id;
+    const velvetLudoPrompts: Omit<Prompt, "id" | "createdAt">[] = [
+      // Velvet Space Challenges
+      { gameId: velvetLudoId, packId: null, text: "VELVET KISS: Give your partner a soft kiss on the cheek.", type: "dare", intensity: 1, flags: { isCoupleExclusive: true } },
+      { gameId: velvetLudoId, packId: null, text: "VELVET COMPLIMENT: Tell your partner something you love about them.", type: "dare", intensity: 1, flags: { isCoupleExclusive: true, safeForRemote: true } },
+      { gameId: velvetLudoId, packId: null, text: "VELVET TRUTH: Share your favorite memory of your relationship.", type: "truth", intensity: 1, flags: { isCoupleExclusive: true, safeForRemote: true } },
+      { gameId: velvetLudoId, packId: null, text: "VELVET EMBRACE: Hold your partner close for 30 seconds.", type: "dare", intensity: 2, flags: { isCoupleExclusive: true } },
+      { gameId: velvetLudoId, packId: null, text: "VELVET WHISPER: Whisper something sweet in your partner's ear.", type: "dare", intensity: 2, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: velvetLudoId, packId: null, text: "VELVET TOUCH: Gently trace your fingers along your partner's arm.", type: "dare", intensity: 2, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: velvetLudoId, packId: null, text: "VELVET MASSAGE: Give your partner a short shoulder massage.", type: "dare", intensity: 3, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: velvetLudoId, packId: null, text: "VELVET DEEP: Kiss your partner slowly and deeply.", type: "dare", intensity: 3, flags: { isCoupleExclusive: true, isFlirty: true } },
+      { gameId: velvetLudoId, packId: null, text: "VELVET CONFESSION: Share a secret desire with your partner.", type: "confession", intensity: 4, flags: { isCoupleExclusive: true, isFlirty: true, isConfession: true } },
+      { gameId: velvetLudoId, packId: null, text: "VELVET TEASE: Give your partner a playful tease.", type: "dare", intensity: 4, flags: { isCoupleExclusive: true, isFlirty: true, isBold: true } },
+      { gameId: velvetLudoId, packId: null, text: "VELVET PASSION: Kiss your partner on the neck for 10 seconds.", type: "dare", intensity: 4, flags: { isCoupleExclusive: true, isFlirty: true, isBold: true } },
+      { gameId: velvetLudoId, packId: null, text: "VELVET FIRE: Show your partner exactly how you want to be kissed.", type: "dare", intensity: 5, flags: { isCoupleExclusive: true, isFlirty: true, isBold: true } },
+      // Bonus moves
+      { gameId: velvetLudoId, packId: null, text: "BONUS ROLL: You landed on a lucky space! Roll again.", type: "rule", intensity: 1, flags: { safeForRemote: true } },
+      { gameId: velvetLudoId, packId: null, text: "SWITCH: Swap positions with one of your partner's pieces.", type: "rule", intensity: 2, flags: { safeForRemote: true } },
+      { gameId: velvetLudoId, packId: null, text: "SHIELD: Protect one of your pieces from being captured next turn.", type: "rule", intensity: 2, flags: { safeForRemote: true } },
+    ];
+    velvetLudoPrompts.forEach((prompt) => {
+      const id = randomUUID();
+      this.prompts.set(id, { ...prompt, id, createdAt: new Date() });
+    });
   }
 
   // User methods
@@ -319,7 +604,21 @@ export class MemStorage implements IStorage {
 
   async createGame(game: InsertGame): Promise<Game> {
     const id = randomUUID();
-    const newGame: Game = { ...game, id, createdAt: new Date() };
+    const newGame: Game = { 
+      id, 
+      name: game.name,
+      slug: game.slug,
+      description: game.description,
+      minPlayers: game.minPlayers ?? 2,
+      maxPlayers: game.maxPlayers ?? 10,
+      supportsOnline: game.supportsOnline ?? true,
+      supportsLocal: game.supportsLocal ?? true,
+      tags: game.tags ?? null,
+      isSpicy: game.isSpicy ?? false,
+      isCoupleFocused: game.isCoupleFocused ?? false,
+      iconName: game.iconName ?? null,
+      createdAt: new Date() 
+    };
     this.games.set(id, newGame);
     return newGame;
   }
@@ -352,7 +651,15 @@ export class MemStorage implements IStorage {
 
   async createPack(pack: InsertPack): Promise<Pack> {
     const id = randomUUID();
-    const newPack: Pack = { ...pack, id, createdAt: new Date() };
+    const newPack: Pack = { 
+      id, 
+      name: pack.name,
+      gameId: pack.gameId,
+      description: pack.description ?? null,
+      intensity: pack.intensity ?? 3,
+      isDefault: pack.isDefault ?? false,
+      createdAt: new Date() 
+    };
     this.packs.set(id, newPack);
     return newPack;
   }
@@ -386,7 +693,16 @@ export class MemStorage implements IStorage {
 
   async createPrompt(prompt: InsertPrompt): Promise<Prompt> {
     const id = randomUUID();
-    const newPrompt: Prompt = { ...prompt, id, createdAt: new Date() };
+    const newPrompt: Prompt = { 
+      id, 
+      text: prompt.text,
+      type: prompt.type as "truth" | "dare" | "challenge" | "confession" | "vote" | "rule",
+      gameId: prompt.gameId,
+      packId: prompt.packId ?? null,
+      intensity: prompt.intensity ?? 3,
+      flags: prompt.flags ?? null,
+      createdAt: new Date() 
+    };
     this.prompts.set(id, newPrompt);
     return newPrompt;
   }
@@ -395,7 +711,11 @@ export class MemStorage implements IStorage {
     const prompt = this.prompts.get(id);
     if (!prompt) return undefined;
 
-    const updatedPrompt = { ...prompt, ...updates };
+    const updatedPrompt: Prompt = { 
+      ...prompt, 
+      ...updates,
+      type: (updates.type ?? prompt.type) as "truth" | "dare" | "challenge" | "confession" | "vote" | "rule"
+    };
     this.prompts.set(id, updatedPrompt);
     return updatedPrompt;
   }
@@ -427,9 +747,17 @@ export class MemStorage implements IStorage {
     }
 
     const newRoom: Room = { 
-      ...room, 
-      id, 
+      id,
+      gameId: room.gameId,
+      hostId: room.hostId,
       joinCode,
+      status: (room.status ?? "waiting") as "waiting" | "in-progress" | "finished",
+      round: room.round ?? 0,
+      settings: room.settings ?? null,
+      currentPromptId: room.currentPromptId ?? null,
+      usedPromptIds: room.usedPromptIds ?? [],
+      turnIndex: room.turnIndex ?? 0,
+      heatLevel: room.heatLevel ?? 0,
       createdAt: new Date() 
     };
     this.rooms.set(id, newRoom);
@@ -459,7 +787,16 @@ export class MemStorage implements IStorage {
 
   async addRoomPlayer(player: InsertRoomPlayer): Promise<RoomPlayer> {
     const id = randomUUID();
-    const newPlayer: RoomPlayer = { ...player, id, joinedAt: new Date() };
+    const newPlayer: RoomPlayer = { 
+      id, 
+      roomId: player.roomId,
+      nickname: player.nickname,
+      odId: player.odId ?? null,
+      isHost: player.isHost ?? false,
+      isReady: player.isReady ?? false,
+      avatarColor: player.avatarColor ?? null,
+      joinedAt: new Date() 
+    };
     this.roomPlayers.set(id, newPlayer);
     return newPlayer;
   }

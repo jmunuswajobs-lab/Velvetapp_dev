@@ -241,3 +241,62 @@ export const loginSchema = z.object({
   username: z.string().min(3),
   password: z.string().min(6),
 });
+
+// ===== VELVET LUDO TYPES =====
+
+export type LudoColor = "red" | "blue" | "green" | "yellow";
+
+export interface LudoPiece {
+  id: string;
+  color: LudoColor;
+  position: number; // -1 = home base, 0-51 = board, 52-57 = home stretch
+  player: string;
+  isHome: boolean;
+}
+
+export interface LudoPlayer {
+  id: string;
+  nickname: string;
+  avatarColor: string;
+  color: LudoColor;
+  pieces: LudoPiece[];
+  hasFinished: boolean;
+}
+
+export interface VelvetSpace {
+  position: number;
+  type: "dare" | "truth" | "kiss" | "massage" | "compliment";
+  description: string;
+}
+
+export interface LudoGameState {
+  boardSize: number;
+  players: LudoPlayer[];
+  currentTurn: number;
+  diceValue: number | null;
+  canRollAgain: boolean;
+  velvetSpaces: VelvetSpace[];
+  currentPrompt: Prompt | null;
+  winner: string | null;
+  gamePhase: "rolling" | "moving" | "prompt" | "finished";
+  turnCount: number;
+}
+
+export const LUDO_BOARD_SIZE = 52;
+export const LUDO_HOME_STRETCH_SIZE = 6;
+
+export const VELVET_SPACE_POSITIONS = [6, 13, 20, 27, 34, 41, 48]; // Every 7th space
+
+export const LUDO_START_POSITIONS: Record<LudoColor, number> = {
+  red: 0,
+  blue: 13,
+  green: 26,
+  yellow: 39,
+};
+
+export const LUDO_HOME_ENTRY: Record<LudoColor, number> = {
+  red: 51,
+  blue: 12,
+  green: 25,
+  yellow: 38,
+};

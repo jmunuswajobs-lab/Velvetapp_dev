@@ -222,6 +222,7 @@ export const useLocalGame = create<LocalGameStore>((set, get) => ({
 interface OnlineRoomState {
   roomId: string | null;
   joinCode: string | null;
+  gameSlug: string | null;
   isHost: boolean;
   isConnected: boolean;
   players: {
@@ -236,7 +237,8 @@ interface OnlineRoomState {
 }
 
 interface OnlineRoomStore extends OnlineRoomState {
-  setRoom: (roomId: string, joinCode: string, isHost: boolean) => void;
+  setRoom: (roomId: string, joinCode: string, isHost: boolean, gameSlug?: string) => void;
+  setGameSlug: (gameSlug: string) => void;
   setConnected: (connected: boolean) => void;
   updatePlayers: (players: OnlineRoomState["players"]) => void;
   setGameStarted: (started: boolean) => void;
@@ -254,6 +256,7 @@ interface OnlineRoomStore extends OnlineRoomState {
 const initialOnlineState: OnlineRoomState = {
   roomId: null,
   joinCode: null,
+  gameSlug: null,
   isHost: false,
   isConnected: false,
   players: [],
@@ -264,8 +267,11 @@ const initialOnlineState: OnlineRoomState = {
 export const useOnlineRoom = create<OnlineRoomStore>((set, get) => ({
   ...initialOnlineState,
 
-  setRoom: (roomId, joinCode, isHost) => 
-    set({ roomId, joinCode, isHost }),
+  setRoom: (roomId, joinCode, isHost, gameSlug) => 
+    set({ roomId, joinCode, isHost, gameSlug: gameSlug || null }),
+
+  setGameSlug: (gameSlug) => 
+    set({ gameSlug }),
 
   setConnected: (isConnected) => 
     set({ isConnected }),
