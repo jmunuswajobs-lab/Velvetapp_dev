@@ -1,0 +1,378 @@
+ADVANCED ADULT COUPLES GAME UNIVERSE (WITH CRAZYGAMES REMIX)
+(Guaranteed AAA Quality • Zero Memory Leaks • Zero Functional Failures • Fully Real-Time • Ultra-Modern)
+
+You are Replit’s senior full-stack architect, game engine designer, graphics/motion director, and QA lead.
+Your job now is to upgrade the entire VelvetPlay Online project to a AAA-quality, fully-stable, multi-game adult play universe.
+
+NO EXCUSES. EVERYTHING MUST WORK 100%.
+No bugs. No broken flows. No half-implemented logic. No missing screens.
+No memory leaks, no stale subscriptions, no runaway effects, no infinite re-renders.
+Every game must run flawlessly across Desktop + Mobile with realtime sync.
+
+Maintain PG-17 standards: flirty, spicy, bold, teasing—but strictly non-explicit, no nudity, no minors, no illegal content.
+
+1️⃣ PHASE 1 — FIX THE ENTIRE EXISTING SYSTEM (STABILITY + FLOW)
+
+Before adding anything new:
+
+You MUST:
+
+Run the project
+
+Identify ALL runtime errors, console errors, TypeScript errors, build errors
+
+Fix every single one
+
+Fix all flow bugs in:
+
+Age gate
+
+Home screen
+
+Game selection
+
+Local game setup
+
+Online room creation
+
+Room join
+
+Lobby ready-state sync
+
+Real-time gameplay
+
+Tools (dice, bottle, coin)
+
+Summary screens
+
+Admin panel
+
+Fix race conditions in WebSockets
+
+Fix broken state restorations
+
+Fix navigation inconsistencies
+
+Fix unmounted component memory leaks
+
+Fix duplicate listeners
+
+Add cleanup logic for:
+
+WebSocket events
+
+Timers
+
+Interval loops
+
+Animations
+
+All main flows MUST function smoothly and consistently.
+
+Once this is done: proceed.
+
+2️⃣ PHASE 2 — ADD MORE ADULT COUPLES GAMES (PG-17)
+
+Add these new original games:
+
+🔹 Deep Sync
+
+Emotional + spicy question game with escalating intensity.
+
+🔹 Temptation Trails
+
+Branching path gameplay (Soft vs Spicy decision tree).
+
+🔹 Fantasy Signals
+
+Fantasy-themed metaphors with emoji response rounds.
+
+🔹 Dare or Devotion
+
+Choose between bold dares vs sincere devotion cards.
+
+🔹 Heat Check
+
+Fast-paced “rapid fire choices” raising heat meter fast.
+
+🔹 Velvet Roulette
+
+A wheel-of-fate style spicy challenge system.
+
+🔹 Neon Conspiracy
+
+Players collaborate to unlock shared secrets based on subtle clues.
+
+Implement all games as:
+
+Fully separate gameplay screens
+
+Fully validated prompt engines
+
+Reusable card animations
+
+100% functional in both Local and Online modes
+
+Every new game must be complete, not placeholders.
+
+3️⃣ PHASE 3 — ULTRA-FUTURISTIC COUPLES LUDO (VELVETLUDO)
+
+You MUST design and implement a premium, futuristic, neon-velvet couples Ludo:
+
+Board Requirements
+
+Custom glowing tiles
+
+Neon edges
+
+Heat nodes
+
+Soft bloom effects
+
+Animated particle background
+
+Responsive & scalable on all devices
+
+Smooth zoom/pan for mobile
+
+Gameplay Enhancements
+
+Heat Tile → triggers spicy prompt
+
+Bond Tile → cooperative action
+
+Freeze Tile → skip turn unless partner saves you
+
+Wild Tile → random effect (validated server-side)
+
+Adult-couple-friendly but PG-17 safe
+
+Animations
+
+Smooth token movement
+
+Dice synced with HeatDice component
+
+Ludo board appears with cinematic transition
+
+Pulsing tile highlights
+
+Real-Time Sync
+
+Must be authoritative-server model:
+
+Backend ALWAYS decides:
+
+Moves
+
+Validity
+
+Dice results
+
+Tile triggers
+
+Frontend sends only intent
+
+Zero desync allowed.
+
+4️⃣ PHASE 4 — NEW GAMES: COUPLES REMIX OF CRAZYGAMES TITLES
+
+Add brand-new couple/friends multiplayer remixes of games inspired by CrazyGames (but redesigned for adult-flirty PG-17 gameplay).
+
+No copying assets/code. Only reinvent concepts.
+Focus: fun, dynamic, multiplayer-friendly, flirty games usable online.
+
+🔥 Add These CrazyGames-Inspired Remixes:
+1. Couples Duel Arena (Remix of Sword/Arcade Duel Games)
+
+Two players
+
+Quick minigame battles
+
+Simple tap-based combat with charge/defend mechanics
+
+Flirty consequences for win/loss (non-explicit)
+
+2. Neon Drift—Couple Mode (Remix of Car Drift Games)
+
+1v1 or cooperative
+
+Glow-trail vehicles on neon arena
+
+Control conflict events (two players share control in couple mode)
+
+3. Truth Bomb Run (Remix of Obstacle Runners)
+
+Obstacle runner where reaching gates reveals spicy truths
+
+If a player fails an obstacle, they get a spice penalty
+
+Fully animated, lightweight physics
+
+4. Emotion Ping-Pong (Remix of Pong games but emotional/flirty)
+
+Neon ball
+
+Paddle hits trigger prompt categories
+
+Winner chooses spicy card
+
+5. Velvet Memory Flip (Remix of Memory Match)
+
+Couple-themed icons
+
+Matching pairs unlock a “sweet or spicy” choice
+
+Subtle animations, velvet textures
+
+6. Neon Guessing Game (Remix of Trivia/Guess)
+
+Guess partner’s feelings/preferences
+
+Heat meter climbs for accurate guesses
+
+Works remotely with synced timers
+
+7. Duo Rhythm Sync (Remix of music/rhythm games)
+
+Couple rhythm-tap game
+
+Shared score
+
+Heat sparks on perfect streaks
+
+5️⃣ PHASE 5 — VISUAL, MOTION & GRAPHIC UPGRADE FOR ALL GAMES
+
+Apply premium visual style to every screen and every game:
+
+Global Style
+
+Velvet-neon radial gradients
+
+Depth shadows
+
+Glow borders
+
+Subtle static/noise overlays
+
+Ember particles
+
+Smooth 3D-ish tilt animations
+
+Motion
+
+Use Framer Motion for all major transitions:
+
+Page transitions
+
+Card flips
+
+Heat meter animations
+
+Button micro-interactions
+
+Token movement
+
+Board transitions
+
+Real-time feedback pulses
+
+Zero Lag
+
+Optimize renders
+
+Memoize components
+
+Debounce inputs
+
+Limit heavy layouts
+
+Use GPU-friendly transforms
+
+Avoid synchronous loops
+
+Prevent re-render cascades
+
+6️⃣ PHASE 6 — STABILITY, MEMORY-SAFETY, PERFORMANCE OPTIMIZATION
+
+You MUST deliver 100% stable, AAA performance:
+
+Memory Safety
+
+Remove all stale WebSocket listeners
+
+Cleanup useEffect properly
+
+Remove orphaned timers
+
+Clear intervals on unmount
+
+Avoid allocating functions inside loops
+
+Performance
+
+Split heavy logic into workers if needed
+
+Avoid deep object clones
+
+Ensure WebSocket events use tiny payloads
+
+Optimize Ludo board rendering (useMemo + React.memo)
+
+Minimize re-renders in game screens
+
+Add server-side rate limiting
+
+Add reconnection throttling
+
+Network Safety
+
+Idempotent server actions
+
+Host-change logic
+
+Atomic moves
+
+Strict validation for all game actions
+
+Sanitize input everywhere
+
+7️⃣ PHASE 7 — FINAL QA PASS & REPORT
+
+After implementing everything:
+
+You MUST:
+
+Run complete E2E flows for all games
+
+Validate multi-device gameplay
+
+Validate online sync on two browser tabs
+
+Test reconnection behavior
+
+Ensure build succeeds with zero warnings
+
+Update README with:
+
+How to run
+
+How to add new games
+
+How the real-time engine works
+
+How the Couples Ludo logic works
+
+Safety + PG-17 guidelines
+
+Provide final summary:
+
+All fixes
+
+All added games
+
+Ludo board logic
+
+Performance improvements
+
+Remaining optional enhancements
