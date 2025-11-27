@@ -25,10 +25,10 @@ export default function Gameplay() {
 
   // Determine which game state to use based on mode
   const currentGameState = isOnlineMode ? onlineGame.gameState : localGame.gameState;
-  const currentRound = isOnlineMode ? onlineGame.gameState.round : localGame.gameState.round;
-  const currentHeatLevel = isOnlineMode ? onlineGame.gameState.heatLevel : localGame.gameState.heatLevel;
-  const currentPrompts = isOnlineMode ? onlineGame.gameState.prompts : localGame.gameState.prompts;
-  const currentPlayerIndex = isOnlineMode ? onlineGame.gameState.turnIndex : localGame.gameState.turnIndex;
+  const currentRound = currentGameState?.round || 1;
+  const currentHeatLevel = currentGameState?.heatLevel || 0;
+  const currentPrompts = currentGameState?.prompts || [];
+  const currentPlayerIndex = currentGameState?.turnIndex || 0;
   const currentPlayer = currentGameState?.players[currentPlayerIndex];
   const promptsRemaining = currentGameState ? currentGameState.prompts.length - currentGameState.currentPromptIndex - 1 : 0;
 
@@ -49,7 +49,7 @@ export default function Gameplay() {
   useEffect(() => {
     if (isOnlineMode) {
       // Handle online game state updates here
-      if (onlineGame.gameState) {
+      if (onlineGame.gameState && onlineGame.gameState.prompts.length > 0) {
         setCurrentPrompt(onlineGame.gameState.prompts[onlineGame.gameState.currentPromptIndex]);
       }
     } else {
@@ -131,7 +131,7 @@ export default function Gameplay() {
     );
   }
 
-  if (!currentGameState) {
+  if (!currentGameState || !currentPrompt) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">

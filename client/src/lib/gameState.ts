@@ -226,10 +226,7 @@ interface OnlineRoomState {
     isReady: boolean;
   }[];
   gameStarted: boolean;
-  currentPrompt: Prompt | null;
-  heatLevel: number;
-  turnIndex: number;
-  round: number;
+  gameState: LocalGameState | null;
 }
 
 interface OnlineRoomStore extends OnlineRoomState {
@@ -237,7 +234,14 @@ interface OnlineRoomStore extends OnlineRoomState {
   setConnected: (connected: boolean) => void;
   updatePlayers: (players: OnlineRoomState["players"]) => void;
   setGameStarted: (started: boolean) => void;
-  updateGameState: (state: Partial<Pick<OnlineRoomState, "currentPrompt" | "heatLevel" | "turnIndex" | "round">>) => void;
+  initGameState: (prompts: Prompt[], players: OnlineRoomState["players"]) => void;
+  nextPrompt: () => Prompt | null;
+  previousPrompt: () => Prompt | null;
+  skipPrompt: () => void;
+  updateHeatLevel: (delta: number) => void;
+  advanceTurn: () => void;
+  endGame: () => GameStats;
+  resetGame: () => void;
   reset: () => void;
 }
 
@@ -248,13 +252,10 @@ const initialOnlineState: OnlineRoomState = {
   isConnected: false,
   players: [],
   gameStarted: false,
-  currentPrompt: null,
-  heatLevel: 0,
-  turnIndex: 0,
-  round: 1,
+  gameState: null,
 };
 
-export const useOnlineRoom = create<OnlineRoomStore>((set) => ({
+export const useOnlineRoom = create<OnlineRoomStore>((set, get) => ({
   ...initialOnlineState,
 
   setRoom: (roomId, joinCode, isHost) => 
@@ -269,8 +270,162 @@ export const useOnlineRoom = create<OnlineRoomStore>((set) => ({
   setGameStarted: (gameStarted) => 
     set({ gameStarted }),
 
-  updateGameState: (state) => 
-    set((prev) => ({ ...prev, ...state })),
+  initGameState: (prompts, players) => {
+    const shuffledPrompts = [...prompts].sort(() => Math.random() - 0.5);
+    
+    set({
+      gameState: {
+        gameId: get().roomId || "",
+        players: players.map(p => ({
+          nickname: p.nickname,
+          avatarColor: p.avatarColor,
+        })),
+        settings: {
+          intensity: 3,
+          allowNSFW: false,
+          allowMovement: true,
+          coupleMode: false,
+          packs: [],
+        },
+        currentPromptIndex: 0,
+        prompts: shuffledPrompts,
+        usedPromptIds: [],
+        round: 1,
+        turnIndex: 0,
+        heatLevel: 0,
+        stats: {
+          roundsPlayed: 0,
+          promptsByType: {
+            truth: 0,
+            dare: 0,
+            challenge: 0,
+            confession: 0,
+            vote: 0,
+            rule: 0,
+          },
+          playerPicks: {},
+          skippedCount: 0,
+        },
+      },
+    });
+  },
+
+  nextPrompt: () => {
+    const { gameState } = get();
+    if (!gameState) return null;
+
+    const nextIndex = gameState.currentPromptIndex + 1;
+    if (nextIndex >= gameState.prompts.length) {
+      return null;
+    }
+
+    const prompt = gameState.prompts[nextIndex];
+    const currentPlayer = gameState.players[gameState.turnIndex];
+
+    set({
+      gameState: {
+        ...gameState,
+        currentPromptIndex: nextIndex,
+        usedPromptIds: [...gameState.usedPromptIds, prompt.id],
+        stats: {
+          ...gameState.stats,
+          roundsPlayed: gameState.stats.roundsPlayed + 1,
+          promptsByType: {
+            ...gameState.stats.promptsByType,
+            [prompt.type as PromptType]: (gameState.stats.promptsByType[prompt.type as PromptType] || 0) + 1,
+          },
+          playerPicks: {
+            ...gameState.stats.playerPicks,
+            [currentPlayer.nickname]: (gameState.stats.playerPicks[currentPlayer.nickname] || 0) + 1,
+          },
+        },
+      },
+    });
+
+    return prompt;
+  },
+
+  previousPrompt: () => {
+    const { gameState } = get();
+    if (!gameState) return null;
+
+    const prevIndex = Math.max(0, gameState.currentPromptIndex - 1);
+    const prompt = gameState.prompts[prevIndex];
+
+    set({
+      gameState: {
+        ...gameState,
+        currentPromptIndex: prevIndex,
+      },
+    });
+
+    return prompt;
+  },
+
+  skipPrompt: () => {
+    const { gameState } = get();
+    if (!gameState) return;
+
+    set({
+      gameState: {
+        ...gameState,
+        stats: {
+          ...gameState.stats,
+          skippedCount: gameState.stats.skippedCount + 1,
+        },
+      },
+    });
+
+    get().nextPrompt();
+  },
+
+  updateHeatLevel: (delta) => {
+    const { gameState } = get();
+    if (!gameState) return;
+
+    const newLevel = Math.min(100, Math.max(0, gameState.heatLevel + delta));
+
+    set({
+      gameState: {
+        ...gameState,
+        heatLevel: newLevel,
+      },
+    });
+  },
+
+  advanceTurn: () => {
+    const { gameState } = get();
+    if (!gameState) return;
+
+    const nextTurnIndex = (gameState.turnIndex + 1) % gameState.players.length;
+    const newRound = nextTurnIndex === 0 ? gameState.round + 1 : gameState.round;
+
+    set({
+      gameState: {
+        ...gameState,
+        turnIndex: nextTurnIndex,
+        round: newRound,
+      },
+    });
+  },
+
+  endGame: () => {
+    const { gameState } = get();
+    if (!gameState) {
+      return {
+        roundsPlayed: 0,
+        promptsByType: { truth: 0, dare: 0, challenge: 0, confession: 0, vote: 0, rule: 0 },
+        playerPicks: {},
+        skippedCount: 0,
+      };
+    }
+
+    return gameState.stats;
+  },
+
+  resetGame: () => {
+    set({ gameState: null, gameStarted: false });
+  },
 
   reset: () => 
     set(initialOnlineState),

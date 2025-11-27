@@ -17,7 +17,7 @@ export default function Lobby() {
   const { toast } = useToast();
   const { 
     joinCode, isHost, isConnected, players, gameStarted,
-    setConnected, updatePlayers, setGameStarted, setPlayers // Added setPlayers
+    setConnected, updatePlayers, setGameStarted, initGameState
   } = useOnlineRoom();
 
   // Add a ref for the WebSocket instance
@@ -64,6 +64,8 @@ export default function Lobby() {
           updatePlayers(data.players);
           break;
         case "game_started":
+          console.log("Game started, initializing with prompts:", data.prompts);
+          initGameState(data.prompts, players);
           setGameStarted(true);
           setLocation(`/lobby/${roomId}/play`);
           break;
