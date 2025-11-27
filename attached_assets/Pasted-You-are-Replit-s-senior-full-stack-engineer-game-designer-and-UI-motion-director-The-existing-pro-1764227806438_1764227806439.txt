@@ -1,0 +1,313 @@
+You are Replit’s senior full-stack engineer, game designer, and UI/motion director.
+The existing project is VelvetPlay Online – an 18+ spicy couples game hub.
+Right now, games have functional and flow issues and the product lacks the futuristic couples Ludo experience I want.
+
+Your tasks:
+
+Fully debug and stabilize the existing app
+
+Add more advanced adult couples games (PG-17, non-explicit)
+
+Design and implement a unique, futuristic “Couples Ludo” with adult mechanics
+
+Upgrade graphics and gameplay screens to be robust and beautiful on all devices
+
+Ensure real-time multiplayer is solid and consistent across devices
+
+Important constraints:
+
+Keep the current stack (React + TypeScript frontend, Node/Express or NestJS backend, WebSockets, Prisma/DB, etc. – whatever is already here).
+
+NO explicit sexual content, NO nudity, NO minors, NO illegal content. Spicy, flirty, kink-tease vibe is OK at a PG-17 level.
+
+The result must be production-grade, not a demo.
+
+1️⃣ Step 1 – Diagnose & Fix All Functional / Flow Issues
+
+First, thoroughly analyze the current repo and stabilize everything:
+
+Inspect folder structure for /frontend, /backend, and /shared (or equivalent).
+
+Run:
+
+npm install or the relevant install commands
+
+Frontend dev command (e.g., npm run dev in frontend)
+
+Backend dev command (e.g., npm run dev in backend)
+
+Fix all TypeScript, runtime, and build errors:
+
+Frontend: npm run build must pass with no errors.
+
+Backend: npm run build (or equivalent) must pass.
+
+Test all flows manually (in code and logic):
+
+Age gate → Home → Game selection → Local mode → Gameplay → Summary
+
+Age gate → Home → Online mode → Create room → Join from second client → Lobby → Gameplay → Summary
+
+Tools (dice, bottle, coin)
+
+Admin panel (if present)
+
+Fix any issues where:
+
+State becomes undefined or null when it shouldn’t.
+
+Screens don’t update correctly when moving between steps.
+
+WebSockets don’t sync room state consistently.
+
+One player sees different prompts/turns than the other.
+
+Add defensive coding:
+
+Guard against missing roomId, missing currentPrompt, or empty players array.
+
+Show graceful fallback UI instead of crashing.
+
+Ensure all primary journeys are stable:
+
+Local play
+
+Online play
+
+Tools
+
+Admin
+
+Only move on to new content AFTER the existing flows work cleanly, with no console errors and no broken navigation.
+
+2️⃣ Step 2 – Add More Adult Couple Games (PG-17)
+
+Add several new couple-focused adult games, all non-explicit, flirty, spicy, and designed for 2 players online or local. Examples (implement all as real, selectable games in the catalog):
+
+Deep Sync
+
+Focus: emotional intimacy, deep questions, shared confessions.
+
+Mechanics: cards alternate between “You” and “We” prompts, heat meter rises on deeper answers.
+
+Temptation Trails
+
+Branching prompts: each card gives 2 “paths” (Soft vs Spicy).
+
+Couple chooses together; path influences next prompt intensity.
+
+Fantasy Signals
+
+Uses non-explicit fantasy hints via metaphors (fire, storms, silk, etc.).
+
+Includes “signal” cards where each partner reacts with emoji or short text.
+
+Dare or Devotion
+
+Every turn: choose a playful dare or a heartfelt devotion act/statement.
+
+Balances spice and softness.
+
+Heat Check
+
+Mini rapid-fire questions/choices to quickly raise the heat meter.
+
+Short, high-tempo gameplay, great as warm-up.
+
+For each new game:
+
+Add entries to the game catalog with title, description, tags (e.g. ["Couple", "Spicy", "Emotional"]), min/max players = 2–4, and flags like isCoupleFocused.
+
+Wire them into the existing game setup and gameplay flows.
+
+Use the existing prompt engine (or extend it) to store prompts of type:
+
+truth, dare, confession, challenge, vote, rule
+
+Add proper prompts (non-placeholder, non-explicit) to your seed data or DB migration.
+
+3️⃣ Step 3 – Add a Futuristic Couples Ludo (“VelvetLudo”)
+
+Design and implement a unique adult couples Ludo variant, not a clone of standard Ludo. Name suggestion: “VelvetLudo”.
+
+Core requirements:
+
+2–4 players, optimized for couples (2 players).
+
+Board design:
+
+Futuristic neon board in a top-down view, with velvet + neon color scheme.
+
+Each tile rendered as a glowing node or panel instead of basic squares.
+
+Smooth animations for token movement.
+
+Mechanics (adapt standard Ludo but add adult twists):
+
+Each colored “home stretch” is themed (Flirty, Bold, Confessional, Wild).
+
+Special tiles:
+
+“Heat Tiles”: landing triggers a spicy prompt from the database.
+
+“Bond Tiles”: cooperative questions or mini-challenges.
+
+“Freeze Tiles”: skip turn unless partner “saves” you with a small challenge.
+
+Dice rolls are done with the existing or improved HeatDice component.
+
+Reaching the end gives a non-explicit fun “achievement” sequence.
+
+Technical implementation:
+
+Backend:
+
+Add a VelvetLudo game type with:
+
+Board state (positions per token)
+
+Active player index
+
+Dice roll history
+
+Per-room game state stored in DB + broadcast over WebSockets
+
+Add endpoints / socket events:
+
+rollDice, moveToken, endTurn, requestPromptForTile.
+
+Frontend:
+
+New screen(s) for Ludo game:
+
+Board renderer component (React + SVG or HTML/CSS grid).
+
+Animated tokens that move smoothly tile-to-tile.
+
+Sidebar for:
+
+current player
+
+heat meter
+
+tile prompt overlay when landing on special tiles.
+
+Use Framer Motion for:
+
+token movement
+
+board entry zoom-in
+
+tile highlight glow pulses
+
+dice roll integration (HeatDice) pinned near the board.
+
+UX:
+
+On mobile, ensure the board is zoomable or fits cleanly with gestures or auto-scaling.
+
+On desktop, use more negative space and larger animations.
+
+Important: Keep Ludo non-explicit. The “adult” aspect should come from:
+
+Prompts (flirty, bold, confessional, kink-tease metaphors)
+
+The “heat meter” and “special tiles”—NOT explicit actions.
+
+4️⃣ Step 4 – Robust Multi-Device Real-Time Gameplay
+
+Upgrade the real-time layer so the same game is robust on any device:
+
+Verify WebSocket / real-time handling:
+
+When a player disconnects and reconnects, they rejoin the same room and board state.
+
+Late joiners are given full current room state.
+
+Host change or host leaving is handled gracefully (choose a new host or end game cleanly).
+
+Implement reconnection logic on frontend:
+
+Detect socket disconnects and try to reconnect.
+
+Show a subtle “reconnecting…” indicator rather than freezing.
+
+Normalize state:
+
+Backend is always source of truth for:
+
+Current player
+
+Board state
+
+Ludo dice result
+
+Current prompt
+
+Heat level
+
+Frontend only displays and sends “intent” actions; backend decides if move is valid.
+
+Make sure multiple devices:
+
+Desktop Chrome, mobile Safari, mobile Chrome – all work with the same flows.
+
+Responsive layout keeps board and UI usable on small screens.
+
+5️⃣ Step 5 – Visual / Motion Upgrade for All Play Screens
+
+Upgrade all gameplay screens (existing games and Ludo) to futuristic, adult, velvet/neon style:
+
+Use the existing glow, gradient, and motion system or create one if missing:
+
+Glowing cards
+
+Heat meter with animated liquid fill
+
+Smooth page transitions
+
+For each major gameplay screen (per game + Ludo):
+
+Add animated backgrounds (subtle parallax, ember particles).
+
+Ensure components don’t look like generic gray boxes.
+
+Use consistent spacing, radiuses, shadows, and glow.
+
+Make sure hover/tap states feel responsive and polished.
+
+Ensure all animations are:
+
+GPU-friendly (translate/scale/opacity/rotate, not layout thrash).
+
+60fps on common devices.
+
+6️⃣ Step 6 – Final QA & Summary
+
+When you’re done:
+
+Confirm:
+
+All builds pass (npm run build for frontend & backend).
+
+No runtime errors in console during typical flows.
+
+Ludo and all couple games work end-to-end, both local and online.
+
+Update README.md:
+
+How to run backend & frontend in Replit.
+
+New games list.
+
+How to start and play VelvetLudo.
+
+Give me a short summary in the chat:
+
+What you fixed (major flow/functional issues).
+
+New games added.
+
+How VelvetLudo works technically & visually.
+
+Any known limitations or next steps.
