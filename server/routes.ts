@@ -7,9 +7,26 @@ import { WebSocketServer, WebSocket } from "ws";
 import { nanoid } from "nanoid";
 import { z } from "zod";
 import { createRoomSchema, joinRoomSchema, insertPromptSchema } from "@shared/schema";
+import { sanitizeNickname, validateRoomId, validatePlayerId } from "./utils";
 
 // Store active WebSocket connections by roomId and playerId
 const roomConnections = new Map<string, Map<string, WebSocket>>();
+
+// Rate limiting map: playerId -> last action timestamp
+const rateLimitMap = new Map<string, number>();
+const RATE_LIMIT_MS = 100; // Minimum 100ms between actions
+
+function isRateLimited(playerId: string): boolean {
+  const now = Date.now();
+  const lastAction = rateLimitMap.get(playerId) || 0;
+  
+  if (now - lastAction < RATE_LIMIT_MS) {
+    return true;
+  }
+  
+  rateLimitMap.set(playerId, now);
+  return false;
+}
 
 function log(message: string) {
   const timestamp = new Date().toLocaleTimeString();
@@ -56,6 +73,12 @@ export async function registerRoutes(
         if (!message || typeof message !== 'object' || !message.type) {
           log(`Invalid message format received`);
           ws.send(JSON.stringify({ type: "error", message: "Invalid message format" }));
+          return;
+        }
+
+        // Rate limiting (except for join_room)
+        if (message.type !== "join_room" && currentPlayerId && isRateLimited(currentPlayerId)) {
+          log(`Rate limit exceeded for player ${currentPlayerId}`);
           return;
         }
 
@@ -535,7 +558,7 @@ export async function registerRoutes(
       const player = await storage.addRoomPlayer({
         roomId: room.id,
         odId: null,
-        nickname: parsed.nickname,
+        nickname: sanitizeNickname(parsed.nickname),
         isHost: true,
         isReady: true,
         avatarColor: avatarColors[Math.floor(Math.random() * avatarColors.length)],

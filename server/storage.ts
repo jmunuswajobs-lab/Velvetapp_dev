@@ -661,7 +661,7 @@ export class MemStorage implements IStorage {
       this.prompts.set(id, { ...prompt, id, createdAt: new Date() });
     });
 
-    // Add CrazyGames-inspired remix prompts
+    // CrazyGames-inspired remixes are already seeded at games[14-20]
     const couplesDuelId = games[14].id;
     const couplesDuelPrompts: Omit<Prompt, "id" | "createdAt">[] = [
       { gameId: couplesDuelId, packId: null, text: "CHARGE ATTACK: Winner chooses a romantic dare for loser.", type: "dare", intensity: 2, flags: { isCoupleExclusive: true, isFlirty: true } },

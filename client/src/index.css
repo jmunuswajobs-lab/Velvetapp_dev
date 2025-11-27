@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Noise overlay for premium texture */
+@keyframes noise {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-5%, -5%); }
+  20% { transform: translate(-10%, 5%); }
+  30% { transform: translate(5%, -10%); }
+  40% { transform: translate(-5%, 15%); }
+  50% { transform: translate(-10%, 5%); }
+  60% { transform: translate(15%, 0); }
+  70% { transform: translate(0, 10%); }
+  80% { transform: translate(-15%, 0); }
+  90% { transform: translate(10%, 5%); }
+}
+
 /* VELVETPLAY DARK MODE ONLY - Premium Velvet/Neon Theme */
 :root {
   --button-outline: rgba(255,255,255, .10);
@@ -9,19 +23,19 @@
   --opaque-button-border-intensity: 9;
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
-  
+
   /* Noir Black Base */
   --background: 260 20% 4%;
   --foreground: 300 5% 95%;
-  
+
   /* Deep Plum/Noir borders */
   --border: 280 40% 15%;
-  
+
   /* Card - Slightly elevated noir */
   --card: 270 30% 8%;
   --card-foreground: 300 5% 95%;
   --card-border: 280 35% 18%;
-  
+
   /* Sidebar - Deep plum tint */
   --sidebar: 275 35% 10%;
   --sidebar-foreground: 300 5% 95%;
@@ -31,53 +45,53 @@
   --sidebar-accent: 328 60% 20%;
   --sidebar-accent-foreground: 328 60% 90%;
   --sidebar-ring: 340 85% 50%;
-  
+
   /* Popover */
   --popover: 270 30% 10%;
   --popover-foreground: 300 5% 95%;
   --popover-border: 280 35% 18%;
-  
+
   /* Primary - Velvet Red */
   --primary: 350 88% 40%;
   --primary-foreground: 0 0% 100%;
-  
+
   /* Secondary - Deep Plum */
   --secondary: 280 45% 18%;
   --secondary-foreground: 280 20% 90%;
-  
+
   /* Muted */
   --muted: 270 20% 15%;
   --muted-foreground: 270 10% 60%;
-  
+
   /* Accent - Neon Magenta */
   --accent: 328 100% 45%;
   --accent-foreground: 0 0% 100%;
-  
+
   /* Destructive */
   --destructive: 0 84% 45%;
   --destructive-foreground: 0 0% 100%;
-  
+
   /* Input */
   --input: 280 30% 20%;
-  
+
   /* Ring - Neon glow */
   --ring: 328 100% 50%;
-  
+
   /* Charts - Heat palette */
   --chart-1: 350 88% 50%;
   --chart-2: 280 70% 55%;
   --chart-3: 15 88% 55%;
   --chart-4: 328 100% 55%;
   --chart-5: 38 85% 65%;
-  
+
   /* Typography */
   --font-sans: 'Plus Jakarta Sans', 'Inter', sans-serif;
   --font-serif: 'Playfair Display', Georgia, serif;
   --font-mono: 'JetBrains Mono', monospace;
   --font-display: 'Space Grotesk', sans-serif;
-  
+
   --radius: .5rem;
-  
+
   /* Shadows with velvet glow */
   --shadow-2xs: 0px 1px 2px 0px hsl(0 0% 0% / 0.3);
   --shadow-xs: 0px 2px 4px 0px hsl(0 0% 0% / 0.3);
@@ -87,7 +101,7 @@
   --shadow-lg: 0px 10px 40px 0px hsl(0 0% 0% / 0.5), 0px 6px 12px -1px hsl(328 100% 50% / 0.15);
   --shadow-xl: 0px 16px 60px 0px hsl(0 0% 0% / 0.6), 0px 8px 16px -1px hsl(328 100% 50% / 0.2);
   --shadow-2xl: 0px 24px 80px 0px hsl(0 0% 0% / 0.7);
-  
+
   --tracking-normal: 0em;
   --spacing: 0.25rem;
 
@@ -262,11 +276,42 @@
   }
 
   .glass-card {
-    background: linear-gradient(135deg, rgba(59, 15, 92, 0.3) 0%, rgba(5, 5, 9, 0.6) 100%);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 0, 138, 0.15);
+    @apply bg-noir-black/40 backdrop-blur-md border border-plum-deep/30;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37),
+                inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
   }
+
+  .velvet-glow {
+    box-shadow: 
+      0 0 20px rgba(255, 0, 138, 0.3),
+      0 0 40px rgba(255, 0, 138, 0.2),
+      0 0 60px rgba(255, 0, 138, 0.1),
+      inset 0 0 20px rgba(255, 0, 138, 0.1);
+  }
+
+  .depth-shadow {
+    box-shadow: 
+      0 4px 6px -1px rgba(0, 0, 0, 0.3),
+      0 2px 4px -1px rgba(0, 0, 0, 0.2),
+      0 10px 15px -3px rgba(176, 15, 47, 0.2),
+      0 4px 6px -2px rgba(59, 15, 92, 0.15);
+  }
+
+  .noise-overlay::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    right: -50%;
+    bottom: -50%;
+    width: 200%;
+    height: 200%;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    animation: noise 8s steps(10) infinite;
+    pointer-events: none;
+  }
+
 
   /* Gradient text */
   .gradient-text {
@@ -281,17 +326,6 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-  }
-
-  /* Noise texture overlay */
-  .noise-overlay::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-    opacity: 0.03;
-    pointer-events: none;
-    z-index: 1;
   }
 
   /* Card shine effect */

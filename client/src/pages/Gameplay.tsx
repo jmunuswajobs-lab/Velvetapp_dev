@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { useParams, useLocation, Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -318,7 +318,7 @@ export default function Gameplay() {
 
         {/* Players bar */}
         <div className="flex justify-center gap-2 mb-6 overflow-x-auto py-2">
-          {currentGameState.players.map((player, index) => (
+          {useMemo(() => currentGameState.players.map((player, index) => (
             <PlayerAvatar
               key={player.nickname}
               nickname={player.nickname}
@@ -326,7 +326,7 @@ export default function Gameplay() {
               isCurrentTurn={index === currentPlayerIndex}
               size="sm"
             />
-          ))}
+          )), [currentGameState.players, currentPlayerIndex])}
         </div>
 
         {/* Controls */}

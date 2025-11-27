@@ -32,7 +32,7 @@ export default function Lobby() {
 
   const [copied, setCopied] = useState(false);
 
-  // WebSocket connection
+  // WebSocket connection with proper cleanup
   useEffect(() => {
     // Ensure roomId and playerId are available before attempting to connect
     if (!roomId || !playerId) {
@@ -47,6 +47,7 @@ export default function Lobby() {
     console.log('Connecting to WebSocket:', wsUrl, 'with playerId:', playerId);
     const socket = new WebSocket(wsUrl);
     let isCleanedUp = false;
+    let reconnectTimeout: NodeJS.Timeout;
 
     socket.onopen = () => {
       if (isCleanedUp) return;
@@ -109,8 +110,11 @@ export default function Lobby() {
     // Cleanup function
     return () => {
       isCleanedUp = true;
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
       if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
-        socket.close();
+        socket.close(1000, "Component unmounted");
       }
       websocketRef.current = null;
     };
