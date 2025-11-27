@@ -71,10 +71,14 @@ export async function registerRoutes(
               roomConnections.get(roomId)!.set(`temp_${Date.now()}`, ws);
             }
 
-            // Get all players in the room
+            // Get room and players
+            const room = await storage.getRoom(roomId);
             const players = await storage.getRoomPlayers(roomId);
 
             log(`Room ${roomId} has ${players.length} players`);
+
+            // Get game info
+            const game = room ? await storage.getGame(room.gameId) : null;
 
             // Broadcast updated player list to all connections in the room
             const connections = roomConnections.get(roomId);
@@ -88,6 +92,7 @@ export async function registerRoutes(
                   isHost: p.isHost,
                   isReady: p.isReady,
                 })),
+                gameSlug: game?.slug,
               });
 
               log(`Broadcasting to ${connections.size} connections`);
@@ -165,7 +170,8 @@ export async function registerRoutes(
 
             await storage.updateRoom(startRoomId, { status: "in-progress" });
 
-            // Get prompts for the game
+            // Get game and prompts
+            const game = await storage.getGame(room.gameId);
             const prompts = await storage.getPromptsByGameId(room.gameId, {
               intensity: (room.settings as any)?.intensity || 3,
             });
@@ -173,9 +179,20 @@ export async function registerRoutes(
             // Shuffle prompts
             const shuffledPrompts = [...prompts].sort(() => Math.random() - 0.5);
 
+            // Get players for the game state
+            const players = await storage.getRoomPlayers(startRoomId);
+
             broadcastToRoom(startRoomId, {
               type: "game_started",
               prompts: shuffledPrompts,
+              players: players.map((p) => ({
+                id: p.id,
+                nickname: p.nickname,
+                avatarColor: p.avatarColor,
+                isHost: p.isHost,
+                isReady: p.isReady,
+              })),
+              gameSlug: game?.slug,
             });
             break;
           }

@@ -60,13 +60,15 @@ export default function Lobby() {
       switch (data.type) {
         case "room_update":
           updatePlayers(data.players);
+          if (data.gameSlug) {
+            setGameSlug(data.gameSlug);
+          }
           break;
         case "game_started":
           console.log("Game started, initializing with prompts:", data.prompts);
-          initGameState(data.prompts, data.players); // Pass players to initGameState
+          initGameState(data.prompts, data.players);
           setGameStarted(true);
-          // Navigate to the game play route. Use a default slug if not provided.
-          setLocation(`/games/${data.gameSlug || 'truth-or-dare'}/play`);
+          setLocation(`/games/${data.gameSlug || gameSlug || 'truth-or-dare'}/play`);
           break;
         case "error":
           toast({

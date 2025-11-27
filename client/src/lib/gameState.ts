@@ -67,16 +67,19 @@ export const useLocalGame = create<LocalGameStore>((set, get) => ({
     const currentState = get().gameState;
     if (currentState) {
       console.log("Clearing previous game state");
+      // Explicitly clear prompts array
+      currentState.prompts = [];
+      currentState.usedPromptIds = [];
     }
     
-    // Shuffle prompts
-    const shuffledPrompts = [...prompts].sort(() => Math.random() - 0.5);
+    // Shuffle prompts - create new array to avoid references
+    const shuffledPrompts = prompts.map(p => ({ ...p })).sort(() => Math.random() - 0.5);
     
     set({
       gameState: {
         gameId,
-        players,
-        settings,
+        players: players.map(p => ({ ...p })),
+        settings: { ...settings },
         currentPromptIndex: 0,
         prompts: shuffledPrompts,
         usedPromptIds: [],
@@ -287,9 +290,11 @@ export const useOnlineRoom = create<OnlineRoomStore>((set, get) => ({
     const currentState = get().gameState;
     if (currentState) {
       console.log("Clearing previous online game state");
+      currentState.prompts = [];
+      currentState.usedPromptIds = [];
     }
     
-    const shuffledPrompts = [...prompts].sort(() => Math.random() - 0.5);
+    const shuffledPrompts = prompts.map(p => ({ ...p })).sort(() => Math.random() - 0.5);
     
     const newGameState = {
       gameId: get().roomId || "",
