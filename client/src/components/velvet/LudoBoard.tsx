@@ -296,20 +296,56 @@ export function LudoBoard({ gameState, onRollDice, onMovePiece, currentPlayerId 
           <AnimatePresence>
             {gameState.players.map((player) =>
               player.tokens
-                .filter((token) => token.position !== "home" && token.position !== "finished" && token.pathProgress < 52)
+                .filter((token) => token.position !== "home" && token.position !== "finished")
                 .map((token) => {
-                  const pathPositions = [
+                  // Main path positions (0-51) - 52 total positions
+                  const mainPathPositions = [
+                    // Red start area (0-5)
                     { x: 10, y: 80 }, { x: 10, y: 70 }, { x: 10, y: 60 }, { x: 10, y: 50 }, { x: 10, y: 40 }, { x: 10, y: 30 },
+                    // Top row going right (6-11)
                     { x: 20, y: 20 }, { x: 30, y: 20 }, { x: 40, y: 20 }, { x: 50, y: 20 }, { x: 60, y: 20 }, { x: 70, y: 20 },
+                    // Blue start area (12-17)
                     { x: 80, y: 10 }, { x: 80, y: 20 }, { x: 80, y: 30 }, { x: 80, y: 40 }, { x: 80, y: 50 }, { x: 80, y: 60 },
+                    // Right column going down (18-23)
                     { x: 90, y: 70 }, { x: 100, y: 70 }, { x: 110, y: 70 }, { x: 120, y: 70 }, { x: 130, y: 70 }, { x: 140, y: 70 },
+                    // Yellow start area (24-29)
                     { x: 140, y: 80 }, { x: 130, y: 80 }, { x: 120, y: 80 }, { x: 110, y: 80 }, { x: 100, y: 80 }, { x: 90, y: 80 },
+                    // Bottom row going left (30-35)
                     { x: 80, y: 90 }, { x: 70, y: 90 }, { x: 60, y: 90 }, { x: 50, y: 90 }, { x: 40, y: 90 }, { x: 30, y: 90 },
+                    // Green start area (36-41)
                     { x: 20, y: 100 }, { x: 20, y: 110 }, { x: 20, y: 120 }, { x: 20, y: 130 }, { x: 20, y: 140 }, { x: 10, y: 140 },
-                    { x: 10, y: 130 }, { x: 10, y: 120 }, { x: 10, y: 110 }, { x: 10, y: 100 }, { x: 10, y: 90 }
+                    // Left column going up to complete loop (42-51) - 10 positions
+                    { x: 10, y: 130 }, { x: 10, y: 120 }, { x: 10, y: 110 }, { x: 10, y: 100 }, 
+                    { x: 10, y: 95 }, { x: 10, y: 90 }, { x: 10, y: 85 }, { x: 10, y: 82 },
+                    { x: 10, y: 79 }, { x: 10, y: 76 }
                   ];
                   
-                  const pathCell = pathPositions[token.pathProgress];
+                  // Color-specific safe path positions (52-56) leading to center
+                  const safePathPositions: Record<LudoColor, { x: number; y: number }[]> = {
+                    red: [
+                      { x: 20, y: 75 }, { x: 30, y: 75 }, { x: 40, y: 75 }, { x: 50, y: 75 }, { x: 60, y: 75 }
+                    ],
+                    blue: [
+                      { x: 75, y: 30 }, { x: 75, y: 40 }, { x: 75, y: 50 }, { x: 75, y: 60 }, { x: 75, y: 70 }
+                    ],
+                    green: [
+                      { x: 120, y: 75 }, { x: 110, y: 75 }, { x: 100, y: 75 }, { x: 90, y: 75 }, { x: 80, y: 75 }
+                    ],
+                    yellow: [
+                      { x: 75, y: 120 }, { x: 75, y: 110 }, { x: 75, y: 100 }, { x: 75, y: 90 }, { x: 75, y: 80 }
+                    ]
+                  };
+                  
+                  let pathCell;
+                  if (token.pathProgress < 52) {
+                    // On main path
+                    pathCell = mainPathPositions[token.pathProgress];
+                  } else {
+                    // In safe zone (52-56)
+                    const safeIndex = token.pathProgress - 52;
+                    pathCell = safePathPositions[player.color][safeIndex];
+                  }
+                  
                   if (!pathCell) return null;
                   
                   const isMovable = movableTokens.some(t => t.id === token.id);
