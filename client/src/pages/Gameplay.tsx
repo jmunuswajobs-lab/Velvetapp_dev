@@ -34,7 +34,7 @@ export default function Gameplay() {
     }
   }, [currentGameState, setLocation]);
 
-  // Early return with loading state
+  // Early return with loading state - must be before accessing properties
   if (!currentGameState) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -50,12 +50,13 @@ export default function Gameplay() {
     );
   }
 
-  const currentRound = currentGameState.round;
-  const currentHeatLevel = currentGameState.heatLevel;
-  const currentPrompts = currentGameState.prompts;
-  const currentPlayerIndex = currentGameState.turnIndex;
-  const currentPlayer = currentGameState.players[currentPlayerIndex];
-  const promptsRemaining = currentGameState.prompts.length - currentGameState.currentPromptIndex - 1;
+  // Now safe to access properties
+  const currentRound = currentGameState?.round || 1;
+  const currentHeatLevel = currentGameState?.heatLevel || 0;
+  const currentPrompts = currentGameState?.prompts || [];
+  const currentPlayerIndex = currentGameState?.turnIndex || 0;
+  const currentPlayer = currentGameState?.players?.[currentPlayerIndex];
+  const promptsRemaining = (currentGameState?.prompts?.length || 0) - (currentGameState?.currentPromptIndex || 0) - 1;
 
   // Actions that differ between modes
   const nextPromptAction = isOnlineMode ? onlineGame.nextPrompt : localGame.nextPrompt;
@@ -169,7 +170,7 @@ export default function Gameplay() {
     );
   }
 
-  if (!currentGameState || !currentPrompt) {
+  if (!currentGameState || !currentPrompt || !currentPlayer) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -187,7 +188,7 @@ export default function Gameplay() {
     );
   }
 
-  const activePlayer = currentGameState.players[currentPlayerIndex];
+  const activePlayer = currentPlayer;
 
 
   return (

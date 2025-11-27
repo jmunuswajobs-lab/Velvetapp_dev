@@ -1,9 +1,10 @@
 import { motion } from "framer-motion";
 import { Link } from "wouter";
-import { Play, Users, Flame, Heart, Zap, MessageSquare, Globe, Scale } from "lucide-react";
+import { Play, Users, Flame, Heart, Zap, MessageSquare, Globe, Scale, HelpCircle } from "lucide-react";
 import type { Game } from "@shared/schema";
 import { VelvetButton } from "./VelvetButton";
-import { SpicyBadge } from "./SpicyBadge";
+import { SpicyBadge, SpiceIndicator } from "./SpicyBadge";
+import { VelvetCard } from "./VelvetCard";
 
 interface GameCardProps {
   game: Game;
