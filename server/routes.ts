@@ -101,8 +101,11 @@ export async function registerRoutes(
           }
 
           case "toggle_ready": {
-            if (!currentRoomId || !currentPlayerId) {
-              log(`Cannot toggle ready: roomId=${currentRoomId}, playerId=${currentPlayerId}`);
+            const toggleRoomId = message.roomId || currentRoomId;
+            const togglePlayerId = message.playerId || currentPlayerId;
+            
+            if (!toggleRoomId || !togglePlayerId) {
+              log(`Cannot toggle ready: roomId=${toggleRoomId}, playerId=${togglePlayerId}`);
               ws.send(JSON.stringify({
                 type: "error",
                 message: "Invalid room or player ID"
@@ -110,14 +113,14 @@ export async function registerRoutes(
               break;
             }
 
-            log(`Toggle ready for player ${currentPlayerId} in room ${currentRoomId}`);
+            log(`Toggle ready for player ${togglePlayerId} in room ${toggleRoomId}`);
 
             // Get all players to find the current player
-            const players = await storage.getRoomPlayers(currentRoomId);
-            const player = players.find(p => p.id === currentPlayerId);
+            const players = await storage.getRoomPlayers(toggleRoomId);
+            const player = players.find(p => p.id === togglePlayerId);
 
             if (!player) {
-              log(`Player ${currentPlayerId} not found in database`);
+              log(`Player ${togglePlayerId} not found in database`);
               ws.send(JSON.stringify({
                 type: "error",
                 message: "Player not found"
@@ -129,12 +132,12 @@ export async function registerRoutes(
             const newReadyState = !player.isReady;
             log(`Toggling ready state for ${player.nickname} to ${newReadyState}`);
 
-            await storage.updateRoomPlayer(currentPlayerId, { isReady: newReadyState });
+            await storage.updateRoomPlayer(togglePlayerId, { isReady: newReadyState });
 
             // Broadcast the updated player list
-            const updatedPlayers = await storage.getRoomPlayers(currentRoomId);
+            const updatedPlayers = await storage.getRoomPlayers(toggleRoomId);
             
-            broadcastToRoom(currentRoomId, {
+            broadcastToRoom(toggleRoomId, {
               type: "room_update",
               players: updatedPlayers.map((p) => ({
                 id: p.id,
@@ -148,12 +151,19 @@ export async function registerRoutes(
           }
 
           case "start_game": {
-            if (!currentRoomId) return;
+            const startRoomId = message.roomId || currentRoomId;
+            if (!startRoomId) {
+              log(`Cannot start game: no roomId provided`);
+              return;
+            }
 
-            const room = await storage.getRoom(currentRoomId);
-            if (!room) return;
+            const room = await storage.getRoom(startRoomId);
+            if (!room) {
+              log(`Room ${startRoomId} not found`);
+              return;
+            }
 
-            await storage.updateRoom(currentRoomId, { status: "in-progress" });
+            await storage.updateRoom(startRoomId, { status: "in-progress" });
 
             // Get prompts for the game
             const prompts = await storage.getPromptsByGameId(room.gameId, {
@@ -163,7 +173,7 @@ export async function registerRoutes(
             // Shuffle prompts
             const shuffledPrompts = [...prompts].sort(() => Math.random() - 0.5);
 
-            broadcastToRoom(currentRoomId, {
+            broadcastToRoom(startRoomId, {
               type: "game_started",
               prompts: shuffledPrompts,
             });

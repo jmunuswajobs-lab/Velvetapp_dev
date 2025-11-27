@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState } from "react";
+import { useEffect, useCallback, useState, useRef } from "react";
 import { useParams, useLocation, Link } from "wouter";
 import { motion } from "framer-motion";
 import { ArrowLeft, Copy, Check, Play, Users, Clock } from "lucide-react";
@@ -17,33 +17,48 @@ export default function Lobby() {
   const { toast } = useToast();
   const { 
     joinCode, isHost, isConnected, players, gameStarted,
-    setConnected, updatePlayers, setGameStarted 
+    setConnected, updatePlayers, setGameStarted, setPlayers // Added setPlayers
   } = useOnlineRoom();
 
+  // Add a ref for the WebSocket instance
+  const websocketRef = useRef<WebSocket | null>(null);
+
+  // Retrieve playerId from localStorage or generate one if it doesn't exist
+  const storedPlayerId = localStorage.getItem(`playerId_${roomId}`);
+  if (!storedPlayerId) {
+    const newPlayerId = crypto.randomUUID();
+    localStorage.setItem(`playerId_${roomId}`, newPlayerId);
+    // Note: This might cause a re-render if used directly in state, but it's fine here for initial setup.
+  }
+
   const [copied, setCopied] = useState(false);
-  const [ws, setWs] = useState<WebSocket | null>(null);
+  // Removed ws state, using websocketRef instead
 
   // WebSocket connection
   useEffect(() => {
-    if (!roomId) return;
+    // Ensure roomId and a playerId are available before attempting to connect
+    const playerId = localStorage.getItem(`playerId_${roomId}`);
+    if (!roomId || !playerId) {
+      console.error("Missing roomId or playerId for WebSocket connection", { roomId, playerId });
+      return;
+    }
 
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const host = window.location.host;
-    const wsUrl = `${protocol}//${host}/ws`;
-    
-    console.log('Connecting to WebSocket:', wsUrl);
+    const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
+
+    console.log('Connecting to WebSocket:', wsUrl, 'with playerId:', playerId);
     const socket = new WebSocket(wsUrl);
 
     socket.onopen = () => {
       setConnected(true);
-      // Get playerId from localStorage if it exists (set during room creation/join)
-      const playerId = localStorage.getItem(`playerId_${roomId}`);
+      console.log("WebSocket connected, joining room:", roomId);
       socket.send(JSON.stringify({ type: "join_room", roomId, playerId }));
     };
 
     socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      
+      console.log("WebSocket message received:", data);
+
       switch (data.type) {
         case "room_update":
           updatePlayers(data.players);
@@ -65,6 +80,7 @@ export default function Lobby() {
     socket.onclose = () => {
       setConnected(false);
       console.log('WebSocket disconnected');
+      // Optionally attempt to reconnect here
     };
 
     socket.onerror = (error) => {
@@ -74,16 +90,18 @@ export default function Lobby() {
         description: "Failed to connect to game server",
         variant: "destructive",
       });
+      setConnected(false); // Ensure connected status is updated on error
     };
 
-    setWs(socket);
+    websocketRef.current = socket; // Store the socket instance in the ref
 
+    // Cleanup function to close the WebSocket connection when the component unmounts
     return () => {
       if (socket.readyState === WebSocket.OPEN) {
         socket.close();
       }
     };
-  }, [roomId, toast]);
+  }, [roomId, setConnected, updatePlayers, setGameStarted, setLocation, toast]); // Dependencies for useEffect
 
   const copyCode = useCallback(() => {
     if (!joinCode) return;
@@ -94,28 +112,56 @@ export default function Lobby() {
   }, [joinCode, toast]);
 
   const copyLink = useCallback(() => {
+    if (!joinCode) return; // Ensure joinCode exists
     navigator.clipboard.writeText(`${window.location.origin}/join/${joinCode}`);
     toast({ title: "Link copied!", description: "Share with your partner" });
   }, [joinCode, toast]);
 
   const toggleReady = useCallback(() => {
-    if (!ws || ws.readyState !== WebSocket.OPEN) {
+    const currentWs = websocketRef.current;
+    const playerId = localStorage.getItem(`playerId_${roomId}`); // Re-fetch playerId for safety
+
+    if (currentWs?.readyState === WebSocket.OPEN && roomId && playerId) {
+      console.log("Toggling ready state for player:", playerId, "in room:", roomId);
+      currentWs.send(JSON.stringify({ 
+        type: "toggle_ready",
+        roomId,
+        playerId
+      }));
+    } else {
+      console.error("Cannot toggle ready - WebSocket not ready or missing data", {
+        wsState: currentWs?.readyState,
+        playerId: playerId,
+        roomId
+      });
       toast({
-        title: "Not connected",
-        description: "Please wait for connection to establish",
+        title: "Connection Issue",
+        description: "Could not toggle ready status. Please check your connection.",
         variant: "destructive",
       });
-      return;
     }
-    
-    console.log('Toggling ready state');
-    ws.send(JSON.stringify({ type: "toggle_ready" }));
-  }, [ws, toast]);
+  }, [roomId, toast]); // Dependencies
 
   const startGame = useCallback(() => {
-    if (!ws || ws.readyState !== WebSocket.OPEN || !isHost) return;
-    ws.send(JSON.stringify({ type: "start_game" }));
-  }, [ws, isHost]);
+    const currentWs = websocketRef.current;
+    if (currentWs?.readyState === WebSocket.OPEN && roomId) {
+      console.log("Starting game in room:", roomId);
+      currentWs.send(JSON.stringify({ 
+        type: "start_game",
+        roomId
+      }));
+    } else {
+      console.error("Cannot start game - WebSocket not ready or missing roomId", {
+        wsState: currentWs?.readyState,
+        roomId
+      });
+      toast({
+        title: "Connection Issue",
+        description: "Could not start the game. Please check your connection.",
+        variant: "destructive",
+      });
+    }
+  }, [roomId, toast]); // Dependencies
 
   const allReady = players.length >= 2 && players.every((p) => p.isReady || p.isHost);
   const readyCount = players.filter((p) => p.isReady || p.isHost).length;
@@ -186,7 +232,7 @@ export default function Lobby() {
                 >
                   {joinCode || "------"}
                 </motion.p>
-                
+
                 <motion.button
                   onClick={copyCode}
                   className="p-2 rounded-lg bg-plum-deep/30 hover:bg-plum-deep/50 transition-colors"
@@ -201,7 +247,7 @@ export default function Lobby() {
                   )}
                 </motion.button>
               </div>
-              
+
               <VelvetButton
                 velvetVariant="ghost-glow"
                 size="sm"
@@ -257,7 +303,7 @@ export default function Lobby() {
                   // Get current playerId from localStorage
                   const currentPlayerId = localStorage.getItem(`playerId_${roomId}`);
                   const isCurrentPlayer = player.id === currentPlayerId;
-                  
+
                   return (
                     <motion.div key={player.id} variants={staggerChildVariants}>
                       <PlayerListItem
@@ -266,7 +312,7 @@ export default function Lobby() {
                         isHost={player.isHost}
                         isReady={player.isReady}
                         showReadyButton={isCurrentPlayer && !player.isHost}
-                        onReadyToggle={toggleReady}
+                        onReadyToggle={toggleReady} // Use the updated toggleReady
                       />
                     </motion.div>
                   );
@@ -282,11 +328,10 @@ export default function Lobby() {
             <VelvetButton
               velvetVariant="velvet"
               className="w-full py-6 text-lg"
-              onClick={startGame}
+              onClick={startGame} // Use the updated startGame
               disabled={!allReady}
               data-testid="button-start-game"
             >
-              <Play className="w-5 h-5 mr-2" />
               {allReady ? "Start Game" : `Waiting for players (${readyCount}/${players.length})`}
             </VelvetButton>
           </SlideIn>
@@ -297,7 +342,7 @@ export default function Lobby() {
             <VelvetButton
               velvetVariant="neon"
               className="w-full py-6 text-lg"
-              onClick={toggleReady}
+              onClick={toggleReady} // Use the updated toggleReady
               data-testid="button-ready"
             >
               {(() => {
