@@ -1,10 +1,12 @@
 import type { Express } from "express";
 import type { Server as HTTPServer } from "http";
-import { db } from "../db";
+import { storage } from "./storage";
 import { games, packs, prompts, rooms, roomPlayers, users, type InsertRoom, type InsertRoomPlayer, type RoomSettings } from "@shared/schema";
 import { eq, and, inArray, sql } from "drizzle-orm";
 import { WebSocketServer, WebSocket } from "ws";
 import { nanoid } from "nanoid";
+import { z } from "zod";
+import { createRoomSchema, joinRoomSchema, insertPromptSchema } from "@shared/schema";
 
 // Store active WebSocket connections by roomId and playerId
 const roomConnections = new Map<string, Map<string, WebSocket>>();
@@ -70,10 +72,7 @@ export async function registerRoutes(
             }
 
             // Get all players in the room
-            const players = await db
-              .select()
-              .from(roomPlayers)
-              .where(eq(roomPlayers.roomId, roomId));
+            const players = await storage.getRoomPlayers(roomId);
 
             log(`Room ${roomId} has ${players.length} players`);
 
@@ -113,14 +112,11 @@ export async function registerRoutes(
 
             log(`Toggle ready for player ${currentPlayerId} in room ${currentRoomId}`);
 
-            // Find the player by their ID
-            const player = await db
-              .select()
-              .from(roomPlayers)
-              .where(eq(roomPlayers.id, currentPlayerId))
-              .limit(1);
+            // Get all players to find the current player
+            const players = await storage.getRoomPlayers(currentRoomId);
+            const player = players.find(p => p.id === currentPlayerId);
 
-            if (player.length === 0) {
+            if (!player) {
               log(`Player ${currentPlayerId} not found in database`);
               ws.send(JSON.stringify({
                 type: "error",
@@ -130,19 +126,13 @@ export async function registerRoutes(
             }
 
             // Toggle ready state
-            const newReadyState = !player[0].isReady;
-            log(`Toggling ready state for ${player[0].nickname} to ${newReadyState}`);
+            const newReadyState = !player.isReady;
+            log(`Toggling ready state for ${player.nickname} to ${newReadyState}`);
 
-            await db
-              .update(roomPlayers)
-              .set({ isReady: newReadyState })
-              .where(eq(roomPlayers.id, currentPlayerId));
+            await storage.updateRoomPlayer(currentPlayerId, { isReady: newReadyState });
 
             // Broadcast the updated player list
-            const updatedPlayers = await db
-              .select()
-              .from(roomPlayers)
-              .where(eq(roomPlayers.roomId, currentRoomId));
+            const updatedPlayers = await storage.getRoomPlayers(currentRoomId);
             
             broadcastToRoom(currentRoomId, {
               type: "room_update",
