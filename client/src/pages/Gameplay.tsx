@@ -13,7 +13,7 @@ import { PlayerAvatar } from "@/components/velvet/PlayerAvatar";
 import { FadeIn, SlideIn } from "@/components/velvet/PageTransition";
 import { useLocalGame, useOnlineRoom } from "@/lib/gameState"; // Assuming these are the correct hooks based on context
 import type { Prompt } from "@shared/schema";
-import { useToast } from "@/components/ui/use-toast"; // Assuming this hook is used for toast notifications
+import { useToast } from "@/hooks/use-toast";
 
 // Placeholder for actual hook implementations if they are different from useLocalGame/useOnlineRoom
 // In a real scenario, these would be imported from their respective files.
