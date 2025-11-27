@@ -16,6 +16,44 @@
   90% { transform: translate(10%, 5%); }
 }
 
+@keyframes ember-rise {
+  0% {
+    transform: translateY(0) translateX(0) scale(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(-10vh) translateX(5px) scale(1);
+  }
+  90% {
+    opacity: 0.8;
+    transform: translateY(-90vh) translateX(-10px) scale(1);
+  }
+  100% {
+    transform: translateY(-100vh) translateX(0) scale(0.5);
+    opacity: 0;
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.6;
+  }
+}
+
+.animate-ember-rise {
+  animation: ember-rise linear infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2.5s ease-in-out infinite;
+}
+
 /* VELVETPLAY DARK MODE ONLY - Premium Velvet/Neon Theme */
 :root {
   --button-outline: rgba(255,255,255, .10);

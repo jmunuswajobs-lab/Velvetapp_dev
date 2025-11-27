@@ -1,8 +1,6 @@
-import { motion } from "framer-motion";
-import { Link } from "wouter";
-import { Play, Users, Flame, Heart, Zap, MessageSquare, Globe, Scale, HelpCircle } from "lucide-react";
+import { memo, useMemo } from "react";
+import { Users, Flame, Heart, Zap, MessageSquare, Globe, Scale, HelpCircle } from "lucide-react";
 import type { Game } from "@shared/schema";
-import { VelvetButton } from "./VelvetButton";
 import { SpicyBadge, SpiceIndicator } from "./SpicyBadge";
 import { VelvetCard } from "./VelvetCard";
 
@@ -22,46 +20,45 @@ const gameIcons: Record<string, typeof Flame> = {
   scale: Scale,
 };
 
-export function GameCard({ game, onClick }: GameCardProps) {
+export const GameCard = memo(function GameCard({ game, onClick }: GameCardProps) {
   const Icon = gameIcons[game.iconName || "flame"] || Flame;
 
-  const getGlowColor = () => {
+  const glowColor = useMemo(() => {
     if (game.isCoupleFocused) return "rgba(255, 46, 109, 0.3)";
     if (game.isSpicy) return "rgba(255, 94, 51, 0.3)";
     return "rgba(255, 0, 138, 0.3)";
-  };
+  }, [game.isCoupleFocused, game.isSpicy]);
+
+  const backgroundGradient = useMemo(() => {
+    return game.isCoupleFocused 
+      ? "radial-gradient(circle at 20% 30%, rgba(255, 46, 109, 0.4) 0%, transparent 60%), radial-gradient(circle at 80% 70%, rgba(176, 15, 47, 0.3) 0%, transparent 60%)"
+      : "radial-gradient(circle at 30% 20%, rgba(255, 0, 138, 0.4) 0%, transparent 60%), radial-gradient(circle at 70% 80%, rgba(59, 15, 92, 0.3) 0%, transparent 60%)";
+  }, [game.isCoupleFocused]);
 
   return (
     <VelvetCard
       onClick={onClick}
-      glowColor={getGlowColor()}
+      glowColor={glowColor}
       className="h-full relative overflow-hidden"
       testId={`game-card-${game.slug}`}
     >
       {/* Decorative gradient background */}
       <div 
         className="absolute inset-0 opacity-10"
-        style={{
-          background: game.isCoupleFocused 
-            ? "radial-gradient(circle at 20% 30%, rgba(255, 46, 109, 0.4) 0%, transparent 60%), radial-gradient(circle at 80% 70%, rgba(176, 15, 47, 0.3) 0%, transparent 60%)"
-            : "radial-gradient(circle at 30% 20%, rgba(255, 0, 138, 0.4) 0%, transparent 60%), radial-gradient(circle at 70% 80%, rgba(59, 15, 92, 0.3) 0%, transparent 60%)"
-        }}
+        style={{ background: backgroundGradient }}
       />
       <div className="p-5 flex flex-col h-full relative z-10">
         {/* Icon and title */}
         <div className="flex items-start gap-4 mb-4">
-          <motion.div
-            className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0"
+          <div
+            className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0 transition-shadow duration-200 hover:shadow-[0_0_16px_rgba(255,0,138,0.35)]"
             style={{
               background: "linear-gradient(135deg, rgba(255, 0, 138, 0.2) 0%, rgba(176, 15, 47, 0.2) 100%)",
               border: "1px solid rgba(255, 0, 138, 0.3)",
             }}
-            whileHover={{
-              boxShadow: "0 0 20px rgba(255, 0, 138, 0.4)",
-            }}
           >
             <Icon className="w-7 h-7 text-neon-magenta" />
-          </motion.div>
+          </div>
 
           <div className="flex-1 min-w-0">
             <h3 className="font-display font-semibold text-lg text-white truncate">
@@ -82,7 +79,7 @@ export function GameCard({ game, onClick }: GameCardProps) {
         </div>
 
         {/* Footer */}
-        <div className="mt-auto pt-4 border-t border-plum-deep/30 flex items-center justify-between">
+        <div className="mt-auto pt-4 border-t border-plum-deep/30 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Users className="w-4 h-4" />
             <span>{game.minPlayers}-{game.maxPlayers} players</span>
@@ -92,7 +89,7 @@ export function GameCard({ game, onClick }: GameCardProps) {
       </div>
     </VelvetCard>
   );
-}
+});
 
 interface GameCardSkeletonProps {
   className?: string;

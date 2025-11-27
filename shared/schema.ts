@@ -252,6 +252,8 @@ export type LudoTileId = string; // Format: "main_0" | "safe_red_0" | "home" | "
 
 export type TileType = "normal" | "start" | "safe" | "heat" | "bond" | "freeze";
 
+export type VelvetSpaceType = "heat" | "dare" | "truth" | "bond" | "kiss" | "freeze" | "wild";
+
 export interface LudoTile {
   id: LudoTileId;
   type: TileType;

@@ -1,6 +1,6 @@
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { Card } from "@/components/ui/card";
-import { forwardRef, type ReactNode, type MouseEvent } from "react";
+import { forwardRef, type ReactNode, type MouseEvent, memo, useCallback } from "react";
 
 interface VelvetCardProps {
   children: ReactNode;
@@ -11,33 +11,42 @@ interface VelvetCardProps {
   testId?: string;
 }
 
-export const VelvetCard = forwardRef<HTMLDivElement, VelvetCardProps>(
+export const VelvetCard = memo(forwardRef<HTMLDivElement, VelvetCardProps>(
   ({ children, className = "", tiltEnabled = true, glowColor = "rgba(255, 0, 138, 0.3)", onClick, testId }, ref) => {
     const x = useMotionValue(0);
     const y = useMotionValue(0);
 
-    const rotateX = useSpring(useTransform(y, [-0.5, 0.5], [10, -10]), { stiffness: 300, damping: 30 });
-    const rotateY = useSpring(useTransform(x, [-0.5, 0.5], [-10, 10]), { stiffness: 300, damping: 30 });
+    const rotateX = useSpring(useTransform(y, [-0.5, 0.5], [8, -8]), { 
+      stiffness: 150, 
+      damping: 20,
+      mass: 0.5
+    });
+    const rotateY = useSpring(useTransform(x, [-0.5, 0.5], [-8, 8]), { 
+      stiffness: 150, 
+      damping: 20,
+      mass: 0.5
+    });
 
-    const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
+    const handleMouseMove = useCallback((e: MouseEvent<HTMLDivElement>) => {
       if (!tiltEnabled) return;
       const rect = e.currentTarget.getBoundingClientRect();
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 2;
       x.set((e.clientX - centerX) / rect.width);
       y.set((e.clientY - centerY) / rect.height);
-    };
+    }, [tiltEnabled, x, y]);
 
-    const handleMouseLeave = () => {
+    const handleMouseLeave = useCallback(() => {
       x.set(0);
       y.set(0);
-    };
+    }, [x, y]);
 
     return (
       <motion.div
         ref={ref}
+        className="will-change-transform"
         style={{
-          perspective: 1000,
+          perspective: 800,
           transformStyle: "preserve-3d",
         }}
         onMouseMove={handleMouseMove}
@@ -46,34 +55,37 @@ export const VelvetCard = forwardRef<HTMLDivElement, VelvetCardProps>(
         data-testid={testId}
       >
         <motion.div
+          className="will-change-transform"
           style={{
             rotateX: tiltEnabled ? rotateX : 0,
             rotateY: tiltEnabled ? rotateY : 0,
+            transform: "translateZ(0)",
           }}
           whileHover={{ 
-            scale: 1.02,
-            transition: { duration: 0.2 }
+            scale: 1.015,
+            transition: { duration: 0.15, ease: "easeOut" }
           }}
-          whileTap={{ scale: 0.98 }}
+          whileTap={{ scale: 0.985 }}
         >
           <Card
             className={`
               relative overflow-hidden
               bg-gradient-to-br from-noir-soft via-noir-deep to-noir-black
               border border-plum-deep/30
-              transition-shadow duration-300
+              transition-shadow duration-200 ease-out
               ${onClick ? "cursor-pointer" : ""}
               ${className}
             `}
             style={{
-              boxShadow: `0 4px 30px ${glowColor}, 0 0 0 1px rgba(255, 0, 138, 0.1)`,
+              boxShadow: `0 4px 24px ${glowColor}, 0 0 0 1px rgba(255, 0, 138, 0.1)`,
+              backfaceVisibility: "hidden",
             }}
           >
-            {/* Shine overlay */}
+            {/* Shine overlay - simplified */}
             <div 
-              className="absolute inset-0 pointer-events-none"
+              className="absolute inset-0 pointer-events-none opacity-60"
               style={{
-                background: "linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 50%, rgba(255,255,255,0.03) 100%)",
+                background: "linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 40%)",
               }}
             />
             
@@ -82,11 +94,11 @@ export const VelvetCard = forwardRef<HTMLDivElement, VelvetCardProps>(
               {children}
             </div>
             
-            {/* Inner glow */}
+            {/* Inner glow - simplified */}
             <div 
-              className="absolute inset-0 pointer-events-none opacity-50"
+              className="absolute inset-0 pointer-events-none opacity-40"
               style={{
-                background: `radial-gradient(ellipse at 50% 0%, ${glowColor} 0%, transparent 60%)`,
+                background: `radial-gradient(ellipse at 50% 0%, ${glowColor} 0%, transparent 50%)`,
               }}
             />
           </Card>
@@ -94,7 +106,7 @@ export const VelvetCard = forwardRef<HTMLDivElement, VelvetCardProps>(
       </motion.div>
     );
   }
-);
+));
 
 VelvetCard.displayName = "VelvetCard";
 
@@ -107,7 +119,7 @@ interface PromptCardProps {
   className?: string;
 }
 
-export function PromptCard({ text, type, intensity, isFlipped = false, onFlip, className = "" }: PromptCardProps) {
+export const PromptCard = memo(function PromptCard({ text, type, intensity, isFlipped = false, onFlip, className = "" }: PromptCardProps) {
   const getTypeColor = (type: string) => {
     switch (type) {
       case "truth": return { bg: "from-plum-deep", glow: "rgba(91, 26, 140, 0.4)" };
@@ -121,37 +133,32 @@ export function PromptCard({ text, type, intensity, isFlipped = false, onFlip, c
   };
 
   const typeStyle = getTypeColor(type);
+  const baseOpacity = 0.3 + (intensity / 5) * 0.4;
 
   return (
     <motion.div
       className={`relative ${className}`}
-      style={{ perspective: 1200 }}
+      style={{ perspective: 1000 }}
       data-testid="prompt-card"
     >
-      {/* Heat glow behind card based on intensity */}
-      <motion.div
-        className="absolute inset-0 rounded-2xl blur-2xl -z-10"
+      {/* Heat glow behind card - using CSS animation for better performance */}
+      <div
+        className="absolute inset-0 rounded-2xl blur-xl -z-10 animate-pulse-glow"
         style={{
           background: typeStyle.glow,
-          opacity: 0.3 + (intensity / 5) * 0.4,
-        }}
-        animate={{
-          scale: [1, 1.1, 1],
-          opacity: [0.3 + (intensity / 5) * 0.4, 0.5 + (intensity / 5) * 0.4, 0.3 + (intensity / 5) * 0.4],
-        }}
-        transition={{
-          duration: 2,
-          repeat: Infinity,
-          ease: "easeInOut",
+          opacity: baseOpacity,
         }}
       />
 
       <motion.div
-        className="relative w-full aspect-[3/4] cursor-pointer"
+        className="relative w-full aspect-[3/4] cursor-pointer will-change-transform"
         animate={{ rotateY: isFlipped ? 180 : 0 }}
-        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        transition={{ type: "spring", stiffness: 200, damping: 25 }}
         onClick={onFlip}
-        style={{ transformStyle: "preserve-3d" }}
+        style={{ 
+          transformStyle: "preserve-3d",
+          transform: "translateZ(0)",
+        }}
       >
         {/* Front face */}
         <div
@@ -159,10 +166,9 @@ export function PromptCard({ text, type, intensity, isFlipped = false, onFlip, c
             absolute inset-0 rounded-2xl p-6 flex flex-col
             bg-gradient-to-br ${typeStyle.bg} to-noir-black
             border border-white/10
-            backface-hidden
           `}
           style={{
-            boxShadow: `0 8px 40px ${typeStyle.glow}, inset 0 0 60px rgba(0,0,0,0.3)`,
+            boxShadow: `0 6px 32px ${typeStyle.glow}, inset 0 0 40px rgba(0,0,0,0.3)`,
             backfaceVisibility: "hidden",
           }}
         >
@@ -172,7 +178,7 @@ export function PromptCard({ text, type, intensity, isFlipped = false, onFlip, c
             </p>
           </div>
           
-          <div className="flex items-center justify-between mt-4">
+          <div className="flex items-center justify-between gap-2 mt-4">
             <span className="text-xs uppercase tracking-wider text-white/60 font-medium">
               {type}
             </span>
@@ -182,7 +188,7 @@ export function PromptCard({ text, type, intensity, isFlipped = false, onFlip, c
                   key={i}
                   className="w-2 h-2 rounded-full bg-ember-orange"
                   style={{
-                    boxShadow: "0 0 8px rgba(255, 94, 51, 0.6)",
+                    boxShadow: "0 0 6px rgba(255, 94, 51, 0.5)",
                   }}
                 />
               ))}
@@ -198,7 +204,7 @@ export function PromptCard({ text, type, intensity, isFlipped = false, onFlip, c
             border border-white/10
           `}
           style={{
-            boxShadow: "0 8px 40px rgba(59, 15, 92, 0.4)",
+            boxShadow: "0 6px 32px rgba(59, 15, 92, 0.4)",
             backfaceVisibility: "hidden",
             transform: "rotateY(180deg)",
           }}
@@ -213,4 +219,4 @@ export function PromptCard({ text, type, intensity, isFlipped = false, onFlip, c
       </motion.div>
     </motion.div>
   );
-}
+});

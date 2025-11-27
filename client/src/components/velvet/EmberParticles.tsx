@@ -1,5 +1,4 @@
-import { motion } from "framer-motion";
-import { useMemo } from "react";
+import { useMemo, memo } from "react";
 
 interface EmberParticle {
   id: number;
@@ -15,15 +14,15 @@ interface EmberParticlesProps {
   className?: string;
 }
 
-export function EmberParticles({ count = 20, className = "" }: EmberParticlesProps) {
+export const EmberParticles = memo(function EmberParticles({ count = 15, className = "" }: EmberParticlesProps) {
   const particles = useMemo<EmberParticle[]>(() => {
-    return Array.from({ length: count }, (_, i) => ({
+    return Array.from({ length: Math.min(count, 20) }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
       delay: Math.random() * 5,
-      duration: 4 + Math.random() * 4,
-      size: 2 + Math.random() * 4,
-      opacity: 0.3 + Math.random() * 0.5,
+      duration: 5 + Math.random() * 5,
+      size: 2 + Math.random() * 3,
+      opacity: 0.2 + Math.random() * 0.4,
     }));
   }, [count]);
 
@@ -33,31 +32,22 @@ export function EmberParticles({ count = 20, className = "" }: EmberParticlesPro
       data-testid="ember-particles"
     >
       {particles.map((particle) => (
-        <motion.div
+        <div
           key={particle.id}
-          className="absolute rounded-full"
+          className="absolute rounded-full animate-ember-rise"
           style={{
             left: `${particle.x}%`,
             bottom: "-10px",
             width: particle.size,
             height: particle.size,
             background: `radial-gradient(circle, rgba(255, 94, 51, ${particle.opacity}) 0%, rgba(255, 0, 138, ${particle.opacity * 0.5}) 100%)`,
-            boxShadow: `0 0 ${particle.size * 2}px rgba(255, 94, 51, ${particle.opacity})`,
-          }}
-          animate={{
-            y: [0, -window.innerHeight * 1.2],
-            x: [0, (Math.random() - 0.5) * 100],
-            opacity: [0, particle.opacity, particle.opacity, 0],
-            scale: [0, 1, 1, 0.5],
-          }}
-          transition={{
-            duration: particle.duration,
-            delay: particle.delay,
-            repeat: Infinity,
-            ease: "easeOut",
+            boxShadow: `0 0 ${particle.size}px rgba(255, 94, 51, ${particle.opacity * 0.6})`,
+            animationDelay: `${particle.delay}s`,
+            animationDuration: `${particle.duration}s`,
+            willChange: "transform, opacity",
           }}
         />
       ))}
     </div>
   );
-}
+});

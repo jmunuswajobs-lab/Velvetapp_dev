@@ -654,5 +654,362 @@ export async function registerRoutes(
     }
   });
 
+  // ===== LUDO LOCAL GAME API =====
+
+  // In-memory store for local Ludo games
+  const localLudoGames = new Map<string, any>();
+
+  app.post("/api/ludo/init-local", async (req, res) => {
+    try {
+      const { players, gameMode } = req.body;
+
+      if (!players || !Array.isArray(players) || players.length < 2 || players.length > 4) {
+        return res.status(400).json({ error: "Must have 2-4 players" });
+      }
+
+      const roomId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const PLAYER_COLORS: LudoColor[] = ["red", "blue", "green", "yellow"];
+
+      const ludoPlayers = players.map((p: { nickname: string; avatarColor: string }, idx: number) => {
+        const color = PLAYER_COLORS[idx];
+        const tokens = Array.from({ length: 4 }, (_, i) => ({
+          id: `${color}_token_${i}`,
+          playerId: `player_${idx}`,
+          color,
+          position: "home",
+          pathProgress: -1,
+        }));
+
+        return {
+          id: `player_${idx}`,
+          nickname: p.nickname,
+          color,
+          avatarColor: p.avatarColor,
+          tokens,
+          finishedTokens: 0,
+        };
+      });
+
+      const state = {
+        roomId,
+        players: ludoPlayers,
+        currentPlayerIndex: 0,
+        diceValue: null,
+        canRoll: true,
+        canMove: false,
+        validMoves: [],
+        specialEffect: null,
+        winnerId: null,
+        turnNumber: 1,
+        gameMode,
+        frozenPlayers: [],
+      };
+
+      localLudoGames.set(roomId, state);
+      res.json(state);
+    } catch (error) {
+      console.error("Error initializing local Ludo game:", error);
+      res.status(500).json({ error: "Failed to initialize game" });
+    }
+  });
+
+  app.post("/api/ludo/roll", async (req, res) => {
+    try {
+      const { roomId } = req.body;
+      const state = localLudoGames.get(roomId);
+
+      if (!state) {
+        return res.status(404).json({ error: "Game not found" });
+      }
+
+      if (!state.canRoll || state.winnerId) {
+        return res.status(400).json({ error: "Cannot roll at this time" });
+      }
+
+      const currentPlayer = state.players[state.currentPlayerIndex];
+
+      // Check if player is frozen
+      if (state.frozenPlayers.includes(currentPlayer.id)) {
+        state.frozenPlayers = state.frozenPlayers.filter((id: string) => id !== currentPlayer.id);
+        state.currentPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
+        state.turnNumber++;
+        localLudoGames.set(roomId, state);
+        return res.json(state);
+      }
+
+      const diceValue = Math.floor(Math.random() * 6) + 1;
+      const validMoves = calculateLudoValidMoves(state, currentPlayer, diceValue);
+
+      state.diceValue = diceValue;
+      state.canRoll = false;
+      state.canMove = validMoves.length > 0;
+      state.validMoves = validMoves;
+
+      // If no valid moves, advance turn
+      if (!state.canMove) {
+        if (diceValue !== 6) {
+          state.currentPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
+          state.turnNumber++;
+        }
+        state.canRoll = true;
+        state.diceValue = null;
+      }
+
+      localLudoGames.set(roomId, state);
+      res.json(state);
+    } catch (error) {
+      console.error("Error rolling dice:", error);
+      res.status(500).json({ error: "Failed to roll dice" });
+    }
+  });
+
+  app.post("/api/ludo/move", async (req, res) => {
+    try {
+      const { roomId, tokenId, moveIndex } = req.body;
+      const state = localLudoGames.get(roomId);
+
+      if (!state) {
+        return res.status(404).json({ error: "Game not found" });
+      }
+
+      if (!state.canMove || moveIndex >= state.validMoves.length) {
+        return res.status(400).json({ error: "Invalid move" });
+      }
+
+      const move = state.validMoves[moveIndex];
+      if (move.tokenId !== tokenId) {
+        return res.status(400).json({ error: "Token mismatch" });
+      }
+
+      const currentPlayer = state.players[state.currentPlayerIndex];
+
+      // Update token position
+      for (const player of state.players) {
+        if (player.id === currentPlayer.id) {
+          for (const token of player.tokens) {
+            if (token.id === tokenId) {
+              token.position = move.targetTileId;
+              token.pathProgress = move.targetProgress;
+              if (move.targetTileId === "finished") {
+                player.finishedTokens++;
+              }
+            }
+          }
+        }
+
+        // Handle capture
+        if (move.willCapture && move.capturedTokenId) {
+          for (const token of player.tokens) {
+            if (token.id === move.capturedTokenId) {
+              token.position = "home";
+              token.pathProgress = -1;
+            }
+          }
+        }
+      }
+
+      // Check for special tile effects
+      const specialEffect = checkLudoSpecialEffect(move.targetTileId, currentPlayer.id);
+      state.specialEffect = specialEffect;
+
+      // Check win condition
+      const winner = state.players.find((p: any) => p.finishedTokens === 4);
+      if (winner) {
+        state.winnerId = winner.id;
+      }
+
+      // Determine next turn
+      const rolledSix = state.diceValue === 6;
+      const shouldContinue = rolledSix && !winner;
+
+      if (!shouldContinue) {
+        state.currentPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
+        state.turnNumber++;
+      }
+
+      state.diceValue = null;
+      state.canRoll = !specialEffect;
+      state.canMove = false;
+      state.validMoves = [];
+
+      localLudoGames.set(roomId, state);
+      res.json(state);
+    } catch (error) {
+      console.error("Error applying move:", error);
+      res.status(500).json({ error: "Failed to apply move" });
+    }
+  });
+
+  app.post("/api/ludo/dismiss-effect", async (req, res) => {
+    try {
+      const { roomId } = req.body;
+      const state = localLudoGames.get(roomId);
+
+      if (!state) {
+        return res.status(404).json({ error: "Game not found" });
+      }
+
+      // Apply freeze effect if applicable
+      if (state.specialEffect?.type === "freeze") {
+        state.frozenPlayers.push(state.specialEffect.playerId);
+      }
+
+      state.specialEffect = null;
+      state.canRoll = true;
+
+      localLudoGames.set(roomId, state);
+      res.json(state);
+    } catch (error) {
+      console.error("Error dismissing effect:", error);
+      res.status(500).json({ error: "Failed to dismiss effect" });
+    }
+  });
+
+  app.post("/api/ludo/rescue", async (req, res) => {
+    try {
+      const { roomId, rescuedPlayerId } = req.body;
+      const state = localLudoGames.get(roomId);
+
+      if (!state) {
+        return res.status(404).json({ error: "Game not found" });
+      }
+
+      state.frozenPlayers = state.frozenPlayers.filter((id: string) => id !== rescuedPlayerId);
+
+      localLudoGames.set(roomId, state);
+      res.json(state);
+    } catch (error) {
+      console.error("Error rescuing player:", error);
+      res.status(500).json({ error: "Failed to rescue player" });
+    }
+  });
+
+  // Helper functions for Ludo logic
+  function calculateLudoValidMoves(state: any, player: any, diceValue: number) {
+    const moves: any[] = [];
+
+    for (const token of player.tokens) {
+      // Token at home
+      if (token.position === "home") {
+        if (diceValue === 6) {
+          const startIndex = LUDO_START_INDICES[player.color as LudoColor];
+          const startTileId = `main_${startIndex}`;
+          const captureInfo = checkLudoCapture(state, startTileId, player.id);
+
+          moves.push({
+            tokenId: token.id,
+            targetTileId: startTileId,
+            targetProgress: 0,
+            willCapture: captureInfo.willCapture,
+            capturedTokenId: captureInfo.capturedTokenId,
+          });
+        }
+        continue;
+      }
+
+      // Token already finished
+      if (token.position === "finished") {
+        continue;
+      }
+
+      // Token on board
+      const newProgress = token.pathProgress + diceValue;
+      const maxProgress = 52 + 5; // Main path + safe zone
+
+      // Can't overshoot finish
+      if (newProgress > maxProgress) {
+        continue;
+      }
+
+      const targetTileId = calculateLudoTargetTile(player.color, token.pathProgress, diceValue);
+      const captureInfo = checkLudoCapture(state, targetTileId, player.id);
+
+      moves.push({
+        tokenId: token.id,
+        targetTileId,
+        targetProgress: newProgress,
+        willCapture: captureInfo.willCapture,
+        capturedTokenId: captureInfo.capturedTokenId,
+      });
+    }
+
+    return moves;
+  }
+
+  function calculateLudoTargetTile(playerColor: LudoColor, currentProgress: number, diceValue: number): string {
+    const newProgress = currentProgress + diceValue;
+
+    // Still on main path
+    if (newProgress < 52) {
+      const mainIndex = (LUDO_START_INDICES[playerColor] + newProgress) % 52;
+      return `main_${mainIndex}`;
+    }
+
+    // Entered safe zone
+    if (newProgress < 52 + 5) {
+      const safeIndex = newProgress - 52;
+      return `safe_${playerColor}_${safeIndex}`;
+    }
+
+    // Reached finish
+    return "finished";
+  }
+
+  function checkLudoCapture(state: any, targetTileId: string, movingPlayerId: string): { willCapture: boolean; capturedTokenId?: string } {
+    // Can't capture on safe tiles or special tiles
+    if (targetTileId.startsWith("safe_") || targetTileId === "home" || targetTileId === "finished") {
+      return { willCapture: false };
+    }
+
+    // Check if this is a start tile (safe from capture)
+    const mainIndex = parseInt(targetTileId.split("_")[1]);
+    const isStartTile = Object.values(LUDO_START_INDICES).includes(mainIndex);
+    if (isStartTile) {
+      return { willCapture: false };
+    }
+
+    // Look for opponent tokens on this tile
+    for (const player of state.players) {
+      if (player.id === movingPlayerId) continue;
+
+      for (const token of player.tokens) {
+        if (token.position === targetTileId) {
+          return { willCapture: true, capturedTokenId: token.id };
+        }
+      }
+    }
+
+    return { willCapture: false };
+  }
+
+  function checkLudoSpecialEffect(tileId: string, playerId: string): any {
+    if (!tileId.startsWith("main_")) {
+      return null;
+    }
+
+    const mainIndex = parseInt(tileId.split("_")[1]);
+    const specialTileTypes: Record<number, string> = {
+      5: "heat",
+      12: "bond",
+      18: "freeze",
+      25: "heat",
+      31: "bond",
+      38: "freeze",
+      44: "heat",
+      51: "bond",
+    };
+
+    const effectType = specialTileTypes[mainIndex];
+    if (!effectType) {
+      return null;
+    }
+
+    return {
+      type: effectType,
+      tileId,
+      playerId,
+    };
+  }
+
   return httpServer;
 }
