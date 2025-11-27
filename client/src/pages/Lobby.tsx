@@ -28,7 +28,10 @@ export default function Lobby() {
     if (!roomId) return;
 
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    const host = window.location.host;
+    const wsUrl = `${protocol}//${host}/ws`;
+    
+    console.log('Connecting to WebSocket:', wsUrl);
     const socket = new WebSocket(wsUrl);
 
     socket.onopen = () => {
@@ -61,14 +64,26 @@ export default function Lobby() {
 
     socket.onclose = () => {
       setConnected(false);
+      console.log('WebSocket disconnected');
+    };
+
+    socket.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      toast({
+        title: "Connection Error",
+        description: "Failed to connect to game server",
+        variant: "destructive",
+      });
     };
 
     setWs(socket);
 
     return () => {
-      socket.close();
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.close();
+      }
     };
-  }, [roomId]);
+  }, [roomId, toast]);
 
   const copyCode = useCallback(() => {
     if (!joinCode) return;
@@ -84,9 +99,18 @@ export default function Lobby() {
   }, [joinCode, toast]);
 
   const toggleReady = useCallback(() => {
-    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      toast({
+        title: "Not connected",
+        description: "Please wait for connection to establish",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    console.log('Toggling ready state');
     ws.send(JSON.stringify({ type: "toggle_ready" }));
-  }, [ws]);
+  }, [ws, toast]);
 
   const startGame = useCallback(() => {
     if (!ws || ws.readyState !== WebSocket.OPEN || !isHost) return;

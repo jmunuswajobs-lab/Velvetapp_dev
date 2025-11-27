@@ -1,16 +1,18 @@
 import type { Express } from "express";
-import { createServer, type Server } from "http";
+import type { Server as HTTPServer } from "http";
+import { db } from "../db";
+import { games, packs, prompts, rooms, roomPlayers, users, type InsertRoom, type InsertRoomPlayer, type RoomSettings } from "@shared/schema";
+import { eq, and, inArray, sql } from "drizzle-orm";
 import { WebSocketServer, WebSocket } from "ws";
-import { storage } from "./storage";
-import { 
-  insertPromptSchema, 
-  createRoomSchema, 
-  joinRoomSchema,
-} from "@shared/schema";
-import { z } from "zod";
+import { nanoid } from "nanoid";
 
-// Room WebSocket connections
+// Store active WebSocket connections by roomId and playerId
 const roomConnections = new Map<string, Map<string, WebSocket>>();
+
+function log(message: string) {
+  const timestamp = new Date().toLocaleTimeString();
+  console.log(`${timestamp} [websocket] ${message}`);
+}
 
 function broadcastToRoom(roomId: string, message: object, excludePlayerId?: string) {
   const connections = roomConnections.get(roomId);
@@ -25,69 +27,62 @@ function broadcastToRoom(roomId: string, message: object, excludePlayerId?: stri
 }
 
 export async function registerRoutes(
-  httpServer: Server,
+  httpServer: HTTPServer,
   app: Express
-): Promise<Server> {
-  
-  // WebSocket server for real-time room sync
-  const wss = new WebSocketServer({ server: httpServer, path: "/ws" });
+): Promise<HTTPServer> {
 
-  wss.on("connection", (ws) => {
+  // WebSocket server
+  const wss = new WebSocketServer({ 
+    server: httpServer, 
+    path: "/ws",
+    verifyClient: (info) => {
+      log(`New WebSocket connection attempt from ${info.req.socket.remoteAddress}`);
+      return true;
+    }
+  });
+
+  wss.on("connection", (ws, req) => {
+    log(`WebSocket connected from ${req.socket.remoteAddress}`);
     let currentRoomId: string | null = null;
     let currentPlayerId: string | null = null;
 
     ws.on("message", async (data) => {
       try {
         const message = JSON.parse(data.toString());
+        log(`Received message: ${message.type} from room ${message.roomId || 'unknown'}`);
 
         switch (message.type) {
           case "join_room": {
             const { roomId, playerId } = message;
             currentRoomId = roomId;
-            currentPlayerId = playerId || `guest-${Date.now()}`;
-
+            currentPlayerId = playerId;
+            // Add connection to room with playerId as key
             if (!roomConnections.has(roomId)) {
               roomConnections.set(roomId, new Map());
             }
-            roomConnections.get(roomId)!.set(currentPlayerId, ws);
 
-            // Send current room state
-            const room = await storage.getRoom(roomId);
-            const players = await storage.getRoomPlayers(roomId);
-            
-            ws.send(JSON.stringify({
-              type: "room_update",
-              room,
-              players: players.map((p) => ({
-                id: p.id,
-                nickname: p.nickname,
-                avatarColor: p.avatarColor,
-                isHost: p.isHost,
-                isReady: p.isReady,
-              })),
-            }));
+            if (playerId) {
+              log(`Player ${playerId} joining room ${roomId}`);
+              roomConnections.get(roomId)!.set(playerId, ws);
+            } else {
+              log(`Warning: Player joining room ${roomId} without playerId`);
+              roomConnections.get(roomId)!.set(`temp_${Date.now()}`, ws);
+            }
 
-            // Notify others
-            broadcastToRoom(roomId, {
-              type: "player_joined",
-              playerId: currentPlayerId,
-            }, currentPlayerId);
-            break;
-          }
+            // Get all players in the room
+            const players = await db
+              .select()
+              .from(roomPlayers)
+              .where(eq(roomPlayers.roomId, roomId));
 
-          case "toggle_ready": {
-            if (!currentRoomId || !currentPlayerId) return;
-            
-            const players = await storage.getRoomPlayers(currentRoomId);
-            const player = players.find((p) => p.id === currentPlayerId);
-            
-            if (player) {
-              await storage.updateRoomPlayer(player.id, { isReady: !player.isReady });
-              
-              const updatedPlayers = await storage.getRoomPlayers(currentRoomId);
-              broadcastToRoom(currentRoomId, {
+            log(`Room ${roomId} has ${players.length} players`);
+
+            // Broadcast updated player list to all connections in the room
+            const connections = roomConnections.get(roomId);
+            if (connections) {
+              const update = JSON.stringify({
                 type: "room_update",
-                players: updatedPlayers.map((p) => ({
+                players: players.map((p) => ({
                   id: p.id,
                   nickname: p.nickname,
                   avatarColor: p.avatarColor,
@@ -95,18 +90,81 @@ export async function registerRoutes(
                   isReady: p.isReady,
                 })),
               });
+
+              log(`Broadcasting to ${connections.size} connections`);
+              connections.forEach((client) => {
+                if (client.readyState === WebSocket.OPEN) {
+                  client.send(update);
+                }
+              });
             }
+            break;
+          }
+
+          case "toggle_ready": {
+            if (!currentRoomId || !currentPlayerId) {
+              log(`Cannot toggle ready: roomId=${currentRoomId}, playerId=${currentPlayerId}`);
+              ws.send(JSON.stringify({
+                type: "error",
+                message: "Invalid room or player ID"
+              }));
+              break;
+            }
+
+            log(`Toggle ready for player ${currentPlayerId} in room ${currentRoomId}`);
+
+            // Find the player by their ID
+            const player = await db
+              .select()
+              .from(roomPlayers)
+              .where(eq(roomPlayers.id, currentPlayerId))
+              .limit(1);
+
+            if (player.length === 0) {
+              log(`Player ${currentPlayerId} not found in database`);
+              ws.send(JSON.stringify({
+                type: "error",
+                message: "Player not found"
+              }));
+              break;
+            }
+
+            // Toggle ready state
+            const newReadyState = !player[0].isReady;
+            log(`Toggling ready state for ${player[0].nickname} to ${newReadyState}`);
+
+            await db
+              .update(roomPlayers)
+              .set({ isReady: newReadyState })
+              .where(eq(roomPlayers.id, currentPlayerId));
+
+            // Broadcast the updated player list
+            const updatedPlayers = await db
+              .select()
+              .from(roomPlayers)
+              .where(eq(roomPlayers.roomId, currentRoomId));
+            
+            broadcastToRoom(currentRoomId, {
+              type: "room_update",
+              players: updatedPlayers.map((p) => ({
+                id: p.id,
+                nickname: p.nickname,
+                avatarColor: p.avatarColor,
+                isHost: p.isHost,
+                isReady: p.isReady,
+              })),
+            });
             break;
           }
 
           case "start_game": {
             if (!currentRoomId) return;
-            
+
             const room = await storage.getRoom(currentRoomId);
             if (!room) return;
 
             await storage.updateRoom(currentRoomId, { status: "in-progress" });
-            
+
             // Get prompts for the game
             const prompts = await storage.getPromptsByGameId(room.gameId, {
               intensity: (room.settings as any)?.intensity || 3,
@@ -124,7 +182,7 @@ export async function registerRoutes(
 
           case "next_prompt": {
             if (!currentRoomId) return;
-            
+
             const room = await storage.getRoom(currentRoomId);
             if (!room) return;
 
@@ -144,9 +202,9 @@ export async function registerRoutes(
 
           case "end_game": {
             if (!currentRoomId) return;
-            
+
             await storage.updateRoom(currentRoomId, { status: "finished" });
-            
+
             broadcastToRoom(currentRoomId, {
               type: "game_ended",
             });
@@ -154,32 +212,47 @@ export async function registerRoutes(
           }
         }
       } catch (error) {
-        console.error("WebSocket message error:", error);
-        ws.send(JSON.stringify({ type: "error", message: "Invalid message" }));
+        log(`Error processing message: ${error}`);
+        // Send a generic error message to the client
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: "error", message: "An unexpected error occurred. Please try again." }));
+        }
       }
     });
 
-    ws.on("close", async () => {
-      if (currentRoomId && currentPlayerId) {
+    ws.on("close", () => {
+      log(`WebSocket closed for player ${currentPlayerId} in room ${currentRoomId}`);
+      if (currentRoomId) {
         const connections = roomConnections.get(currentRoomId);
         if (connections) {
-          connections.delete(currentPlayerId);
+          // Remove by playerId if available, otherwise remove this ws instance
+          if (currentPlayerId) {
+            connections.delete(currentPlayerId);
+          } else {
+            // Fallback: remove by ws reference
+            for (const [key, value] of connections.entries()) {
+              if (value === ws) {
+                connections.delete(key);
+                break;
+              }
+            }
+          }
+
           if (connections.size === 0) {
             roomConnections.delete(currentRoomId);
+            log(`Room ${currentRoomId} has no more connections`);
           }
         }
-
-        // Notify others
-        broadcastToRoom(currentRoomId, {
-          type: "player_left",
-          playerId: currentPlayerId,
-        });
       }
+    });
+
+    ws.on("error", (error) => {
+      log(`WebSocket error for player ${currentPlayerId}: ${error.message}`);
     });
   });
 
   // ===== GAMES API =====
-  
+
   app.get("/api/games", async (req, res) => {
     try {
       const games = await storage.getGames();
@@ -202,7 +275,7 @@ export async function registerRoutes(
   });
 
   // ===== PACKS API =====
-  
+
   app.get("/api/packs", async (req, res) => {
     try {
       const packs = await storage.getPacks();
@@ -222,11 +295,11 @@ export async function registerRoutes(
   });
 
   // ===== PROMPTS API =====
-  
+
   app.get("/api/prompts", async (req, res) => {
     try {
       const { gameId, intensity, packId } = req.query;
-      
+
       if (gameId) {
         const prompts = await storage.getPromptsByGameId(
           gameId as string, 
@@ -237,7 +310,7 @@ export async function registerRoutes(
         );
         return res.json(prompts);
       }
-      
+
       const prompts = await storage.getPrompts();
       res.json(prompts);
     } catch (error) {
@@ -283,11 +356,11 @@ export async function registerRoutes(
   });
 
   // ===== ROOMS API =====
-  
+
   app.post("/api/rooms", async (req, res) => {
     try {
       const parsed = createRoomSchema.parse(req.body);
-      
+
       // Create room
       const room = await storage.createRoom({
         gameId: parsed.gameId,
@@ -328,7 +401,7 @@ export async function registerRoutes(
   app.post("/api/rooms/join", async (req, res) => {
     try {
       const parsed = joinRoomSchema.parse(req.body);
-      
+
       const room = await storage.getRoomByJoinCode(parsed.joinCode);
       if (!room) {
         return res.status(404).json({ error: "Room not found" });
