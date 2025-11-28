@@ -187,28 +187,33 @@ export async function registerRoutes(
           }
 
           case "start_game": {
-            const startRoomId = message.roomId || currentRoomId;
-            const startPlayerId = message.playerId || currentPlayerId;
-            
-            if (!startRoomId) {
-              log(`Cannot start game: no roomId provided`);
-              ws.send(JSON.stringify({ type: "error", message: "Missing room ID" }));
+            // SECURITY: Use only the authenticated currentRoomId and currentPlayerId
+            // to prevent privilege escalation via spoofed message.playerId
+            if (!currentRoomId || !currentPlayerId) {
+              log(`Cannot start game: not authenticated to a room`);
+              ws.send(JSON.stringify({ type: "error", message: "Not connected to a room" }));
               return;
             }
 
-            const room = await storage.getRoom(startRoomId);
+            const room = await storage.getRoom(currentRoomId);
             if (!room) {
-              log(`Room ${startRoomId} not found`);
+              log(`Room ${currentRoomId} not found`);
               ws.send(JSON.stringify({ type: "error", message: "Room not found" }));
               return;
             }
 
-            // Validate that the requesting player is the host
-            const players = await storage.getRoomPlayers(startRoomId);
-            const requestingPlayer = players.find(p => p.id === startPlayerId);
+            // Validate that the requesting player is the host using authenticated ID
+            const players = await storage.getRoomPlayers(currentRoomId);
+            const requestingPlayer = players.find(p => p.id === currentPlayerId);
             
-            if (!requestingPlayer?.isHost) {
-              log(`Non-host player ${startPlayerId} attempted to start game in room ${startRoomId}`);
+            if (!requestingPlayer) {
+              log(`Player ${currentPlayerId} not found in room ${currentRoomId}`);
+              ws.send(JSON.stringify({ type: "error", message: "Player not found in room" }));
+              return;
+            }
+            
+            if (!requestingPlayer.isHost) {
+              log(`Non-host player ${currentPlayerId} attempted to start game in room ${currentRoomId}`);
               ws.send(JSON.stringify({ type: "error", message: "Only the host can start the game" }));
               return;
             }
@@ -221,7 +226,7 @@ export async function registerRoutes(
               return;
             }
 
-            await storage.updateRoom(startRoomId, { status: "in-progress" });
+            await storage.updateRoom(currentRoomId, { status: "in-progress" });
 
             // Get game and prompts
             const game = await storage.getGame(room.gameId);
@@ -232,7 +237,7 @@ export async function registerRoutes(
             // Shuffle prompts
             const shuffledPrompts = [...prompts].sort(() => Math.random() - 0.5);
 
-            broadcastToRoom(startRoomId, {
+            broadcastToRoom(currentRoomId, {
               type: "game_started",
               prompts: shuffledPrompts,
               players: players.map((p) => ({
