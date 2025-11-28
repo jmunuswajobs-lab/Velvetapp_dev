@@ -63,20 +63,29 @@ export default function Gameplay() {
   // Redirect if no game state
   useEffect(() => {
     if (!currentGameState) {
-      console.log("No game state found, redirecting to home", {
+      console.log("No game state found", {
         isOnlineMode,
         hasLocalState: !!localGame.gameState,
-        hasOnlineState: !!onlineGame.gameState
+        hasOnlineState: !!onlineGame.gameState,
+        localPrompts: localGame.gameState?.prompts?.length,
+        onlinePrompts: onlineGame.gameState?.prompts?.length
       });
       // Give a small delay to allow state to propagate
       const timer = setTimeout(() => {
-        if (!currentGameState) {
+        const checkState = isOnlineMode ? onlineGame.gameState : localGame.gameState;
+        if (!checkState) {
+          console.log("Redirecting to home - no game state after timeout");
+          toast({
+            title: "No Active Game",
+            description: "Please start a new game",
+            variant: "destructive",
+          });
           setLocation("/");
         }
-      }, 500);
+      }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [currentGameState, setLocation, isOnlineMode, localGame.gameState, onlineGame.gameState]);
+  }, [currentGameState, setLocation, isOnlineMode, localGame.gameState, onlineGame.gameState, toast]);
 
   // Early return with loading state - must be before accessing properties
   if (!currentGameState) {

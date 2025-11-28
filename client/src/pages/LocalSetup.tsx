@@ -44,18 +44,22 @@ export default function LocalSetup() {
   });
 
   const { data: prompts, isLoading: promptsLoading, error: promptsError } = useQuery<Prompt[]>({
-    queryKey: [`/api/prompts`, { gameId: game?.id }],
+    queryKey: [`/api/prompts`, { gameId: game?.id, intensity: settings.intensity }],
     queryFn: async () => {
       if (!game?.id) throw new Error("No game ID");
       const response = await fetch(`/api/prompts?gameId=${game.id}&intensity=${settings.intensity}`);
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Prompts fetch error:", errorText);
         throw new Error(`Failed to fetch prompts: ${response.statusText}`);
       }
-      return response.json();
+      const data = await response.json();
+      console.log("Fetched prompts:", data.length);
+      return data;
     },
     enabled: !!game?.id,
-    staleTime: 0, // Always fetch fresh prompts
-    retry: 1,
+    staleTime: 5000, // Cache for 5 seconds
+    retry: 2,
   });
 
   const addPlayer = () => {
@@ -89,17 +93,23 @@ export default function LocalSetup() {
                   !promptsLoading;
 
   const startGame = () => {
-    if (!isValid || !game || !prompts) return;
+    if (!isValid || !game || !prompts || prompts.length === 0) {
+      console.error("Cannot start game - missing data:", { game: !!game, prompts: prompts?.length });
+      return;
+    }
 
     const validPlayers = players.map((p) => ({
       nickname: p.nickname.trim(),
       avatarColor: p.avatarColor,
     }));
 
+    console.log("Initializing game with:", { gameId: game.id, players: validPlayers.length, prompts: prompts.length });
+    
     initGame(game.id, validPlayers, settings, prompts);
 
     // Use setTimeout to ensure state is updated before navigation
     setTimeout(() => {
+      console.log("Navigating to gameplay");
       setLocation(`/games/${slug}/play`);
     }, 100);
   };

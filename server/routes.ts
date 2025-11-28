@@ -502,20 +502,26 @@ export async function registerRoutes(
   // Get prompts for a game
   app.get("/api/prompts", async (req, res) => {
     try {
-      const { gameId, packId } = req.query;
+      const { gameId, packId, intensity } = req.query;
 
       if (!gameId) {
         return res.status(400).json({ error: "gameId is required" });
       }
 
-      const prompts = await storage.getPrompts(
+      const intensityLevel = intensity ? parseInt(intensity as string, 10) : undefined;
+      
+      const prompts = await storage.getPromptsByGameId(
         gameId as string,
-        packId as string | undefined
+        {
+          intensity: intensityLevel,
+          packId: packId as string | undefined
+        }
       );
 
       if (!prompts || prompts.length === 0) {
         console.warn(`No prompts found for gameId: ${gameId}`);
-        return res.status(404).json({ error: "No prompts found for this game" });
+        // Return empty array instead of 404 to avoid breaking the flow
+        return res.json([]);
       }
 
       res.json(prompts);

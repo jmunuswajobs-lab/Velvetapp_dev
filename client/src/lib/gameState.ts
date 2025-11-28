@@ -68,6 +68,23 @@ export const useLocalGame = create<LocalGameStore>((set, get) => ({
     settings,
     prompts
   ) => {
+    console.log("initGame called with:", { 
+      gameId, 
+      playersCount: players.length, 
+      promptsCount: prompts.length,
+      settings 
+    });
+
+    if (!prompts || prompts.length === 0) {
+      console.error("Cannot initialize game - no prompts provided");
+      return;
+    }
+
+    if (!players || players.length < 2) {
+      console.error("Cannot initialize game - need at least 2 players");
+      return;
+    }
+
     // Clear any existing game state first to prevent memory leaks
     const currentState = get().gameState;
     if (currentState) {
@@ -80,32 +97,33 @@ export const useLocalGame = create<LocalGameStore>((set, get) => ({
     // Shuffle prompts - create new array to avoid references
     const shuffledPrompts = prompts.map(p => ({ ...p })).sort(() => Math.random() - 0.5);
 
-    set({
-      gameState: {
-        gameId,
-        players: players.map(p => ({ ...p })),
-        settings: { ...settings },
-        currentPromptIndex: 0,
-        prompts: shuffledPrompts,
-        usedPromptIds: [],
-        round: 1,
-        turnIndex: 0,
-        heatLevel: 0,
-        stats: {
-          roundsPlayed: 0,
-          promptsByType: {
-            truth: 0,
-            dare: 0,
-            challenge: 0,
-            confession: 0,
-            vote: 0,
-            rule: 0,
-          },
-          playerPicks: {},
-          skippedCount: 0,
+    const newState = {
+      gameId,
+      players: players.map(p => ({ ...p })),
+      settings: { ...settings },
+      currentPromptIndex: 0,
+      prompts: shuffledPrompts,
+      usedPromptIds: [],
+      round: 1,
+      turnIndex: 0,
+      heatLevel: 0,
+      stats: {
+        roundsPlayed: 0,
+        promptsByType: {
+          truth: 0,
+          dare: 0,
+          challenge: 0,
+          confession: 0,
+          vote: 0,
+          rule: 0,
         },
+        playerPicks: {},
+        skippedCount: 0,
       },
-    });
+    };
+
+    console.log("Setting new game state with", shuffledPrompts.length, "prompts");
+    set({ gameState: newState });
   },
 
   nextPrompt: () => {
