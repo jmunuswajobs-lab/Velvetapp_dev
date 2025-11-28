@@ -55,7 +55,7 @@ export default function LudoSetup() {
   const isValid = players.every((p) => p.nickname.trim().length > 0) && 
                   players.length >= 2;
 
-  const startGame = () => {
+  const startGame = async () => {
     if (!isValid) return;
 
     const validPlayers = players.map((p) => ({
@@ -63,11 +63,12 @@ export default function LudoSetup() {
       avatarColor: p.avatarColor,
     }));
 
-    initLocalGame(validPlayers, gameMode);
-    
-    setTimeout(() => {
+    try {
+      await initLocalGame(validPlayers, gameMode);
       setLocation("/games/velvet-ludo/play");
-    }, 100);
+    } catch (error) {
+      console.error("Failed to start Ludo game:", error);
+    }
   };
 
   return (

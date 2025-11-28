@@ -60,33 +60,17 @@ export default function Gameplay() {
   }, [setLocation, slug, isOnlineMode, roomId]);
 
 
-  // Redirect if no game state after sufficient time
+  // Redirect if no game state
   useEffect(() => {
-    if (!currentGameState) {
-      console.log("No game state found", {
-        isOnlineMode,
-        hasLocalState: !!localGame.gameState,
-        hasOnlineState: !!onlineGame.gameState,
-        localPrompts: localGame.gameState?.prompts?.length,
-        onlinePrompts: onlineGame.gameState?.prompts?.length
+    if (!currentGameState || !currentGameState.prompts || currentGameState.prompts.length === 0) {
+      toast({
+        title: "No Active Game",
+        description: "Start a new game to begin playing",
+        variant: "destructive",
       });
-      
-      // Give time to allow state to load from persistence
-      const timer = setTimeout(() => {
-        const checkState = isOnlineMode ? onlineGame.gameState : localGame.gameState;
-        if (!checkState || !checkState.prompts || checkState.prompts.length === 0) {
-          console.log("Redirecting - no valid game state after timeout");
-          toast({
-            title: "No Active Game",
-            description: "Start a new game to begin playing",
-            variant: "destructive",
-          });
-          setLocation(`/games/${slug}`);
-        }
-      }, 1500);
-      return () => clearTimeout(timer);
+      setLocation(`/games/${slug}`);
     }
-  }, [currentGameState, setLocation, slug, isOnlineMode, localGame.gameState, onlineGame.gameState, toast]);
+  }, [currentGameState, setLocation, slug, toast]);
 
   // Early return with loading state - must be before accessing properties
   if (!currentGameState) {

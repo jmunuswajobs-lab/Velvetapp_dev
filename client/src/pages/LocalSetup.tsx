@@ -92,7 +92,7 @@ export default function LocalSetup() {
                   prompts && prompts.length > 0 &&
                   !promptsLoading;
 
-  const startGame = async () => {
+  const startGame = () => {
     if (!isValid || !game || !prompts || prompts.length === 0) {
       console.error("Cannot start game - missing data:", { game: !!game, prompts: prompts?.length });
       return;
@@ -103,22 +103,11 @@ export default function LocalSetup() {
       avatarColor: p.avatarColor,
     }));
 
-    console.log("Initializing game with:", { gameId: game.id, players: validPlayers.length, prompts: prompts.length });
-    
-    // Initialize game state synchronously
+    // Initialize game state
     initGame(game.id, validPlayers, settings, prompts);
 
-    // Force a small delay to ensure persistence completes
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // Verify state was set before navigating
-    const state = useLocalGame.getState().gameState;
-    if (state && state.prompts.length > 0) {
-      console.log("State verified, navigating to gameplay");
-      setLocation(`/games/${slug}/play`);
-    } else {
-      console.error("State verification failed - not navigating");
-    }
+    // Navigate immediately - Zustand persist is synchronous
+    setLocation(`/games/${slug}/play`);
   };
 
   if (gameLoading || !game) {

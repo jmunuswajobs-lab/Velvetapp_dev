@@ -70,13 +70,6 @@ export const useLocalGame = create<LocalGameStore>()(
         settings,
         prompts
       ) => {
-        console.log("initGame called with:", { 
-          gameId, 
-          playersCount: players.length, 
-          promptsCount: prompts.length,
-          settings 
-        });
-
         if (!prompts || prompts.length === 0) {
           console.error("Cannot initialize game - no prompts provided");
           return;
@@ -85,14 +78,6 @@ export const useLocalGame = create<LocalGameStore>()(
         if (!players || players.length < 2) {
           console.error("Cannot initialize game - need at least 2 players");
           return;
-        }
-
-        // Clear any existing state first
-        const currentState = get().gameState;
-        if (currentState) {
-          currentState.prompts = [];
-          currentState.usedPromptIds = [];
-          currentState.players = [];
         }
 
         // Shuffle prompts - create new array to avoid references
@@ -123,8 +108,7 @@ export const useLocalGame = create<LocalGameStore>()(
           },
         };
 
-        console.log("Setting new game state with", shuffledPrompts.length, "prompts");
-        set({ gameState: newState }, true); // Force replace to ensure persistence
+        set({ gameState: newState }, true);
       },
 
   nextPrompt: () => {
@@ -241,14 +225,7 @@ export const useLocalGame = create<LocalGameStore>()(
   },
 
   resetGame: () => {
-        const state = get();
-        if (state.gameState) {
-          // Clear all arrays to free memory
-          state.gameState.prompts = [];
-          state.gameState.usedPromptIds = [];
-          state.gameState.players = [];
-        }
-        set({ gameState: null });
+        set({ gameState: null }, true);
       },
     }),
     {
@@ -322,14 +299,6 @@ export const useOnlineRoom = create<OnlineRoomStore>((set, get) => ({
     set({ gameStarted }),
 
   initGameState: (prompts, players) => {
-    // Clear previous state to prevent memory leaks
-    const currentState = get().gameState;
-    if (currentState) {
-      console.log("Clearing previous online game state");
-      currentState.prompts = [];
-      currentState.usedPromptIds = [];
-    }
-
     const shuffledPrompts = prompts.map(p => ({ ...p })).sort(() => Math.random() - 0.5);
 
     const newGameState = {
@@ -483,23 +452,10 @@ export const useOnlineRoom = create<OnlineRoomStore>((set, get) => ({
   },
 
   resetGame: () => {
-    const state = get();
-    if (state.gameState) {
-      // Clear all arrays to free memory
-      state.gameState.prompts = [];
-      state.gameState.usedPromptIds = [];
-      state.gameState.players = [];
-    }
-    set({ gameState: null, gameStarted: false });
+    set({ gameState: null, gameStarted: false }, true);
   },
 
   reset: () => {
-    const state = get();
-    if (state.gameState) {
-      state.gameState.prompts = [];
-      state.gameState.usedPromptIds = [];
-      state.gameState.players = [];
-    }
-    set(initialOnlineState);
+    set(initialOnlineState, true);
   },
 }));

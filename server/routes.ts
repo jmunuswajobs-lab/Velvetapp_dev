@@ -724,7 +724,7 @@ export async function registerRoutes(
         };
       });
 
-      const state = {
+      const state: LudoGameState = {
         roomId,
         players: ludoPlayers,
         currentPlayerIndex: 0,
@@ -736,11 +736,18 @@ export async function registerRoutes(
         winnerId: null,
         turnNumber: 1,
         gameMode,
-        frozenPlayers: [],
+        frozenPlayers: new Set(),
       };
 
       localLudoGames.set(roomId, state);
-      res.json(state);
+      
+      // Convert Set to Array for JSON serialization
+      const serializedState = {
+        ...state,
+        frozenPlayers: Array.from(state.frozenPlayers),
+      };
+      
+      res.json(serializedState);
     } catch (error) {
       console.error("Error initializing local Ludo game:", error);
       res.status(500).json({ error: "Failed to initialize game" });

@@ -1,143 +1,176 @@
+
 import { create } from "zustand";
-import type { LudoGameState, LudoPlayer, GameMode, Prompt } from "@shared/schema";
+import { persist } from "zustand/middleware";
+import type { LudoGameState, LudoPlayer, GameMode } from "@shared/schema";
 
 interface LudoStore {
   gameState: LudoGameState | null;
   isOnline: boolean;
   roomId: string | null;
   playerId: string | null;
-  ws: WebSocket | null;
 
-  initLocalGame: (players: { nickname: string; avatarColor: string }[], gameMode: GameMode) => void;
-  initOnlineGame: (roomId: string, playerId: string, ws: WebSocket) => void;
-  rollDice: () => void;
-  selectMove: (tokenId: string, moveIndex: number) => void;
-  dismissSpecialEffect: () => void;
-  rescuePlayer: (playerId: string) => void;
+  initLocalGame: (players: { nickname: string; avatarColor: string }[], gameMode: GameMode) => Promise<void>;
+  rollDice: () => Promise<void>;
+  selectMove: (tokenId: string, moveIndex: number) => Promise<void>;
+  dismissSpecialEffect: () => Promise<void>;
+  rescuePlayer: (playerId: string) => Promise<void>;
   endGame: () => void;
   setGameState: (state: LudoGameState) => void;
 }
 
-export const useLudoStore = create<LudoStore>((set, get) => ({
-  gameState: null,
-  isOnline: false,
-  roomId: null,
-  playerId: null,
-  ws: null,
+export const useLudoStore = create<LudoStore>()(
+  persist(
+    (set, get) => ({
+      gameState: null,
+      isOnline: false,
+      roomId: null,
+      playerId: null,
 
-  initLocalGame: async (players, gameMode) => {
-    try {
-      const response = await fetch("/api/ludo/init-local", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ players, gameMode }),
-      });
+      initLocalGame: async (players, gameMode) => {
+        try {
+          const response = await fetch("/api/ludo/init-local", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ players, gameMode }),
+          });
 
-      if (!response.ok) {
-        throw new Error("Failed to initialize local game");
-      }
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error("Ludo init failed:", errorText);
+            throw new Error(`Failed to initialize: ${response.statusText}`);
+          }
 
-      const state: LudoGameState = await response.json();
-      set({
-        gameState: {
-          ...state,
-          frozenPlayers: new Set(state.frozenPlayers),
-        },
-        isOnline: false,
-        roomId: state.roomId,
-      });
-    } catch (error) {
-      console.error("Error initializing local game:", error);
+          const state: any = await response.json();
+          
+          set({
+            gameState: {
+              ...state,
+              frozenPlayers: new Set(state.frozenPlayers || []),
+            },
+            isOnline: false,
+            roomId: state.roomId,
+          });
+        } catch (error) {
+          console.error("Error initializing local game:", error);
+          throw error;
+        }
+      },
+
+      rollDice: async () => {
+        const { roomId, gameState } = get();
+        if (!gameState || !roomId || gameState.winnerId) return;
+
+        try {
+          const response = await fetch("/api/ludo/roll", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ roomId }),
+          });
+
+          if (!response.ok) throw new Error("Failed to roll dice");
+
+          const state = await response.json();
+          set({ 
+            gameState: { 
+              ...state, 
+              frozenPlayers: new Set(state.frozenPlayers || []) 
+            } 
+          });
+        } catch (error) {
+          console.error("Error rolling dice:", error);
+        }
+      },
+
+      selectMove: async (tokenId, moveIndex) => {
+        const { roomId, gameState } = get();
+        if (!gameState || !roomId || !gameState.canMove) return;
+
+        try {
+          const response = await fetch("/api/ludo/move", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ roomId, tokenId, moveIndex }),
+          });
+
+          if (!response.ok) throw new Error("Failed to move piece");
+
+          const state = await response.json();
+          set({ 
+            gameState: { 
+              ...state, 
+              frozenPlayers: new Set(state.frozenPlayers || []) 
+            } 
+          });
+        } catch (error) {
+          console.error("Error moving piece:", error);
+        }
+      },
+
+      dismissSpecialEffect: async () => {
+        const { roomId, gameState } = get();
+        if (!gameState || !roomId || !gameState.specialEffect) return;
+
+        try {
+          const response = await fetch("/api/ludo/dismiss-effect", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ roomId }),
+          });
+
+          if (!response.ok) throw new Error("Failed to dismiss effect");
+
+          const state = await response.json();
+          set({ 
+            gameState: { 
+              ...state, 
+              frozenPlayers: new Set(state.frozenPlayers || []) 
+            } 
+          });
+        } catch (error) {
+          console.error("Error dismissing effect:", error);
+        }
+      },
+
+      rescuePlayer: async (rescuedPlayerId) => {
+        const { roomId } = get();
+        if (!roomId) return;
+
+        try {
+          const response = await fetch("/api/ludo/rescue", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ roomId, rescuedPlayerId }),
+          });
+
+          if (!response.ok) throw new Error("Failed to rescue player");
+
+          const state = await response.json();
+          set({ 
+            gameState: { 
+              ...state, 
+              frozenPlayers: new Set(state.frozenPlayers || []) 
+            } 
+          });
+        } catch (error) {
+          console.error("Error rescuing player:", error);
+        }
+      },
+
+      endGame: () => {
+        set({ gameState: null, isOnline: false, roomId: null, playerId: null });
+      },
+
+      setGameState: (state) => {
+        set({ 
+          gameState: {
+            ...state,
+            frozenPlayers: new Set(state.frozenPlayers || []),
+          }
+        });
+      },
+    }),
+    {
+      name: "velvetplay-ludo",
     }
-  },
-
-  initOnlineGame: (roomId, playerId, ws) => {
-    set({ roomId, playerId, isOnline: true, ws });
-
-    // Request initial state
-    ws.send(JSON.stringify({ type: "ludo:get-state", roomId }));
-  },
-
-  rollDice: () => {
-    const { isOnline, ws, roomId, playerId, gameState } = get();
-
-    if (!gameState || gameState.winnerId) return;
-
-    if (isOnline && ws && roomId) {
-      ws.send(JSON.stringify({ type: "ludo:roll", roomId, playerId }));
-    } else if (!isOnline && roomId) {
-      fetch("/api/ludo/roll", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roomId }),
-      })
-        .then(res => res.json())
-        .then(state => set({ gameState: { ...state, frozenPlayers: new Set(state.frozenPlayers) } }));
-    }
-  },
-
-  selectMove: (tokenId, moveIndex) => {
-    const { isOnline, ws, roomId, playerId, gameState } = get();
-
-    if (!gameState || !gameState.canMove) return;
-
-    if (isOnline && ws && roomId) {
-      ws.send(JSON.stringify({ type: "ludo:move", roomId, playerId, tokenId, moveIndex }));
-    } else if (!isOnline && roomId) {
-      fetch("/api/ludo/move", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roomId, tokenId, moveIndex }),
-      })
-        .then(res => res.json())
-        .then(state => set({ gameState: { ...state, frozenPlayers: new Set(state.frozenPlayers) } }));
-    }
-  },
-
-  dismissSpecialEffect: () => {
-    const { isOnline, ws, roomId, playerId, gameState } = get();
-
-    if (!gameState || !gameState.specialEffect) return;
-
-    if (isOnline && ws && roomId) {
-      ws.send(JSON.stringify({ type: "ludo:dismiss-effect", roomId, playerId }));
-    } else if (!isOnline && roomId) {
-      fetch("/api/ludo/dismiss-effect", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roomId }),
-      })
-        .then(res => res.json())
-        .then(state => set({ gameState: { ...state, frozenPlayers: new Set(state.frozenPlayers) } }));
-    }
-  },
-
-  rescuePlayer: (rescuedPlayerId) => {
-    const { isOnline, ws, roomId, playerId } = get();
-
-    if (isOnline && ws && roomId) {
-      ws.send(JSON.stringify({ type: "ludo:rescue", roomId, playerId, rescuedPlayerId }));
-    } else if (!isOnline && roomId) {
-      fetch("/api/ludo/rescue", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roomId, rescuedPlayerId }),
-      })
-        .then(res => res.json())
-        .then(state => set({ gameState: { ...state, frozenPlayers: new Set(state.frozenPlayers) } }));
-    }
-  },
-
-  endGame: () => {
-    set({ gameState: null, isOnline: false, roomId: null, playerId: null, ws: null });
-  },
-
-  setGameState: (state) => {
-    set({ 
-      gameState: {
-        ...state,
-        frozenPlayers: new Set(state.frozenPlayers),
-      }
-    });
-  },
-}));
+  )
+);
