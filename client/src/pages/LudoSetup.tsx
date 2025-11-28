@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation, Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Plus, X, Users, Play, Dice5 } from "lucide-react";
+import { ArrowLeft, Plus, X, Users, Play, Dice5, Gamepad2, Heart } from "lucide-react";
 import { EmberParticles } from "@/components/velvet/EmberParticles";
 import { VelvetButton } from "@/components/velvet/VelvetButton";
 import { VelvetInput } from "@/components/velvet/VelvetInput";
@@ -112,8 +112,8 @@ export default function LudoSetup() {
         </FadeIn>
 
         <VelvetCard className="p-6 mb-6">
-          <h2 className="text-xl font-display font-semibold mb-4 text-center">
-            🎮 Game Mode
+          <h2 className="text-xl font-display font-semibold mb-4 text-center flex items-center justify-center gap-2">
+            <Gamepad2 className="w-5 h-5 text-neon-magenta" /> Game Mode
           </h2>
           <div className="grid grid-cols-2 gap-4">
             <VelvetButton
@@ -121,7 +121,7 @@ export default function LudoSetup() {
               onClick={() => setGameMode("couple")}
               className="py-6 flex flex-col items-center gap-2"
             >
-              <span className="text-3xl">💑</span>
+              <Heart className="w-8 h-8 text-velvet-red" />
               <span className="font-semibold">Couple Mode</span>
               <span className="text-xs text-muted-foreground">
                 Romantic challenges
@@ -132,7 +132,7 @@ export default function LudoSetup() {
               onClick={() => setGameMode("friends")}
               className="py-6 flex flex-col items-center gap-2"
             >
-              <span className="text-3xl">👥</span>
+              <Users className="w-8 h-8 text-blue-400" />
               <span className="font-semibold">Friends Mode</span>
               <span className="text-xs text-muted-foreground">
                 Fun challenges
