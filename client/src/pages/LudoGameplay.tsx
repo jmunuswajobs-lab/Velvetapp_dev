@@ -1,6 +1,5 @@
-
 import { useEffect, useState } from "react";
-import { useParams, useLocation, Link } from "wouter";
+import { useLocation, Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Trophy, Sparkles, Home, Flame, Heart, Snowflake, Zap } from "lucide-react";
 import { EmberParticles } from "@/components/velvet/EmberParticles";
@@ -16,18 +15,18 @@ export default function LudoGameplay() {
   const { 
     gameState, 
     rollDice, 
-    movePiece, 
-    completePrompt, 
+    selectMove,
+    dismissSpecialEffect,
     endGame 
   } = useLudoStore();
 
   const [showWinner, setShowWinner] = useState(false);
 
   useEffect(() => {
-    if (gameState?.winner) {
+    if (gameState?.winnerId) {
       setShowWinner(true);
     }
-  }, [gameState?.winner]);
+  }, [gameState?.winnerId]);
 
   if (!gameState) {
     return (
@@ -45,14 +44,22 @@ export default function LudoGameplay() {
     );
   }
 
-  const currentPlayer = gameState.players[gameState.currentTurn];
-  const winnerPlayer = gameState.winner 
-    ? gameState.players.find(p => p.id === gameState.winner)
+  const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+  const winnerPlayer = gameState.winnerId 
+    ? gameState.players.find(p => p.id === gameState.winnerId)
     : null;
 
   const handleEndGame = () => {
     endGame();
     setLocation("/games/velvet-ludo");
+  };
+
+  const handleMovePiece = (tokenId: string) => {
+    const validMovesForToken = gameState.validMoves.filter(m => m.tokenId === tokenId);
+    if (validMovesForToken.length > 0) {
+      const moveIndex = gameState.validMoves.indexOf(validMovesForToken[0]);
+      selectMove(tokenId, moveIndex);
+    }
   };
 
   const getTileIcon = (type: string) => {
@@ -106,7 +113,7 @@ export default function LudoGameplay() {
 
             <div className="text-center">
               <p className="text-sm text-muted-foreground">Velvet Ludo</p>
-              <p className="font-display font-semibold">Round {gameState.turnCount + 1}</p>
+              <p className="font-display font-semibold">Round {gameState.turnNumber + 1}</p>
             </div>
 
             <div className="w-20" />
@@ -120,14 +127,14 @@ export default function LudoGameplay() {
           <LudoBoard
             gameState={gameState}
             onRollDice={rollDice}
-            onMovePiece={movePiece}
+            onMovePiece={handleMovePiece}
           />
         </FadeIn>
       </main>
 
-      {/* Prompt Modal */}
+      {/* Special Effect Modal (Heat/Bond/Freeze prompts) */}
       <AnimatePresence>
-        {gameState.gamePhase === "prompt" && gameState.currentPrompt && (
+        {gameState.specialEffect && gameState.specialEffect.prompt && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -159,33 +166,29 @@ export default function LudoGameplay() {
                     }}
                     transition={{ duration: 2, repeat: Infinity }}
                   >
-                    {getTileIcon(gameState.velvetSpaces.find(v => 
-                      gameState.players[gameState.currentTurn].pieces.some(p => p.position === v.position)
-                    )?.type || "dare")}
+                    {getTileIcon(gameState.specialEffect.type)}
                   </motion.div>
 
                   <h2 className="text-2xl font-display font-bold gradient-text mb-2">
                     Special Tile!
                   </h2>
                   <p className="text-muted-foreground text-sm">
-                    {getTileDescription(gameState.velvetSpaces.find(v => 
-                      gameState.players[gameState.currentTurn].pieces.some(p => p.position === v.position)
-                    )?.type || "dare")}
+                    {getTileDescription(gameState.specialEffect.type)}
                   </p>
                 </div>
 
                 <div className="mb-6">
                   <PromptCard
-                    text={gameState.currentPrompt.text}
-                    type={gameState.currentPrompt.type}
-                    intensity={gameState.currentPrompt.intensity}
+                    text={gameState.specialEffect.prompt.text}
+                    type={gameState.specialEffect.prompt.type as "truth" | "dare"}
+                    intensity={gameState.specialEffect.prompt.intensity}
                   />
                 </div>
 
                 <VelvetButton
                   velvetVariant="neon"
                   className="w-full"
-                  onClick={completePrompt}
+                  onClick={dismissSpecialEffect}
                   data-testid="button-complete-prompt"
                 >
                   Continue
