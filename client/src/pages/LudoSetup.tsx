@@ -7,7 +7,8 @@ import { VelvetButton } from "@/components/velvet/VelvetButton";
 import { VelvetInput } from "@/components/velvet/VelvetInput";
 import { VelvetCard } from "@/components/velvet/VelvetCard";
 import { FadeIn, SlideIn } from "@/components/velvet/PageTransition";
-import { useLudoStore } from "@/lib/ludoState";
+import { createLudoGameSession } from "@/lib/ludoState";
+import { useToast } from "@/hooks/use-toast";
 
 interface PlayerInput {
   id: string;
@@ -19,7 +20,7 @@ const LUDO_COLORS = ["#FF4444", "#4488FF", "#44CC44", "#FFCC44"];
 
 export default function LudoSetup() {
   const [, setLocation] = useLocation();
-  const { initLocalGame } = useLudoStore();
+  const { toast } = useToast();
 
   const [gameMode, setGameMode] = useState<"couple" | "friends">("couple");
   const [players, setPlayers] = useState<PlayerInput[]>([
@@ -64,10 +65,15 @@ export default function LudoSetup() {
     }));
 
     try {
-      await initLocalGame(validPlayers, gameMode);
-      setLocation("/games/velvet-ludo/play");
+      const sessionId = await createLudoGameSession(validPlayers, gameMode);
+      setLocation(`/games/velvet-ludo/play/${sessionId}`);
     } catch (error) {
       console.error("Failed to start Ludo game:", error);
+      toast({
+        title: "Error",
+        description: "Failed to start Ludo game. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 

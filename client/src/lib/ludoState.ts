@@ -1,176 +1,170 @@
 
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import type { LudoGameState, LudoPlayer, GameMode } from "@shared/schema";
+import { useGameSessionStore, generateSessionId, type LudoSession } from "./gameSessionStore";
+import type { GameMode } from "@shared/schema";
 
-interface LudoStore {
-  gameState: LudoGameState | null;
-  isOnline: boolean;
-  roomId: string | null;
-  playerId: string | null;
+export async function createLudoGameSession(
+  players: { nickname: string; avatarColor: string }[],
+  gameMode: GameMode
+): Promise<string> {
+  if (!players || players.length < 2 || players.length > 4) {
+    throw new Error("Must have 2-4 players for Ludo");
+  }
 
-  initLocalGame: (players: { nickname: string; avatarColor: string }[], gameMode: GameMode) => Promise<void>;
-  rollDice: () => Promise<void>;
-  selectMove: (tokenId: string, moveIndex: number) => Promise<void>;
-  dismissSpecialEffect: () => Promise<void>;
-  rescuePlayer: (playerId: string) => Promise<void>;
-  endGame: () => void;
-  setGameState: (state: LudoGameState) => void;
+  try {
+    const response = await fetch("/api/ludo/init-local", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ players, gameMode }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to initialize: ${errorText}`);
+    }
+
+    const ludoState = await response.json();
+    const sessionId = generateSessionId();
+
+    const session: LudoSession = {
+      id: sessionId,
+      gameType: "ludo",
+      gameId: "c71522c3-b8b0-4fbe-b823-2f76cfbd66f9", // Velvet Ludo game ID
+      mode: "local",
+      createdAt: Date.now(),
+      players: players.map(p => ({ ...p })),
+      config: { intensity: 3, allowNSFW: false, allowMovement: true, coupleMode: gameMode === "couple", packs: [] },
+      roomId: ludoState.roomId,
+      ludoState: {
+        ...ludoState,
+        frozenPlayers: Array.from(ludoState.frozenPlayers || []),
+      },
+    };
+
+    useGameSessionStore.getState().createSession(session);
+    return sessionId;
+  } catch (error) {
+    console.error("Error creating Ludo session:", error);
+    throw error;
+  }
 }
 
-export const useLudoStore = create<LudoStore>()(
-  persist(
-    (set, get) => ({
-      gameState: null,
-      isOnline: false,
-      roomId: null,
-      playerId: null,
+export function useLudoGameSession(sessionId: string) {
+  const session = useGameSessionStore((state) => 
+    state.sessions[sessionId] as LudoSession | undefined
+  );
 
-      initLocalGame: async (players, gameMode) => {
-        try {
-          const response = await fetch("/api/ludo/init-local", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ players, gameMode }),
-          });
+  const updateSession = useGameSessionStore((state) => state.updateSession);
 
-          if (!response.ok) {
-            const errorText = await response.text();
-            console.error("Ludo init failed:", errorText);
-            throw new Error(`Failed to initialize: ${response.statusText}`);
-          }
+  if (!session || session.gameType !== "ludo") {
+    return null;
+  }
 
-          const state: any = await response.json();
-          
-          set({
-            gameState: {
-              ...state,
-              frozenPlayers: new Set(state.frozenPlayers || []),
-            },
-            isOnline: false,
-            roomId: state.roomId,
-          });
-        } catch (error) {
-          console.error("Error initializing local game:", error);
-          throw error;
-        }
-      },
+  return {
+    session,
+    gameState: session.ludoState,
 
-      rollDice: async () => {
-        const { roomId, gameState } = get();
-        if (!gameState || !roomId || gameState.winnerId) return;
-
-        try {
-          const response = await fetch("/api/ludo/roll", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ roomId }),
-          });
-
-          if (!response.ok) throw new Error("Failed to roll dice");
-
-          const state = await response.json();
-          set({ 
-            gameState: { 
-              ...state, 
-              frozenPlayers: new Set(state.frozenPlayers || []) 
-            } 
-          });
-        } catch (error) {
-          console.error("Error rolling dice:", error);
-        }
-      },
-
-      selectMove: async (tokenId, moveIndex) => {
-        const { roomId, gameState } = get();
-        if (!gameState || !roomId || !gameState.canMove) return;
-
-        try {
-          const response = await fetch("/api/ludo/move", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ roomId, tokenId, moveIndex }),
-          });
-
-          if (!response.ok) throw new Error("Failed to move piece");
-
-          const state = await response.json();
-          set({ 
-            gameState: { 
-              ...state, 
-              frozenPlayers: new Set(state.frozenPlayers || []) 
-            } 
-          });
-        } catch (error) {
-          console.error("Error moving piece:", error);
-        }
-      },
-
-      dismissSpecialEffect: async () => {
-        const { roomId, gameState } = get();
-        if (!gameState || !roomId || !gameState.specialEffect) return;
-
-        try {
-          const response = await fetch("/api/ludo/dismiss-effect", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ roomId }),
-          });
-
-          if (!response.ok) throw new Error("Failed to dismiss effect");
-
-          const state = await response.json();
-          set({ 
-            gameState: { 
-              ...state, 
-              frozenPlayers: new Set(state.frozenPlayers || []) 
-            } 
-          });
-        } catch (error) {
-          console.error("Error dismissing effect:", error);
-        }
-      },
-
-      rescuePlayer: async (rescuedPlayerId) => {
-        const { roomId } = get();
-        if (!roomId) return;
-
-        try {
-          const response = await fetch("/api/ludo/rescue", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ roomId, rescuedPlayerId }),
-          });
-
-          if (!response.ok) throw new Error("Failed to rescue player");
-
-          const state = await response.json();
-          set({ 
-            gameState: { 
-              ...state, 
-              frozenPlayers: new Set(state.frozenPlayers || []) 
-            } 
-          });
-        } catch (error) {
-          console.error("Error rescuing player:", error);
-        }
-      },
-
-      endGame: () => {
-        set({ gameState: null, isOnline: false, roomId: null, playerId: null });
-      },
-
-      setGameState: (state) => {
-        set({ 
-          gameState: {
-            ...state,
-            frozenPlayers: new Set(state.frozenPlayers || []),
-          }
+    rollDice: async () => {
+      try {
+        const response = await fetch("/api/ludo/roll", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ roomId: session.roomId }),
         });
-      },
-    }),
-    {
-      name: "velvetplay-ludo",
-    }
-  )
-);
+
+        if (!response.ok) throw new Error("Failed to roll dice");
+
+        const state = await response.json();
+        updateSession(sessionId, {
+          ludoState: {
+            ...state,
+            frozenPlayers: Array.from(state.frozenPlayers || []),
+          },
+        } as Partial<LudoSession>);
+      } catch (error) {
+        console.error("Error rolling dice:", error);
+      }
+    },
+
+    selectMove: async (tokenId: string, moveIndex: number) => {
+      try {
+        const response = await fetch("/api/ludo/move", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ roomId: session.roomId, tokenId, moveIndex }),
+        });
+
+        if (!response.ok) throw new Error("Failed to move piece");
+
+        const state = await response.json();
+        updateSession(sessionId, {
+          ludoState: {
+            ...state,
+            frozenPlayers: Array.from(state.frozenPlayers || []),
+          },
+        } as Partial<LudoSession>);
+      } catch (error) {
+        console.error("Error moving piece:", error);
+      }
+    },
+
+    dismissSpecialEffect: async () => {
+      try {
+        const response = await fetch("/api/ludo/dismiss-effect", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ roomId: session.roomId }),
+        });
+
+        if (!response.ok) throw new Error("Failed to dismiss effect");
+
+        const state = await response.json();
+        updateSession(sessionId, {
+          ludoState: {
+            ...state,
+            frozenPlayers: Array.from(state.frozenPlayers || []),
+          },
+        } as Partial<LudoSession>);
+      } catch (error) {
+        console.error("Error dismissing effect:", error);
+      }
+    },
+
+    rescuePlayer: async (playerId: string) => {
+      try {
+        const response = await fetch("/api/ludo/rescue", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ roomId: session.roomId, rescuedPlayerId: playerId }),
+        });
+
+        if (!response.ok) throw new Error("Failed to rescue player");
+
+        const state = await response.json();
+        updateSession(sessionId, {
+          ludoState: {
+            ...state,
+            frozenPlayers: Array.from(state.frozenPlayers || []),
+          },
+        } as Partial<LudoSession>);
+      } catch (error) {
+        console.error("Error rescuing player:", error);
+      }
+    },
+
+    endGame: () => {
+      useGameSessionStore.getState().deleteSession(sessionId);
+    },
+  };
+}
+
+// Legacy export for compatibility
+export const useLudoStore = () => ({
+  gameState: null,
+  initLocalGame: async () => {},
+  rollDice: async () => {},
+  selectMove: async () => {},
+  dismissSpecialEffect: async () => {},
+  rescuePlayer: async () => {},
+  endGame: () => {},
+  setGameState: () => {},
+});

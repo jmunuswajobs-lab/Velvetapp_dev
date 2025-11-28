@@ -40,19 +40,20 @@ function Router() {
         <Route path="/" component={Home} />
 
         {/* Velvet Ludo specific routes */}
-        <Route path="/games/velvet-ludo/local" component={LudoSetup} />
-        <Route path="/games/velvet-ludo/play" component={LudoGameplay} />
+        <Route path="/games/velvet-ludo" component={GameDetail} />
+        <Route path="/games/velvet-ludo/setup" component={LudoSetup} />
+        <Route path="/games/velvet-ludo/play/:sessionId" component={LudoGameplay} />
 
         {/* Game routes */}
         <Route path="/games/:slug" component={GameDetail} />
-        <Route path="/games/:slug/local" component={LocalSetup} />
+        <Route path="/games/:slug/setup" component={LocalSetup} />
         <Route path="/games/:slug/online" component={OnlineSetup} />
-        <Route path="/games/:slug/play" component={GameRouter} />
+        <Route path="/games/:slug/play/:sessionId" component={Gameplay} />
         <Route path="/games/:slug/summary" component={Summary} />
 
         {/* Online routes */}
         <Route path="/lobby/:roomId" component={Lobby} />
-        <Route path="/lobby/:roomId/play" component={Gameplay} />
+        <Route path="/lobby/:roomId/play/:sessionId" component={Gameplay} />
         <Route path="/lobby/:roomId/summary" component={Summary} />
         <Route path="/join/:joinCode" component={OnlineSetup} />
 

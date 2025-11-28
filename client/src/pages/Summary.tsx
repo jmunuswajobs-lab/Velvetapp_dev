@@ -1,15 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams, Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { 
-  ArrowLeft, Home, RotateCcw, Trophy, Flame, 
+import {
+  ArrowLeft, Home, RotateCcw, Trophy, Flame,
   SkipForward, MessageCircle, Sparkles
 } from "lucide-react";
 import { EmberParticles } from "@/components/velvet/EmberParticles";
 import { VelvetButton } from "@/components/velvet/VelvetButton";
 import { VelvetCard } from "@/components/velvet/VelvetCard";
 import { FadeIn, SlideIn, StaggerChildren, staggerChildVariants, ScaleIn } from "@/components/velvet/PageTransition";
-import { useLocalGame } from "@/lib/gameState";
+import { useLocalGame, useLocalGameSession } from "@/lib/gameState";
+import { useGameSessionStore } from "@/lib/store";
 import type { GameStats, PromptType } from "@shared/schema";
 
 const promptTypeLabels: Record<PromptType, string> = {
@@ -31,38 +32,47 @@ const promptTypeColors: Record<PromptType, string> = {
 };
 
 export default function Summary() {
-  const { slug } = useParams<{ slug: string }>();
+  const { slug, sessionId } = useParams<{ slug: string; sessionId?: string }>();
   const [, setLocation] = useLocation();
-  const { gameState, endGame, resetGame } = useLocalGame();
-  const [stats, setStats] = useState<GameStats | null>(null);
+  const gameSession = useLocalGameSession(sessionId || "");
 
-  useEffect(() => {
-    if (gameState) {
-      setStats(endGame());
+  const stats = useMemo(() => {
+    if (!gameSession) {
+      return {
+        roundsPlayed: 0,
+        promptsByType: {},
+        playerPicks: {},
+        skippedCount: 0,
+      };
     }
-  }, [gameState, endGame]);
+    return gameSession.session.stats;
+  }, [gameSession]);
 
   const handlePlayAgain = () => {
-    resetGame();
-    setLocation(`/games/${slug}/local`);
+    if (sessionId) {
+      useGameSessionStore.getState().deleteSession(sessionId);
+    }
+    setLocation(`/games/${slug}/setup`);
   };
 
   const handleGoHome = () => {
-    resetGame();
+    if (sessionId) {
+      useGameSessionStore.getState().deleteSession(sessionId);
+    }
     setLocation("/");
   };
 
   // Find MVP player
-  const mvpPlayer = stats 
+  const mvpPlayer = stats
     ? Object.entries(stats.playerPicks).sort((a, b) => b[1] - a[1])[0]
     : null;
 
   // Total prompts played
-  const totalPrompts = stats 
-    ? Object.values(stats.promptsByType).reduce((a, b) => a + b, 0) 
+  const totalPrompts = stats
+    ? Object.values(stats.promptsByType).reduce((a, b) => a + b, 0)
     : 0;
 
-  if (!stats) {
+  if (!stats || totalPrompts === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -83,7 +93,7 @@ export default function Summary() {
   return (
     <div className="min-h-screen relative">
       {/* Background - celebratory gradient */}
-      <div 
+      <div
         className="fixed inset-0 -z-20"
         style={{
           background: `
@@ -132,7 +142,7 @@ export default function Summary() {
           >
             <Sparkles className="w-10 h-10 text-noir-black" />
           </motion.div>
-          
+
           <h1 className="text-3xl font-display font-bold gradient-text-gold mb-2">
             Game Complete!
           </h1>
@@ -180,7 +190,7 @@ export default function Summary() {
         <SlideIn direction="up" delay={0.3} className="mb-6">
           <VelvetCard tiltEnabled={false} className="p-6">
             <h2 className="text-lg font-display font-semibold mb-4">Prompt Types</h2>
-            
+
             <div className="space-y-3">
               {(Object.entries(stats.promptsByType) as [PromptType, number][])
                 .filter(([, count]) => count > 0)
@@ -213,13 +223,13 @@ export default function Summary() {
           <SlideIn direction="up" delay={0.4} className="mb-8">
             <VelvetCard tiltEnabled={false} className="p-6">
               <h2 className="text-lg font-display font-semibold mb-4">Player Activity</h2>
-              
+
               <div className="space-y-3">
                 {Object.entries(stats.playerPicks)
                   .sort((a, b) => b[1] - a[1])
                   .map(([player, count], index) => (
                     <div key={player} className="flex items-center gap-3">
-                      <div 
+                      <div
                         className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
                           index === 0 ? "bg-champagne-gold text-noir-black" : "bg-plum-deep/50 text-white"
                         }`}

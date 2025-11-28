@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLocation, Link } from "wouter";
+import { useLocation, useParams, Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Trophy, Sparkles, Home, Flame, Heart, Snowflake, Zap } from "lucide-react";
 import { EmberParticles } from "@/components/velvet/EmberParticles";
@@ -7,18 +7,43 @@ import { VelvetButton } from "@/components/velvet/VelvetButton";
 import { VelvetCard, PromptCard } from "@/components/velvet/VelvetCard";
 import { LudoBoard } from "@/components/velvet/LudoBoard";
 import { FadeIn } from "@/components/velvet/PageTransition";
-import { useLudoStore } from "@/lib/ludoState";
+import { useLudoGameSession } from "@/lib/ludoState";
+import { useToast } from "@/hooks/use-toast";
 
 export default function LudoGameplay() {
+  const { sessionId } = useParams<{ sessionId: string }>();
   const [, setLocation] = useLocation();
-  
-  const { 
-    gameState, 
-    rollDice, 
-    selectMove,
-    dismissSpecialEffect,
-    endGame 
-  } = useLudoStore();
+  const { toast } = useToast();
+
+  const ludoSession = useLudoGameSession(sessionId || "");
+
+  useEffect(() => {
+    if (!sessionId || !ludoSession) {
+      toast({
+        title: "No Active Game",
+        description: "Start a new game to play.",
+        variant: "destructive",
+      });
+      setLocation("/games/velvet-ludo");
+    }
+  }, [sessionId, ludoSession, setLocation, toast]);
+
+  if (!sessionId || !ludoSession) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <motion.div
+            className="w-16 h-16 rounded-full border-4 border-neon-magenta/30 border-t-neon-magenta mx-auto mb-4"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          />
+          <h1 className="text-2xl font-display font-bold mb-2">Loading Game...</h1>
+        </div>
+      </div>
+    );
+  }
+
+  const { gameState, rollDice, selectMove, dismissSpecialEffect, rescuePlayer, endGame } = ludoSession;
 
   const [showWinner, setShowWinner] = useState(false);
 

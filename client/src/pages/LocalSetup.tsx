@@ -12,8 +12,9 @@ import { PlayerAvatar } from "@/components/velvet/PlayerAvatar";
 import { FadeIn, SlideIn } from "@/components/velvet/PageTransition";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { useLocalGame, getRandomAvatarColor } from "@/lib/gameState";
+import { getRandomAvatarColor, createLocalGameSession } from "@/lib/gameState";
 import type { Game, Prompt, RoomSettings } from "@shared/schema";
+import { useToast } from "@/hooks/use-toast";
 
 interface PlayerInput {
   id: string;
@@ -24,7 +25,7 @@ interface PlayerInput {
 export default function LocalSetup() {
   const { slug } = useParams<{ slug: string }>();
   const [, setLocation] = useLocation();
-  const { initGame } = useLocalGame();
+  const { toast } = useToast();
 
   const [players, setPlayers] = useState<PlayerInput[]>([
     { id: "1", nickname: "", avatarColor: getRandomAvatarColor() },
@@ -94,7 +95,11 @@ export default function LocalSetup() {
 
   const startGame = () => {
     if (!isValid || !game || !prompts || prompts.length === 0) {
-      console.error("Cannot start game - missing data:", { game: !!game, prompts: prompts?.length });
+      toast({
+        title: "Cannot Start Game",
+        description: "Missing game data or prompts. Please try again.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -103,16 +108,20 @@ export default function LocalSetup() {
       avatarColor: p.avatarColor,
     }));
 
-    console.log("Initializing game with:", { gameId: game.id, players: validPlayers.length, prompts: prompts.length });
-    
-    // Initialize game state
-    initGame(game.id, validPlayers, settings, prompts);
-
-    // Small delay to ensure Zustand persist completes
-    requestAnimationFrame(() => {
-      console.log("Navigating to gameplay");
-      setLocation(`/games/${slug}/play`);
-    });
+    try {
+      // Create session synchronously - no race conditions
+      const sessionId = createLocalGameSession(game.id, validPlayers, settings, prompts);
+      
+      // Navigate immediately with session ID
+      setLocation(`/games/${slug}/play/${sessionId}`);
+    } catch (error) {
+      console.error("Failed to create game session:", error);
+      toast({
+        title: "Error",
+        description: "Failed to start game. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (gameLoading || !game) {
