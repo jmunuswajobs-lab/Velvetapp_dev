@@ -188,14 +188,36 @@ export async function registerRoutes(
 
           case "start_game": {
             const startRoomId = message.roomId || currentRoomId;
+            const startPlayerId = message.playerId || currentPlayerId;
+            
             if (!startRoomId) {
               log(`Cannot start game: no roomId provided`);
+              ws.send(JSON.stringify({ type: "error", message: "Missing room ID" }));
               return;
             }
 
             const room = await storage.getRoom(startRoomId);
             if (!room) {
               log(`Room ${startRoomId} not found`);
+              ws.send(JSON.stringify({ type: "error", message: "Room not found" }));
+              return;
+            }
+
+            // Validate that the requesting player is the host
+            const players = await storage.getRoomPlayers(startRoomId);
+            const requestingPlayer = players.find(p => p.id === startPlayerId);
+            
+            if (!requestingPlayer?.isHost) {
+              log(`Non-host player ${startPlayerId} attempted to start game in room ${startRoomId}`);
+              ws.send(JSON.stringify({ type: "error", message: "Only the host can start the game" }));
+              return;
+            }
+
+            // Check if all players are ready (except host who is always ready)
+            const allReady = players.every(p => p.isReady || p.isHost);
+            if (!allReady) {
+              log(`Cannot start game: not all players are ready`);
+              ws.send(JSON.stringify({ type: "error", message: "Not all players are ready" }));
               return;
             }
 
@@ -209,9 +231,6 @@ export async function registerRoutes(
 
             // Shuffle prompts
             const shuffledPrompts = [...prompts].sort(() => Math.random() - 0.5);
-
-            // Get players for the game state
-            const players = await storage.getRoomPlayers(startRoomId);
 
             broadcastToRoom(startRoomId, {
               type: "game_started",

@@ -17,7 +17,7 @@ export default function Lobby() {
   const { toast } = useToast();
   const {
     joinCode, isHost, isConnected, players, gameStarted, gameSlug,
-    setConnected, updatePlayers, setGameStarted, initGameState
+    setConnected, updatePlayers, setGameStarted, initGameState, setGameSlug
   } = useOnlineRoom();
 
   // Add a ref for the WebSocket instance
