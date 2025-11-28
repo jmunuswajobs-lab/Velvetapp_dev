@@ -710,7 +710,7 @@ export async function registerRoutes(
           id: `${color}_token_${i}`,
           playerId: `player_${idx}`,
           color,
-          position: "home",
+          position: "home" as const,
           pathProgress: -1,
         }));
 
@@ -724,7 +724,7 @@ export async function registerRoutes(
         };
       });
 
-      const state: LudoGameState = {
+      const state = {
         roomId,
         players: ludoPlayers,
         currentPlayerIndex: 0,
@@ -736,18 +736,15 @@ export async function registerRoutes(
         winnerId: null,
         turnNumber: 1,
         gameMode,
-        frozenPlayers: new Set(),
+        frozenPlayers: [],
       };
 
-      localLudoGames.set(roomId, state);
-      
-      // Convert Set to Array for JSON serialization
-      const serializedState = {
+      localLudoGames.set(roomId, {
         ...state,
-        frozenPlayers: Array.from(state.frozenPlayers),
-      };
+        frozenPlayers: new Set(),
+      });
       
-      res.json(serializedState);
+      res.json(state);
     } catch (error) {
       console.error("Error initializing local Ludo game:", error);
       res.status(500).json({ error: "Failed to initialize game" });
@@ -797,7 +794,10 @@ export async function registerRoutes(
       }
 
       localLudoGames.set(roomId, state);
-      res.json(state);
+      res.json({
+        ...state,
+        frozenPlayers: Array.from(state.frozenPlayers || []),
+      });
     } catch (error) {
       console.error("Error rolling dice:", error);
       res.status(500).json({ error: "Failed to roll dice" });
@@ -874,7 +874,10 @@ export async function registerRoutes(
       state.validMoves = [];
 
       localLudoGames.set(roomId, state);
-      res.json(state);
+      res.json({
+        ...state,
+        frozenPlayers: Array.from(state.frozenPlayers || []),
+      });
     } catch (error) {
       console.error("Error applying move:", error);
       res.status(500).json({ error: "Failed to apply move" });
@@ -899,7 +902,10 @@ export async function registerRoutes(
       state.canRoll = true;
 
       localLudoGames.set(roomId, state);
-      res.json(state);
+      res.json({
+        ...state,
+        frozenPlayers: Array.from(state.frozenPlayers || []),
+      });
     } catch (error) {
       console.error("Error dismissing effect:", error);
       res.status(500).json({ error: "Failed to dismiss effect" });
@@ -918,7 +924,10 @@ export async function registerRoutes(
       state.frozenPlayers = state.frozenPlayers.filter((id: string) => id !== rescuedPlayerId);
 
       localLudoGames.set(roomId, state);
-      res.json(state);
+      res.json({
+        ...state,
+        frozenPlayers: Array.from(state.frozenPlayers || []),
+      });
     } catch (error) {
       console.error("Error rescuing player:", error);
       res.status(500).json({ error: "Failed to rescue player" });

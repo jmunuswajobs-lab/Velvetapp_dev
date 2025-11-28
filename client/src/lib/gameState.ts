@@ -80,6 +80,13 @@ export const useLocalGame = create<LocalGameStore>()(
           return;
         }
 
+        console.log("initGame called with:", {
+          gameId,
+          playersCount: players.length,
+          promptsCount: prompts.length,
+          settings
+        });
+
         // Shuffle prompts - create new array to avoid references
         const shuffledPrompts = prompts.map(p => ({ ...p })).sort(() => Math.random() - 0.5);
 
@@ -108,6 +115,7 @@ export const useLocalGame = create<LocalGameStore>()(
           },
         };
 
+        console.log("Setting new game state with", shuffledPrompts.length, "prompts");
         set({ gameState: newState }, true);
       },
 

@@ -103,11 +103,16 @@ export default function LocalSetup() {
       avatarColor: p.avatarColor,
     }));
 
+    console.log("Initializing game with:", { gameId: game.id, players: validPlayers.length, prompts: prompts.length });
+    
     // Initialize game state
     initGame(game.id, validPlayers, settings, prompts);
 
-    // Navigate immediately - Zustand persist is synchronous
-    setLocation(`/games/${slug}/play`);
+    // Small delay to ensure Zustand persist completes
+    requestAnimationFrame(() => {
+      console.log("Navigating to gameplay");
+      setLocation(`/games/${slug}/play`);
+    });
   };
 
   if (gameLoading || !game) {

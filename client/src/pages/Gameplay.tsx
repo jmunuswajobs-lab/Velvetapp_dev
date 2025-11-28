@@ -60,16 +60,20 @@ export default function Gameplay() {
   }, [setLocation, slug, isOnlineMode, roomId]);
 
 
-  // Redirect if no game state
+  // Redirect if no game state after a short delay
   useEffect(() => {
-    if (!currentGameState || !currentGameState.prompts || currentGameState.prompts.length === 0) {
-      toast({
-        title: "No Active Game",
-        description: "Start a new game to begin playing",
-        variant: "destructive",
-      });
-      setLocation(`/games/${slug}`);
-    }
+    const timer = setTimeout(() => {
+      if (!currentGameState || !currentGameState.prompts || currentGameState.prompts.length === 0) {
+        console.log("No game state detected, redirecting...");
+        toast({
+          title: "No Active Game",
+          description: "Start a new game to begin playing",
+          variant: "destructive",
+        });
+        setLocation(`/games/${slug}`);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
   }, [currentGameState, setLocation, slug, toast]);
 
   // Early return with loading state - must be before accessing properties
