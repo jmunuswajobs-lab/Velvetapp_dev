@@ -2,7 +2,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Dice1, Dice2, Dice3, Dice4, Dice5, Dice6 } from "lucide-react";
 import type { LudoGameState, LudoPlayer, LudoColor, LudoToken } from "@shared/schema";
-import { VELVET_SPACE_POSITIONS, LUDO_START_POSITIONS } from "@shared/schema";
+import { VELVET_SPACE_POSITIONS, LUDO_START_POSITIONS, LUDO_MAIN_PATH_LENGTH } from "@shared/schema";
 import { VelvetButton } from "./VelvetButton";
 import { VelvetCard } from "./VelvetCard";
 
@@ -337,12 +337,13 @@ export function LudoBoard({ gameState, onRollDice, onMovePiece, currentPlayerId 
                   };
                   
                   let pathCell;
-                  if (token.pathProgress < 52) {
-                    // On main path
-                    pathCell = mainPathPositions[token.pathProgress];
+                  if (token.pathProgress < LUDO_MAIN_PATH_LENGTH) {
+                    // On main path - calculate actual board index based on player's start position
+                    const boardIndex = (LUDO_START_POSITIONS[player.color] + token.pathProgress) % LUDO_MAIN_PATH_LENGTH;
+                    pathCell = mainPathPositions[boardIndex];
                   } else {
                     // In safe zone (52-56)
-                    const safeIndex = token.pathProgress - 52;
+                    const safeIndex = token.pathProgress - LUDO_MAIN_PATH_LENGTH;
                     pathCell = safePathPositions[player.color][safeIndex];
                   }
                   
