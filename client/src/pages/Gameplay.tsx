@@ -63,10 +63,20 @@ export default function Gameplay() {
   // Redirect if no game state
   useEffect(() => {
     if (!currentGameState) {
-      console.log("No game state found, redirecting to home");
-      setLocation("/");
+      console.log("No game state found, redirecting to home", {
+        isOnlineMode,
+        hasLocalState: !!localGame.gameState,
+        hasOnlineState: !!onlineGame.gameState
+      });
+      // Give a small delay to allow state to propagate
+      const timer = setTimeout(() => {
+        if (!currentGameState) {
+          setLocation("/");
+        }
+      }, 500);
+      return () => clearTimeout(timer);
     }
-  }, [currentGameState, setLocation]);
+  }, [currentGameState, setLocation, isOnlineMode, localGame.gameState, onlineGame.gameState]);
 
   // Early return with loading state - must be before accessing properties
   if (!currentGameState) {

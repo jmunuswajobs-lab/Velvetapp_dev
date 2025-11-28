@@ -43,20 +43,29 @@ export default function LocalSetup() {
     enabled: !!slug,
   });
 
-  const { data: prompts, isLoading: promptsLoading } = useQuery<Prompt[]>({
-    queryKey: [`/api/prompts?gameId=${game?.id}&intensity=${settings.intensity}`],
+  const { data: prompts, isLoading: promptsLoading, error: promptsError } = useQuery<Prompt[]>({
+    queryKey: [`/api/prompts`, { gameId: game?.id }],
+    queryFn: async () => {
+      if (!game?.id) throw new Error("No game ID");
+      const response = await fetch(`/api/prompts?gameId=${game.id}&intensity=${settings.intensity}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch prompts: ${response.statusText}`);
+      }
+      return response.json();
+    },
     enabled: !!game?.id,
     staleTime: 0, // Always fetch fresh prompts
+    retry: 1,
   });
 
   const addPlayer = () => {
     if (players.length >= 10) return;
     setPlayers([
       ...players,
-      { 
-        id: Date.now().toString(), 
-        nickname: "", 
-        avatarColor: getRandomAvatarColor() 
+      {
+        id: Date.now().toString(),
+        nickname: "",
+        avatarColor: getRandomAvatarColor()
       },
     ]);
   };
@@ -74,7 +83,7 @@ export default function LocalSetup() {
     setPlayers([...players].sort(() => Math.random() - 0.5));
   };
 
-  const isValid = players.every((p) => p.nickname.trim().length > 0) && 
+  const isValid = players.every((p) => p.nickname.trim().length > 0) &&
                   players.length >= 2 &&
                   prompts && prompts.length > 0 &&
                   !promptsLoading;
@@ -88,7 +97,7 @@ export default function LocalSetup() {
     }));
 
     initGame(game.id, validPlayers, settings, prompts);
-    
+
     // Use setTimeout to ensure state is updated before navigation
     setTimeout(() => {
       setLocation(`/games/${slug}/play`);
@@ -121,10 +130,30 @@ export default function LocalSetup() {
     );
   }
 
+  // Handle prompts loading error
+  if (promptsError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-display font-bold mb-2">Error Loading Prompts</h1>
+          <p className="text-muted-foreground mb-6">
+            Could not load prompts for this game. Please try again later.
+          </p>
+          <VelvetButton
+            velvetVariant="neon"
+            onClick={() => window.location.reload()}
+          >
+            Retry
+          </VelvetButton>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen relative">
       {/* Background */}
-      <div 
+      <div
         className="fixed inset-0 -z-20"
         style={{
           background: `
@@ -140,7 +169,7 @@ export default function LocalSetup() {
       <header className="glass border-b border-plum-deep/30">
         <div className="max-w-2xl mx-auto px-4 py-4">
           <Link href={`/games/${slug}`}>
-            <button 
+            <button
               className="flex items-center gap-2 text-muted-foreground hover:text-white transition-colors"
               data-testid="button-back"
             >
@@ -197,7 +226,7 @@ export default function LocalSetup() {
                       color={player.avatarColor}
                       size="sm"
                     />
-                    
+
                     <VelvetInput
                       placeholder={`Player ${index + 1} nickname`}
                       value={player.nickname}
@@ -226,7 +255,7 @@ export default function LocalSetup() {
             {players.length < 10 && (
               <motion.button
                 onClick={addPlayer}
-                className="w-full mt-4 p-3 rounded-lg border border-dashed border-plum-deep/50 
+                className="w-full mt-4 p-3 rounded-lg border border-dashed border-plum-deep/50
                          text-muted-foreground hover:text-white hover:border-neon-magenta/50
                          transition-all flex items-center justify-center gap-2"
                 whileHover={{ scale: 1.01 }}
@@ -324,13 +353,13 @@ export default function LocalSetup() {
 
           {!isValid && (
             <p className="text-center text-sm text-muted-foreground mt-2">
-              {players.some((p) => !p.nickname.trim()) 
+              {players.some((p) => !p.nickname.trim())
                 ? "Enter nicknames for all players"
                 : promptsLoading
                 ? "Loading prompts..."
                 : !prompts || prompts.length === 0
                 ? "No prompts available for this game"
-                : "Loading..."}
+                : "Start a new game to begin playing"}
             </p>
           )}
         </SlideIn>

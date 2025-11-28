@@ -19,11 +19,11 @@ const RATE_LIMIT_MS = 100; // Minimum 100ms between actions
 function isRateLimited(playerId: string): boolean {
   const now = Date.now();
   const lastAction = rateLimitMap.get(playerId) || 0;
-  
+
   if (now - lastAction < RATE_LIMIT_MS) {
     return true;
   }
-  
+
   rateLimitMap.set(playerId, now);
   return false;
 }
@@ -51,8 +51,8 @@ export async function registerRoutes(
 ): Promise<HTTPServer> {
 
   // Set up WebSocket server
-  const wss = new WebSocketServer({ 
-    server: httpServer, 
+  const wss = new WebSocketServer({
+    server: httpServer,
     path: "/ws"
   });
 
@@ -68,7 +68,7 @@ export async function registerRoutes(
     ws.on("message", async (data) => {
       try {
         const message = JSON.parse(data.toString());
-        
+
         // Validate message structure
         if (!message || typeof message !== 'object' || !message.type) {
           log(`Invalid message format received`);
@@ -205,13 +205,13 @@ export async function registerRoutes(
             // Validate that the requesting player is the host using authenticated ID
             const players = await storage.getRoomPlayers(currentRoomId);
             const requestingPlayer = players.find(p => p.id === currentPlayerId);
-            
+
             if (!requestingPlayer) {
               log(`Player ${currentPlayerId} not found in room ${currentRoomId}`);
               ws.send(JSON.stringify({ type: "error", message: "Player not found in room" }));
               return;
             }
-            
+
             if (!requestingPlayer.isHost) {
               log(`Non-host player ${currentPlayerId} attempted to start game in room ${currentRoomId}`);
               ws.send(JSON.stringify({ type: "error", message: "Only the host can start the game" }));
@@ -259,7 +259,7 @@ export async function registerRoutes(
             if (!room) return;
 
             const newTurnIndex = ((room.turnIndex || 0) + 1);
-            await storage.updateRoom(currentRoomId, { 
+            await storage.updateRoom(currentRoomId, {
               turnIndex: newTurnIndex,
               heatLevel: Math.min(100, (room.heatLevel || 0) + 5),
             });
@@ -330,7 +330,7 @@ export async function registerRoutes(
             const velvetIndex = VELVET_POSITIONS.indexOf(newPosition);
             const isVelvetSpace = velvetIndex !== -1;
             let tileType: VelvetSpaceType | null = null;
-            
+
             if (isVelvetSpace) {
               tileType = velvetSpaceTypes[velvetIndex % velvetSpaceTypes.length];
             }
@@ -499,24 +499,28 @@ export async function registerRoutes(
 
   // ===== PROMPTS API =====
 
+  // Get prompts for a game
   app.get("/api/prompts", async (req, res) => {
     try {
-      const { gameId, intensity, packId } = req.query;
+      const { gameId, packId } = req.query;
 
-      if (gameId) {
-        const prompts = await storage.getPromptsByGameId(
-          gameId as string, 
-          { 
-            intensity: intensity ? parseInt(intensity as string) : undefined,
-            packId: packId as string | undefined,
-          }
-        );
-        return res.json(prompts);
+      if (!gameId) {
+        return res.status(400).json({ error: "gameId is required" });
       }
 
-      const prompts = await storage.getPrompts();
+      const prompts = await storage.getPrompts(
+        gameId as string,
+        packId as string | undefined
+      );
+
+      if (!prompts || prompts.length === 0) {
+        console.warn(`No prompts found for gameId: ${gameId}`);
+        return res.status(404).json({ error: "No prompts found for this game" });
+      }
+
       res.json(prompts);
     } catch (error) {
+      console.error("Error fetching prompts:", error);
       res.status(500).json({ error: "Failed to fetch prompts" });
     }
   });
@@ -588,8 +592,8 @@ export async function registerRoutes(
         avatarColor: avatarColors[Math.floor(Math.random() * avatarColors.length)],
       });
 
-      res.status(201).json({ 
-        roomId: room.id, 
+      res.status(201).json({
+        roomId: room.id,
         joinCode: room.joinCode,
         playerId: player.id,
       });
@@ -634,7 +638,7 @@ export async function registerRoutes(
         avatarColor: avatarColors[Math.floor(Math.random() * avatarColors.length)],
       });
 
-      res.json({ 
+      res.json({
         roomId: room.id,
         playerId: player.id,
       });

@@ -42,7 +42,7 @@ export const useAgeVerification = create<AgeVerificationState>()(
 
 interface LocalGameStore {
   gameState: LocalGameState | null;
-  
+
   // Actions
   initGame: (
     gameId: string,
@@ -62,7 +62,12 @@ interface LocalGameStore {
 export const useLocalGame = create<LocalGameStore>((set, get) => ({
   gameState: null,
 
-  initGame: (gameId, players, settings, prompts) => {
+  initGame: (
+    gameId,
+    players,
+    settings,
+    prompts
+  ) => {
     // Clear any existing game state first to prevent memory leaks
     const currentState = get().gameState;
     if (currentState) {
@@ -71,10 +76,10 @@ export const useLocalGame = create<LocalGameStore>((set, get) => ({
       currentState.prompts = [];
       currentState.usedPromptIds = [];
     }
-    
+
     // Shuffle prompts - create new array to avoid references
     const shuffledPrompts = prompts.map(p => ({ ...p })).sort(() => Math.random() - 0.5);
-    
+
     set({
       gameState: {
         gameId,
@@ -300,9 +305,9 @@ export const useOnlineRoom = create<OnlineRoomStore>((set, get) => ({
       currentState.prompts = [];
       currentState.usedPromptIds = [];
     }
-    
+
     const shuffledPrompts = prompts.map(p => ({ ...p })).sort(() => Math.random() - 0.5);
-    
+
     const newGameState = {
       gameId: get().roomId || "",
       players: players.map(p => ({
@@ -336,7 +341,7 @@ export const useOnlineRoom = create<OnlineRoomStore>((set, get) => ({
         skippedCount: 0,
       },
     };
-    
+
     set({ gameState: newGameState, gameStarted: true });
   },
 
