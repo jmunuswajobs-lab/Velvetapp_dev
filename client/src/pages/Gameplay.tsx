@@ -60,7 +60,7 @@ export default function Gameplay() {
   }, [setLocation, slug, isOnlineMode, roomId]);
 
 
-  // Redirect if no game state
+  // Redirect if no game state after sufficient time
   useEffect(() => {
     if (!currentGameState) {
       console.log("No game state found", {
@@ -70,7 +70,7 @@ export default function Gameplay() {
         localPrompts: localGame.gameState?.prompts?.length,
         onlinePrompts: onlineGame.gameState?.prompts?.length
       });
-      // Give a small delay to allow state to propagate
+      // Give more time to allow state to propagate
       const timer = setTimeout(() => {
         const checkState = isOnlineMode ? onlineGame.gameState : localGame.gameState;
         if (!checkState) {
@@ -82,7 +82,7 @@ export default function Gameplay() {
           });
           setLocation("/");
         }
-      }, 1000);
+      }, 2000);
       return () => clearTimeout(timer);
     }
   }, [currentGameState, setLocation, isOnlineMode, localGame.gameState, onlineGame.gameState, toast]);

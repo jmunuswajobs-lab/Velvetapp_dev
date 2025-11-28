@@ -105,13 +105,14 @@ export default function LocalSetup() {
 
     console.log("Initializing game with:", { gameId: game.id, players: validPlayers.length, prompts: prompts.length });
     
+    // Initialize game state
     initGame(game.id, validPlayers, settings, prompts);
 
-    // Use setTimeout to ensure state is updated before navigation
+    // Wait for state to be set and then navigate
     setTimeout(() => {
       console.log("Navigating to gameplay");
       setLocation(`/games/${slug}/play`);
-    }, 100);
+    }, 300);
   };
 
   if (gameLoading || !game) {
