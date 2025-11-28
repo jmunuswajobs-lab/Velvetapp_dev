@@ -70,22 +70,23 @@ export default function Gameplay() {
         localPrompts: localGame.gameState?.prompts?.length,
         onlinePrompts: onlineGame.gameState?.prompts?.length
       });
-      // Give more time to allow state to propagate
+      
+      // Give time to allow state to load from persistence
       const timer = setTimeout(() => {
         const checkState = isOnlineMode ? onlineGame.gameState : localGame.gameState;
-        if (!checkState) {
-          console.log("Redirecting to home - no game state after timeout");
+        if (!checkState || !checkState.prompts || checkState.prompts.length === 0) {
+          console.log("Redirecting - no valid game state after timeout");
           toast({
             title: "No Active Game",
-            description: "Please start a new game",
+            description: "Start a new game to begin playing",
             variant: "destructive",
           });
-          setLocation("/");
+          setLocation(`/games/${slug}`);
         }
-      }, 2000);
+      }, 1500);
       return () => clearTimeout(timer);
     }
-  }, [currentGameState, setLocation, isOnlineMode, localGame.gameState, onlineGame.gameState, toast]);
+  }, [currentGameState, setLocation, slug, isOnlineMode, localGame.gameState, onlineGame.gameState, toast]);
 
   // Early return with loading state - must be before accessing properties
   if (!currentGameState) {
@@ -124,19 +125,20 @@ export default function Gameplay() {
   const [showExitConfirm, setShowExitConfirm] = useState(false);
 
   useEffect(() => {
-    let isMounted = true;
+    if (!currentGameState || !currentGameState.prompts || currentGameState.prompts.length === 0) {
+      return;
+    }
 
     const prompt = currentGameState.prompts[currentGameState.currentPromptIndex];
-    if (prompt) {
+    if (prompt && prompt.text) {
       setCurrentPromptState(prompt);
     }
 
     // Cleanup function
     return () => {
-      isMounted = false;
       setIsCardFlipped(false);
     };
-  }, [currentGameState?.currentPromptIndex, currentGameState.prompts]);
+  }, [currentGameState?.currentPromptIndex, currentGameState?.prompts]);
 
   const handleNext = useCallback(() => {
     setIsCardFlipped(false);

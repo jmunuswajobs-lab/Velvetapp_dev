@@ -87,10 +87,18 @@ export const useLocalGame = create<LocalGameStore>()(
           return;
         }
 
+        // Clear any existing state first
+        const currentState = get().gameState;
+        if (currentState) {
+          currentState.prompts = [];
+          currentState.usedPromptIds = [];
+          currentState.players = [];
+        }
+
         // Shuffle prompts - create new array to avoid references
         const shuffledPrompts = prompts.map(p => ({ ...p })).sort(() => Math.random() - 0.5);
 
-        const newState = {
+        const newState: LocalGameState = {
           gameId,
           players: players.map(p => ({ ...p })),
           settings: { ...settings },
@@ -116,7 +124,7 @@ export const useLocalGame = create<LocalGameStore>()(
         };
 
         console.log("Setting new game state with", shuffledPrompts.length, "prompts");
-        set({ gameState: newState });
+        set({ gameState: newState }, true); // Force replace to ensure persistence
       },
 
   nextPrompt: () => {
