@@ -226,17 +226,36 @@ export async function registerRoutes(
               return;
             }
 
-            await storage.updateRoom(currentRoomId, { status: "in-progress" });
-
-            // Get game and prompts
+            // Get game first to ensure it exists
             const game = await storage.getGame(room.gameId);
+            if (!game) {
+              log(`Game ${room.gameId} not found for room ${currentRoomId}`);
+              ws.send(JSON.stringify({ type: "error", message: "Game not found" }));
+              return;
+            }
+
+            log(`Starting game ${game.slug} (${game.name}) in room ${currentRoomId}`);
+
+            // Get prompts
             const prompts = await storage.getPromptsByGameId(room.gameId, {
               intensity: (room.settings as any)?.intensity || 3,
             });
 
+            if (!prompts || prompts.length === 0) {
+              log(`No prompts found for game ${room.gameId}`);
+              ws.send(JSON.stringify({ type: "error", message: "No prompts available for this game" }));
+              return;
+            }
+
             // Shuffle prompts
             const shuffledPrompts = [...prompts].sort(() => Math.random() - 0.5);
 
+            // Update room status
+            await storage.updateRoom(currentRoomId, { status: "in-progress" });
+
+            log(`Broadcasting game_started for ${game.slug} with ${shuffledPrompts.length} prompts to ${players.length} players`);
+
+            // Broadcast game started event
             broadcastToRoom(currentRoomId, {
               type: "game_started",
               prompts: shuffledPrompts,
@@ -247,7 +266,10 @@ export async function registerRoutes(
                 isHost: p.isHost,
                 isReady: p.isReady,
               })),
-              gameSlug: game?.slug,
+              gameSlug: game.slug,
+              gameId: game.id,
+              gameName: game.name,
+              roomId: currentRoomId,
             });
             break;
           }
@@ -467,12 +489,24 @@ export async function registerRoutes(
 
   app.get("/api/games/:slug", async (req, res) => {
     try {
-      const game = await storage.getGameBySlug(req.params.slug);
+      const { slug } = req.params;
+      log(`Fetching game with slug: ${slug}`);
+      
+      const game = await storage.getGameBySlug(slug);
+      
       if (!game) {
-        return res.status(404).json({ error: "Game not found" });
+        log(`Game not found for slug: ${slug}`);
+        return res.status(404).json({ 
+          error: "Game not found",
+          slug,
+          message: `No game exists with slug "${slug}". Check available games at /api/games`
+        });
       }
+      
+      log(`Successfully fetched game: ${game.name} (${game.slug})`);
       res.json(game);
     } catch (error) {
+      log(`Error fetching game: ${error}`);
       res.status(500).json({ error: "Failed to fetch game" });
     }
   });

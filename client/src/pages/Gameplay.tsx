@@ -3,7 +3,7 @@ import { useParams, useLocation, Link } from "wouter";
 import { motion } from "framer-motion";
 import { 
   ArrowLeft, SkipForward, X, 
-  Home, ArrowRight
+  Home, ArrowRight, Flame
 } from "lucide-react";
 import { EmberParticles } from "@/components/velvet/EmberParticles";
 import { VelvetButton } from "@/components/velvet/VelvetButton";
@@ -28,7 +28,7 @@ export default function Gameplay() {
 
   // Redirect if session not found
   useEffect(() => {
-    if (!sessionId) {
+    if (!sessionId && !onlineRoom.gameState) {
       toast({
         title: "No Active Game",
         description: "Start a new game to begin playing",
@@ -36,9 +36,10 @@ export default function Gameplay() {
       });
       setLocation(`/games/${slug}`);
     }
-  }, [sessionId, setLocation, slug, toast]);
+  }, [sessionId, onlineRoom.gameState, setLocation, slug, toast]);
 
-  if (!sessionId || !gameState) {
+  // Show loading state
+  if (!gameState || (isOnlineGame && onlineRoom.isConnecting)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -53,9 +54,65 @@ export default function Gameplay() {
     );
   }
 
-  const currentPrompt = gameState.prompts?.[gameState.currentPromptIndex];
-  const currentPlayer = gameState.players?.[gameState.turnIndex];
-  const promptsRemaining = gameState.prompts?.length - gameState.currentPromptIndex - 1 || 0;
+  // Show error state
+  if (onlineRoom.error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Flame className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+          <h1 className="text-2xl font-display font-bold mb-2">Error Loading Game</h1>
+          <p className="text-muted-foreground mb-6">{onlineRoom.error}</p>
+          <Link href={`/games/${slug}`}>
+            <VelvetButton velvetVariant="neon">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Game
+            </VelvetButton>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Validate required data
+  if (!gameState.prompts || gameState.prompts.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Flame className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+          <h1 className="text-2xl font-display font-bold mb-2">No Prompts Available</h1>
+          <p className="text-muted-foreground mb-6">This game has no prompts loaded.</p>
+          <Link href={`/games/${slug}`}>
+            <VelvetButton velvetVariant="neon">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Game
+            </VelvetButton>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!gameState.players || gameState.players.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Flame className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+          <h1 className="text-2xl font-display font-bold mb-2">No Players Found</h1>
+          <p className="text-muted-foreground mb-6">The game session has no players.</p>
+          <Link href={`/games/${slug}`}>
+            <VelvetButton velvetVariant="neon">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Game
+            </VelvetButton>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const currentPrompt = gameState.prompts[gameState.currentPromptIndex];
+  const currentPlayer = gameState.players[gameState.turnIndex];
+  const promptsRemaining = gameState.prompts.length - gameState.currentPromptIndex - 1;
 
   const handleNext = () => {
     if (isOnlineGame) {

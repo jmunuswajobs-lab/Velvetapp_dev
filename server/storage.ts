@@ -24,7 +24,7 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  
+
   // Games
   getGames(): Promise<Game[]>;
   getGame(id: string): Promise<Game | undefined>;
@@ -32,14 +32,14 @@ export interface IStorage {
   createGame(game: InsertGame): Promise<Game>;
   updateGame(id: string, game: Partial<InsertGame>): Promise<Game | undefined>;
   deleteGame(id: string): Promise<boolean>;
-  
+
   // Packs
   getPacks(): Promise<Pack[]>;
   getPacksByGameId(gameId: string): Promise<Pack[]>;
   getPack(id: string): Promise<Pack | undefined>;
   createPack(pack: InsertPack): Promise<Pack>;
   deletePack(id: string): Promise<boolean>;
-  
+
   // Prompts
   getPrompts(): Promise<Prompt[]>;
   getPromptsByGameId(gameId: string, options?: { intensity?: number; packId?: string }): Promise<Prompt[]>;
@@ -47,7 +47,7 @@ export interface IStorage {
   createPrompt(prompt: InsertPrompt): Promise<Prompt>;
   updatePrompt(id: string, prompt: Partial<InsertPrompt>): Promise<Prompt | undefined>;
   deletePrompt(id: string): Promise<boolean>;
-  
+
   // Rooms
   getRooms(): Promise<Room[]>;
   getRoom(id: string): Promise<Room | undefined>;
@@ -55,7 +55,7 @@ export interface IStorage {
   createRoom(room: InsertRoom): Promise<Room>;
   updateRoom(id: string, room: Partial<Room>): Promise<Room | undefined>;
   deleteRoom(id: string): Promise<boolean>;
-  
+
   // Room Players
   getRoomPlayers(roomId: string): Promise<RoomPlayer[]>;
   addRoomPlayer(player: InsertRoomPlayer): Promise<RoomPlayer>;
@@ -78,7 +78,7 @@ export class MemStorage implements IStorage {
     this.prompts = new Map();
     this.rooms = new Map();
     this.roomPlayers = new Map();
-    
+
     this.seedData();
   }
 
@@ -415,41 +415,41 @@ export class MemStorage implements IStorage {
       { gameId: truthOrDareId, packId: null, text: "Have you ever had a crush on a friend's partner?", type: "truth", intensity: 1, flags: { isFlirty: true } },
       { gameId: truthOrDareId, packId: null, text: "What's your guilty pleasure TV show?", type: "truth", intensity: 1, flags: {} },
       { gameId: truthOrDareId, packId: null, text: "When was the last time you told a white lie?", type: "truth", intensity: 1, flags: {} },
-      
+
       // Truths - Medium
       { gameId: truthOrDareId, packId: null, text: "What's your biggest turn-on?", type: "truth", intensity: 3, flags: { isFlirty: true } },
       { gameId: truthOrDareId, packId: null, text: "Have you ever had a dream about someone in this room?", type: "truth", intensity: 3, flags: { isFlirty: true } },
       { gameId: truthOrDareId, packId: null, text: "What's the wildest thing on your bucket list?", type: "truth", intensity: 3, flags: { isBold: true } },
       { gameId: truthOrDareId, packId: null, text: "What's a secret you've never told anyone?", type: "truth", intensity: 3, flags: { isConfession: true } },
-      
+
       // Truths - Spicy
       { gameId: truthOrDareId, packId: null, text: "Describe your most memorable kiss in detail.", type: "truth", intensity: 4, flags: { isFlirty: true } },
       { gameId: truthOrDareId, packId: null, text: "What's your biggest fantasy?", type: "truth", intensity: 5, flags: { isFlirty: true, isBold: true } },
       { gameId: truthOrDareId, packId: null, text: "What's the most daring thing you've done in the bedroom?", type: "truth", intensity: 5, flags: { isFlirty: true, isBold: true } },
-      
+
       // Dares - Mild
       { gameId: truthOrDareId, packId: null, text: "Do your best impression of someone in the room.", type: "dare", intensity: 1, flags: {} },
       { gameId: truthOrDareId, packId: null, text: "Send the last photo in your camera roll to the group chat.", type: "dare", intensity: 1, flags: {} },
       { gameId: truthOrDareId, packId: null, text: "Speak in an accent for the next 3 rounds.", type: "dare", intensity: 1, flags: {} },
-      
+
       // Dares - Medium
       { gameId: truthOrDareId, packId: null, text: "Give someone in the room a shoulder massage for 30 seconds.", type: "dare", intensity: 3, flags: { isFlirty: true, requiresMovement: true } },
       { gameId: truthOrDareId, packId: null, text: "Whisper something seductive in someone's ear.", type: "dare", intensity: 3, flags: { isFlirty: true } },
       { gameId: truthOrDareId, packId: null, text: "Let someone go through your phone for 1 minute.", type: "dare", intensity: 3, flags: { isBold: true } },
-      
+
       // Dares - Spicy
       { gameId: truthOrDareId, packId: null, text: "Give your most convincing lap dance.", type: "dare", intensity: 4, flags: { isFlirty: true, isBold: true, requiresMovement: true } },
       { gameId: truthOrDareId, packId: null, text: "Remove one article of clothing (your choice).", type: "dare", intensity: 5, flags: { isBold: true, isKinkyTease: true } },
       { gameId: truthOrDareId, packId: null, text: "Let someone trace an ice cube anywhere they want on your body.", type: "dare", intensity: 5, flags: { isFlirty: true, isBold: true, isKinkyTease: true } },
-      
+
       // Challenges
       { gameId: truthOrDareId, packId: null, text: "Maintain eye contact with someone for 60 seconds without laughing.", type: "challenge", intensity: 2, flags: {} },
       { gameId: truthOrDareId, packId: null, text: "Make someone blush within 30 seconds.", type: "challenge", intensity: 3, flags: { isFlirty: true } },
-      
+
       // Confessions
       { gameId: truthOrDareId, packId: null, text: "Confess: Who in this room would you most want to be stranded on an island with?", type: "confession", intensity: 2, flags: { isFlirty: true } },
       { gameId: truthOrDareId, packId: null, text: "Confess: What's something you've always wanted to tell someone here but haven't?", type: "confession", intensity: 3, flags: { isConfession: true } },
-      
+
       // Votes
       { gameId: truthOrDareId, packId: null, text: "Vote: Who is the biggest flirt in the room?", type: "vote", intensity: 2, flags: {} },
       { gameId: truthOrDareId, packId: null, text: "Vote: Who has the best lips here?", type: "vote", intensity: 3, flags: { isFlirty: true } },
@@ -651,7 +651,7 @@ export class MemStorage implements IStorage {
       { gameId: velvetLudoId, packId: null, text: "😈 VELVET TEASE: Give your partner a playful tease.", type: "dare", intensity: 4, flags: { isCoupleExclusive: true, isFlirty: true, isBold: true } },
       { gameId: velvetLudoId, packId: null, text: "💋 VELVET PASSION: Kiss your partner on the neck for 10 seconds.", type: "dare", intensity: 4, flags: { isCoupleExclusive: true, isFlirty: true, isBold: true } },
       { gameId: velvetLudoId, packId: null, text: "🔥 VELVET FIRE: Show your partner exactly how you want to be kissed.", type: "dare", intensity: 5, flags: { isCoupleExclusive: true, isFlirty: true, isBold: true } },
-      
+
       // Friends Mode - Fun Challenges
       { gameId: velvetLudoId, packId: null, text: "🎭 IMPROV: Do your best celebrity impression!", type: "dare", intensity: 1, flags: {} },
       { gameId: velvetLudoId, packId: null, text: "🎤 SING IT: Sing the chorus of your favorite song.", type: "dare", intensity: 2, flags: {} },
@@ -661,7 +661,7 @@ export class MemStorage implements IStorage {
       { gameId: velvetLudoId, packId: null, text: "🌟 CONFESSION: Share your most embarrassing moment.", type: "confession", intensity: 3, flags: { isConfession: true, safeForRemote: true } },
       { gameId: velvetLudoId, packId: null, text: "🎯 CHALLENGE: Name 5 things in the room that are blue!", type: "challenge", intensity: 1, flags: {} },
       { gameId: velvetLudoId, packId: null, text: "🧠 TRIVIA: What's the capital of Australia?", type: "challenge", intensity: 2, flags: { safeForRemote: true } },
-      
+
       // Bonus moves (both modes)
       { gameId: velvetLudoId, packId: null, text: "🎲 BONUS ROLL: You landed on a lucky space! Roll again.", type: "rule", intensity: 1, flags: { safeForRemote: true } },
       { gameId: velvetLudoId, packId: null, text: "🔄 SWITCH: Swap positions with one of opponent's pieces.", type: "rule", intensity: 2, flags: { safeForRemote: true } },
@@ -794,12 +794,22 @@ export class MemStorage implements IStorage {
   }
 
   async getGameBySlug(slug: string): Promise<GameWithPacks | undefined> {
+    console.log(`[storage] Fetching game by slug: "${slug}"`);
+
     const game = Array.from(this.games.values()).find((g) => g.slug === slug);
-    if (!game) return undefined;
+
+    if (!game) {
+      console.log(`[storage] No game found with slug: "${slug}"`);
+      return undefined;
+    }
+
+    console.log(`[storage] Found game: ${game.name} (ID: ${game.id})`);
 
     const packs = await this.getPacksByGameId(game.id);
     const prompts = await this.getPromptsByGameId(game.id);
-    
+
+    console.log(`[storage] Game has ${packs.length} packs and ${prompts.length} prompts`);
+
     return {
       ...game,
       packs,
@@ -880,15 +890,15 @@ export class MemStorage implements IStorage {
 
   async getPromptsByGameId(gameId: string, options?: { intensity?: number; packId?: string }): Promise<Prompt[]> {
     let prompts = Array.from(this.prompts.values()).filter((p) => p.gameId === gameId);
-    
+
     if (options?.intensity) {
       prompts = prompts.filter((p) => p.intensity <= options.intensity!);
     }
-    
+
     if (options?.packId) {
       prompts = prompts.filter((p) => p.packId === options.packId);
     }
-    
+
     return prompts;
   }
 
@@ -912,7 +922,7 @@ export class MemStorage implements IStorage {
     return newPrompt;
   }
 
-  async updatePrompt(id: string, updates: Partial<InsertPrompt>): Promise<Prompt | undefined> {
+  async updatePrompt(id: string, updates: Partial<InsertInsertPrompt>): Promise<Prompt | undefined> {
     const prompt = this.prompts.get(id);
     if (!prompt) return undefined;
 
@@ -945,7 +955,7 @@ export class MemStorage implements IStorage {
   async createRoom(room: InsertRoom): Promise<Room> {
     const id = randomUUID();
     let joinCode = generateJoinCode();
-    
+
     // Ensure unique join code
     while (await this.getRoomByJoinCode(joinCode)) {
       joinCode = generateJoinCode();

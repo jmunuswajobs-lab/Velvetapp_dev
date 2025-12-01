@@ -181,6 +181,38 @@ export default function Lobby() {
     }
   }, [roomId, toast, setLocation, gameSlug, ws]);
 
+  const handleStartGame = () => {
+    if (!gameSlug) {
+      toast({
+        title: "No Game Selected",
+        description: "Please select a game before starting",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!players || players.length < 2) {
+      toast({
+        title: "Need More Players",
+        description: "At least 2 players are required to start",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const allReady = players.every(p => p.isReady || p.isHost);
+    if (!allReady) {
+      toast({
+        title: "Players Not Ready",
+        description: "All players must be ready before starting",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    console.log("Starting game with slug:", gameSlug);
+    startGame();
+  };
 
   const allReady = players.length >= 2 && players.every((p) => p.isReady || p.isHost);
   const readyCount = players.filter((p) => p.isReady || p.isHost).length;
@@ -347,7 +379,7 @@ export default function Lobby() {
             <VelvetButton
               velvetVariant="velvet"
               className="w-full py-6 text-lg"
-              onClick={startGame} // Use the updated startGame
+              onClick={handleStartGame} // Use the new handler
               disabled={!allReady}
               data-testid="button-start-game"
             >
