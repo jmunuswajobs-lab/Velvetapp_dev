@@ -1,0 +1,232 @@
+BALL + RACK + SHOT LOOP MUST WORK
+
+You are Replit’s principal gameplay engineer working on this repo:
+
+https://github.com/jmunuswajobs-lab/Velvetapp_dev
+
+Game: Emotion Ping Pong (Beer/Cup Pong).
+
+Current problems (MUST BE FIXED):
+
+Cups are scattered across the table — not a tight triangle rack at the far end.
+
+There is no visible ball rendered on screen.
+
+Swipe / throw gestures do not result in a ball animation or a clear hit/miss.
+
+The agent previously claimed “hit detection + removal animation” but user can’t see the ball or any proper collision feedback.
+
+You must not stop after UI tweaks.
+You must deliver a fully working shot loop:
+
+“Swipe → ball flies → hits/misses a cup → cup disappears → turn swaps”.
+
+No partial implementations, no invisible ball, no debug-only behavior.
+
+1️⃣ Hard Reset: Identify the Real Beer Pong Files
+
+First, scan and open the actual beer pong implementation:
+
+Frontend:
+
+client/src/components/velvet/BeerPongGame.tsx (or similarly named)
+
+Any hooks like useBeerPongController, useGameSession, etc.
+
+Backend:
+
+Beer pong / emotion ping pong engine files (e.g. beerPongEngine.ts, emotionPongEngine.ts)
+
+WebSocket handlers that process TAKE_SHOT / beer-pong actions.
+
+Do not create duplicate files. Work in the main, currently-used ones.
+
+2️⃣ Fix Cup Layout FIRST (Proper Triangle)
+
+Inside the BeerPongGame component:
+
+Replace whatever cup layout exists with a strict 3–2–1 triangle for each rack.
+
+Define a deterministic layout function, e.g.:
+
+const RACK_LAYOUT: { row: number; col: number }[] = [
+  { row: 0, col: 0 },
+  { row: 1, col: -0.5 },
+  { row: 1, col: 0.5 },
+  { row: 2, col: -1 },
+  { row: 2, col: 0 },
+  { row: 2, col: 1 },
+];
+
+
+Map this into table coordinates:
+
+function getCupPosition(index: number, side: "near" | "far"): { x: number; y: number; scale: number } {
+  // x: horizontal offset from center
+  // y: distance from player
+}
+
+
+All active cups must be within that triangle area.
+
+There should be no cups on the edges or mid-table once your mapping is correct.
+
+Acceptance test: look at the rendered UI — if cups are not clearly in a triangle at the far edge (and mirrored near edge), do not proceed until they are.
+
+3️⃣ Implement a Visible Ball Component
+
+Create a Ball visual component in BeerPongGame.tsx:
+
+interface BallProps {
+  x: number; // table coordinate
+  y: number;
+  z: number; // arc “height”
+  visible: boolean;
+}
+
+const Ball: React.FC<BallProps> = (...) => { /* render circle + shadow */ };
+
+
+Render it on top of the table.
+
+When idle, visible = false.
+
+When a shot is in progress, visible = true and its position updates on every animation frame.
+
+You must be able to literally see a ball sitting above the near edge when testing in dev by forcing visible=true temporarily.
+
+4️⃣ Wire Swipe Gesture → Local Shot Simulation → WS Message
+
+In the BeerPongGame component:
+
+Implement swipe detection on the table area:
+
+pointerdown → store start point + time.
+
+pointerup → compute dx, dy, dt.
+
+Convert to shot parameters:
+
+const angle = clamp(dx * ANGLE_FACTOR, MIN_ANGLE, MAX_ANGLE);
+const rawPower = Math.max(dy * POWER_FACTOR, 0);
+const power = clamp(rawPower, MIN_POWER, 1);
+
+
+On valid shot:
+
+Call a local startLocalShotAnimation({ angle, power }).
+
+Send WS message to backend using existing API (or a tiny wrapper). Do not skip the WS call.
+
+Debug logging requirement:
+Every shot must log:
+
+console.log("[BEERPONG_SHOT]", { angle, power, dx, dy, dt });
+
+
+so the user can verify input is read.
+
+5️⃣ Implement the Ball Animation Loop (On the Client)
+
+startLocalShotAnimation should:
+
+Set ball.visible = true.
+
+Use requestAnimationFrame loop (or framer-motion animation controls) to animate:
+
+// t 0 → 1 over ~800ms
+x(t) = startX + (targetX - startX) * t
+y(t) = startY + (targetY - startY) * t
+z(t) = ARC_HEIGHT * 4 * t * (1 - t)  // simple parabola
+scale(t) ≈ 1 - 0.4 * t
+
+
+TargetX/targetY can be approximated from angle/power and far-rack area.
+
+When t >= 1:
+
+Stop animation.
+
+Keep ball invisible (visible=false) and let server state drive the final cup layout.
+
+Non-negotiable: the user must see the ball moving across the table on every shot.
+
+6️⃣ Hook Server Hit/Miss Updates to Cup Removal
+
+Backend already decides hit/miss & cup. On the frontend:
+
+Subscribe to session updates (you already do).
+
+When a new state arrives:
+
+if (state.lastShot && state.lastShot.hit) {
+  // find matching cup
+  // trigger cup HIT animation (shake + fade/scale out)
+}
+
+
+Use Framer Motion or CSS transitions in the Cup component:
+
+.hit state:
+
+scale: 1.1 → 0
+
+opacity: 1 → 0
+
+rotateZ: 0 → 20deg
+
+After animation, filter the cup from state.
+
+7️⃣ Explicit Acceptance Checks (You must self-test)
+
+Before you say “done”, you must perform these manual checks in the running app:
+
+Triangle rack check
+
+Opponent rack at far end is a clear 3-2-1 triangle.
+
+No cups floating at random positions.
+
+Ball visibility check
+
+Start a match.
+
+Force visible=true for Ball in code → see a ball on the table.
+
+Restore proper logic.
+
+Shot loop check (solo, in one tab):
+
+Swipe up on table.
+
+Console logs [BEERPONG_SHOT] with angle/power.
+
+Ball animates across the table.
+
+End of anim hides ball.
+
+Hit/miss check (two tabs, real online play):
+
+Hit: after some shots, a cup visibly disappears after a brief animation.
+
+Miss: cups remain, but a small “Miss” or nothing obvious shows — in any case, no phantom hits.
+
+Turn change check:
+
+After your shot, the UI flips to “Opponent’s turn”.
+
+Opponent tab can shoot, you cannot until turn returns.
+
+If any of these fail, continue fixing. Do not downgrade requirements.
+
+8️⃣ Explain What You Changed
+
+In your final response, you must include:
+
+Files and key components modified (esp. BeerPongGame + engine/hooks).
+
+How you compute angle/power from gesture.
+
+How ball position (x,y,z) is computed and mapped to CSS.
+
+How you map backend cup state to the triangular layout.
