@@ -10,7 +10,7 @@ import { VelvetButton } from "@/components/velvet/VelvetButton";
 import { VelvetCard } from "@/components/velvet/VelvetCard";
 import { FadeIn, SlideIn, StaggerChildren, staggerChildVariants, ScaleIn } from "@/components/velvet/PageTransition";
 import { useLocalGame, useLocalGameSession } from "@/lib/gameState";
-import { useGameSessionStore } from "@/lib/store";
+import { useGameSessionStore } from "@/lib/gameSessionStore";
 import type { GameStats, PromptType } from "@shared/schema";
 
 const promptTypeLabels: Record<PromptType, string> = {
