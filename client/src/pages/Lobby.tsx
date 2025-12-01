@@ -81,7 +81,7 @@ export default function Lobby() {
             console.log("Game started, initializing with prompts:", data.prompts);
             initGameState(data.prompts, data.players);
             setGameStarted(true);
-            setLocation(`/games/${data.gameSlug || gameSlug || 'truth-or-dare'}/play`);
+            setLocation(`/games/${data.gameSlug || gameSlug || 'truth-or-dare'}/play/${roomId}`);
             break;
           case "error":
             toast({
