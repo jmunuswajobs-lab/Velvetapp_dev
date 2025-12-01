@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useParams, useLocation, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Plus, X, Users, Play, Shuffle } from "lucide-react";
+import { ArrowLeft, Plus, X, Users, Play, Shuffle, Gamepad2, Zap } from "lucide-react";
 import { EmberParticles } from "@/components/velvet/EmberParticles";
 import { VelvetButton } from "@/components/velvet/VelvetButton";
 import { VelvetInput } from "@/components/velvet/VelvetInput";
@@ -38,6 +38,7 @@ export default function LocalSetup() {
     coupleMode: false,
     packs: [],
   });
+  const [difficulty, setDifficulty] = useState<number>(3); // For arcade games
 
   const { data: game, isLoading: gameLoading, error: gameError } = useQuery<Game>({
     queryKey: [`/api/games/${slug}`],
@@ -62,7 +63,7 @@ export default function LocalSetup() {
       return data;
     },
     enabled: !!game?.id && needsPrompts,
-    staleTime: 5000, // Cache for 5 seconds
+    staleTime: 5000,
     retry: 2,
   });
 
@@ -91,9 +92,13 @@ export default function LocalSetup() {
     setPlayers([...players].sort(() => Math.random() - 0.5));
   };
 
-  // For non-prompt games, we don't need prompts loaded
+  // Validation based on game type
+  const isPromptGame = game && (game.engineType === "prompt-party" || game.engineType === "prompt-couple");
+  const isArcadeGame = game && ["pong", "racer", "tap-duel", "rhythm"].includes(game.engineType);
+  const isBoardGame = game && ["board-ludo", "memory-match", "guessing", "roulette", "tool-randomizer"].includes(game.engineType);
+
   const isValid = players.every((p) => p.nickname.trim().length > 0) &&
-                  players.length >= 2 &&
+                  players.length >= game?.minPlayers &&
                   (needsPrompts ? (prompts && prompts.length > 0 && !promptsLoading) : !promptsLoading);
 
   const startGame = () => {
@@ -106,7 +111,6 @@ export default function LocalSetup() {
       return;
     }
 
-    // Check prompts only if game needs them
     if (needsPrompts && (!prompts || prompts.length === 0)) {
       toast({
         title: "Cannot Start Game",
@@ -122,10 +126,7 @@ export default function LocalSetup() {
     }));
 
     try {
-      // Create session synchronously - pass engineType from game object
       const sessionId = createLocalGameSession(game.id, validPlayers, settings, prompts || [], game.engineType);
-      
-      // Navigate immediately with session ID
       setLocation(`/games/${slug}/play/${sessionId}`);
     } catch (error) {
       console.error("Failed to create game session:", error);
@@ -163,7 +164,6 @@ export default function LocalSetup() {
     );
   }
 
-  // Handle prompts loading error
   if (promptsError) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -185,7 +185,6 @@ export default function LocalSetup() {
 
   return (
     <div className="min-h-screen relative">
-      {/* Background */}
       <div
         className="fixed inset-0 -z-20"
         style={{
@@ -198,14 +197,10 @@ export default function LocalSetup() {
       />
       <EmberParticles count={10} />
 
-      {/* Header */}
       <header className="glass border-b border-plum-deep/30">
         <div className="max-w-2xl mx-auto px-4 py-4">
           <Link href={`/games/${slug}`}>
-            <button
-              className="flex items-center gap-2 text-muted-foreground hover:text-white transition-colors"
-              data-testid="button-back"
-            >
+            <button className="flex items-center gap-2 text-muted-foreground hover:text-white transition-colors">
               <ArrowLeft className="w-4 h-4" />
               <span>Back to {game?.name}</span>
             </button>
@@ -213,30 +208,28 @@ export default function LocalSetup() {
         </div>
       </header>
 
-      {/* Content */}
       <main className="max-w-2xl mx-auto px-4 py-8">
         <FadeIn className="text-center mb-8">
           <h1 className="text-3xl font-display font-bold gradient-text mb-2">
-            Local Game Setup
+            {isArcadeGame ? "Quick Play" : isPromptGame ? "Game Setup" : "Board Game Setup"}
           </h1>
           <p className="text-muted-foreground">
-            Add players and customize your experience
+            {isArcadeGame ? "Pick players and get ready to compete" : isPromptGame ? "Add players and customize your experience" : "Set up your game"}
           </p>
         </FadeIn>
 
-        {/* Players section */}
+        {/* Players section - ALWAYS shown */}
         <SlideIn direction="up" delay={0.1} className="mb-8">
           <VelvetCard tiltEnabled={false} className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-display font-semibold flex items-center gap-2">
                 <Users className="w-5 h-5 text-neon-magenta" />
-                Players ({players.length}/10)
+                Players ({players.length}/{game?.maxPlayers || 10})
               </h2>
               <VelvetButton
                 velvetVariant="ghost-glow"
                 size="sm"
                 onClick={shufflePlayers}
-                data-testid="button-shuffle-players"
               >
                 <Shuffle className="w-4 h-4 mr-1" />
                 Shuffle
@@ -261,12 +254,11 @@ export default function LocalSetup() {
                     />
 
                     <VelvetInput
-                      placeholder={`Player ${index + 1} nickname`}
+                      placeholder={`Player ${index + 1}`}
                       value={player.nickname}
                       onChange={(e) => updatePlayer(player.id, e.target.value)}
                       maxLength={20}
                       className="flex-1"
-                      data-testid={`input-player-${index}`}
                     />
 
                     {players.length > 2 && (
@@ -275,7 +267,6 @@ export default function LocalSetup() {
                         className="p-2 text-muted-foreground hover:text-destructive transition-colors"
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
-                        data-testid={`button-remove-player-${index}`}
                       >
                         <X className="w-4 h-4" />
                       </motion.button>
@@ -285,7 +276,7 @@ export default function LocalSetup() {
               </AnimatePresence>
             </div>
 
-            {players.length < 10 && (
+            {players.length < (game?.maxPlayers || 10) && (
               <motion.button
                 onClick={addPlayer}
                 className="w-full mt-4 p-3 rounded-lg border border-dashed border-plum-deep/50
@@ -293,7 +284,6 @@ export default function LocalSetup() {
                          transition-all flex items-center justify-center gap-2"
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
-                data-testid="button-add-player"
               >
                 <Plus className="w-4 h-4" />
                 Add Player
@@ -302,74 +292,114 @@ export default function LocalSetup() {
           </VelvetCard>
         </SlideIn>
 
-        {/* Settings section */}
-        <SlideIn direction="up" delay={0.2} className="mb-8">
-          <VelvetCard tiltEnabled={false} className="p-6">
-            <h2 className="text-lg font-display font-semibold mb-4">
-              Game Settings
-            </h2>
-
-            <div className="space-y-6">
-              <IntensitySlider
-                value={settings.intensity}
-                onChange={(v) => setSettings({ ...settings, intensity: v })}
-              />
+        {/* ARCADE GAME SETUP - Simple difficulty slider */}
+        {isArcadeGame && (
+          <SlideIn direction="up" delay={0.2} className="mb-8">
+            <VelvetCard tiltEnabled={false} className="p-6">
+              <h2 className="text-lg font-display font-semibold mb-4 flex items-center gap-2">
+                <Gamepad2 className="w-5 h-5 text-neon-magenta" />
+                Game Settings
+              </h2>
 
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="couple-mode" className="text-sm font-medium">
-                      Couple Mode
-                    </Label>
-                    <p className="text-xs text-muted-foreground">
-                      Prompts designed for two people
-                    </p>
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <Label className="text-sm font-medium">Difficulty</Label>
+                    <span className="text-neon-magenta font-semibold">{["Easy", "Medium", "Hard", "Extreme"][difficulty - 1]}</span>
                   </div>
-                  <Switch
-                    id="couple-mode"
-                    checked={settings.coupleMode}
-                    onCheckedChange={(v) => setSettings({ ...settings, coupleMode: v })}
-                    data-testid="switch-couple-mode"
+                  <input
+                    type="range"
+                    min="1"
+                    max="4"
+                    value={difficulty}
+                    onChange={(e) => setDifficulty(parseInt(e.target.value))}
+                    className="w-full h-2 bg-plum-deep/30 rounded-lg appearance-none cursor-pointer accent-neon-magenta"
                   />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="allow-movement" className="text-sm font-medium">
-                      Allow Movement
-                    </Label>
-                    <p className="text-xs text-muted-foreground">
-                      Include dares that require moving around
-                    </p>
+                  <div className="flex justify-between text-xs text-muted-foreground mt-2">
+                    <span>Easy</span>
+                    <span>Extreme</span>
                   </div>
-                  <Switch
-                    id="allow-movement"
-                    checked={settings.allowMovement}
-                    onCheckedChange={(v) => setSettings({ ...settings, allowMovement: v })}
-                    data-testid="switch-movement"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="allow-nsfw" className="text-sm font-medium text-heat-pink">
-                      Extra Spicy Mode
-                    </Label>
-                    <p className="text-xs text-muted-foreground">
-                      More daring prompts (still PG-17)
-                    </p>
-                  </div>
-                  <Switch
-                    id="allow-nsfw"
-                    checked={settings.allowNSFW}
-                    onCheckedChange={(v) => setSettings({ ...settings, allowNSFW: v })}
-                    data-testid="switch-nsfw"
-                  />
                 </div>
               </div>
-            </div>
-          </VelvetCard>
-        </SlideIn>
+            </VelvetCard>
+          </SlideIn>
+        )}
+
+        {/* BOARD GAME SETUP - Basic settings */}
+        {isBoardGame && (
+          <SlideIn direction="up" delay={0.2} className="mb-8">
+            <VelvetCard tiltEnabled={false} className="p-6">
+              <h2 className="text-lg font-display font-semibold mb-4">Game Settings</h2>
+              <p className="text-sm text-muted-foreground">Board games are ready to play. No additional settings needed!</p>
+            </VelvetCard>
+          </SlideIn>
+        )}
+
+        {/* PROMPT GAME SETUP - Full customization */}
+        {isPromptGame && (
+          <SlideIn direction="up" delay={0.2} className="mb-8">
+            <VelvetCard tiltEnabled={false} className="p-6">
+              <h2 className="text-lg font-display font-semibold mb-4">Game Settings</h2>
+
+              <div className="space-y-6">
+                <IntensitySlider
+                  value={settings.intensity}
+                  onChange={(v) => setSettings({ ...settings, intensity: v })}
+                />
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="couple-mode" className="text-sm font-medium">
+                        Couple Mode
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Prompts designed for two people
+                      </p>
+                    </div>
+                    <Switch
+                      id="couple-mode"
+                      checked={settings.coupleMode}
+                      onCheckedChange={(v) => setSettings({ ...settings, coupleMode: v })}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="allow-movement" className="text-sm font-medium">
+                        Allow Movement
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Include dares that require moving around
+                      </p>
+                    </div>
+                    <Switch
+                      id="allow-movement"
+                      checked={settings.allowMovement}
+                      onCheckedChange={(v) => setSettings({ ...settings, allowMovement: v })}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="allow-nsfw" className="text-sm font-medium text-heat-pink">
+                        Extra Spicy Mode
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        More daring prompts (still PG-17)
+                      </p>
+                    </div>
+                    <Switch
+                      id="allow-nsfw"
+                      checked={settings.allowNSFW}
+                      onCheckedChange={(v) => setSettings({ ...settings, allowNSFW: v })}
+                    />
+                  </div>
+                </div>
+              </div>
+            </VelvetCard>
+          </SlideIn>
+        )}
 
         {/* Start button */}
         <SlideIn direction="up" delay={0.3}>
@@ -378,10 +408,9 @@ export default function LocalSetup() {
             className="w-full py-6 text-lg"
             onClick={startGame}
             disabled={!isValid}
-            data-testid="button-start-game"
           >
             <Play className="w-5 h-5 mr-2" />
-            Start Game ({prompts?.length || 0} prompts)
+            {isArcadeGame ? "Start Competition" : isPromptGame ? `Start Game (${prompts?.length || 0} prompts)` : "Start Game"}
           </VelvetButton>
 
           {!isValid && (
@@ -392,7 +421,7 @@ export default function LocalSetup() {
                 ? "Loading prompts..."
                 : !prompts || prompts.length === 0
                 ? "No prompts available for this game"
-                : "Start a new game to begin playing"}
+                : "Ready to play!"}
             </p>
           )}
         </SlideIn>
