@@ -13,6 +13,7 @@ import { PlayerAvatar } from "@/components/velvet/PlayerAvatar";
 import { FadeIn } from "@/components/velvet/PageTransition";
 import { useLocalGameSession, useOnlineRoom } from "@/lib/gameState";
 import { useToast } from "@/hooks/use-toast";
+import { getNextPrompt, type PromptFilter } from "@/lib/promptEngine";
 
 export default function Gameplay() {
   const { slug, sessionId } = useParams<{ slug: string; sessionId: string }>();
@@ -91,6 +92,8 @@ export default function Gameplay() {
     );
   }
 
+  // Use weighted prompt selection when available
+  const targetSpice = gameState.config?.intensity || 3;
   const currentPrompt = gameState.prompts[gameState.currentPromptIndex];
   const currentPlayer = gameState.players[gameState.turnIndex];
   const promptsRemaining = gameState.prompts.length - gameState.currentPromptIndex - 1;
@@ -105,14 +108,27 @@ export default function Gameplay() {
       // Send move to server
       console.log("Move to next prompt in online game");
     } else {
-      // Local game
-      const prompt = gameSession?.nextPrompt();
-      if (!prompt) {
+      // Local game - use weighted prompt selection
+      const usedIds = gameState.usedPromptIds || [];
+      const filter: PromptFilter = {
+        minSpice: Math.max(1, targetSpice - 1),
+        maxSpice: Math.min(5, targetSpice + 1),
+        alreadyUsedIds: usedIds,
+      };
+      
+      const nextPrompt = getNextPrompt(gameState.prompts, filter, {
+        targetSpice,
+        preferVariety: true,
+      });
+
+      if (!nextPrompt) {
         setLocation(`/games/${slug}/summary/${sessionId}`);
         return;
       }
+
+      gameSession?.nextPrompt();
       gameSession?.advanceTurn();
-      gameSession?.updateHeatLevel((prompt.intensity || 0) * 2);
+      gameSession?.updateHeatLevel((nextPrompt.intensity || 0) * 2);
     }
   };
 

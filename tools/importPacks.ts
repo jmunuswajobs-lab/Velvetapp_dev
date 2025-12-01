@@ -1,9 +1,7 @@
 import { readdir, readFile } from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
-import { db } from "../server/index.js";
-import { packs, prompts, games } from "../shared/schema.js";
-import { eq } from "drizzle-orm";
+import { MemStorage } from "../server/storage.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -26,19 +24,19 @@ async function importPacks() {
   console.log("🎯 Starting pack import...");
 
   try {
-    // Get Truth or Dare game
-    const game = await db
-      .select()
-      .from(games)
-      .where(eq(games.slug, "truth-or-dare"))
-      .limit(1);
+    // Initialize storage
+    const storage = new MemStorage();
 
-    if (!game || game.length === 0) {
+    // Get Truth or Dare game
+    const games = await storage.getGames();
+    const game = games.find((g) => g.slug === "truth-or-dare");
+
+    if (!game) {
       throw new Error("Truth or Dare game not found. Please create it first.");
     }
 
-    const gameId = game[0].id;
-    console.log(`✓ Found game: ${game[0].name} (${gameId})`);
+    const gameId = game.id;
+    console.log(`✓ Found game: ${game.name} (${gameId})`);
 
     // Read all pack files
     const packsDir = path.join(__dirname, "../content/packs");
@@ -81,54 +79,24 @@ async function importPacks() {
 
       console.log(`\n📦 Importing pack: ${packData.name}`);
 
-      // Check if pack already exists
-      const existingPack = await db
-        .select()
-        .from(packs)
-        .where(eq(packs.name, packData.name))
-        .limit(1);
+      // Create pack
+      const createdPack = await storage.createPack({
+        gameId,
+        name: packData.name,
+        description: packData.description,
+        intensity: packData.intensity,
+        isDefault: false,
+      });
 
-      let packId: string;
+      console.log(`  ✓ Created pack with ID: ${createdPack.id}`);
 
-      if (existingPack && existingPack.length > 0) {
-        packId = existingPack[0].id;
-        console.log(`  ✓ Pack already exists with ID: ${packId}`);
-
-        // Delete existing prompts for this pack
-        const existingPrompts = await db
-          .select()
-          .from(prompts)
-          .where(eq(prompts.packId, packId));
-
-        if (existingPrompts.length > 0) {
-          console.log(
-            `  🗑️  Removing ${existingPrompts.length} old prompts...`
-          );
-          // Note: In production, use a proper migration/deletion pattern
-        }
-      } else {
-        // Insert new pack
-        const result = await db
-          .insert(packs)
-          .values({
-            gameId,
-            name: packData.name,
-            description: packData.description,
-            intensity: packData.intensity,
-          })
-          .returning({ id: packs.id });
-
-        packId = result[0].id;
-        console.log(`  ✓ Created pack with ID: ${packId}`);
-      }
-
-      // Insert all prompts
+      // Create all prompts
       for (const promptData of packData.prompts) {
-        await db.insert(prompts).values({
+        await storage.createPrompt({
           gameId,
-          packId,
+          packId: createdPack.id,
           text: promptData.text,
-          type: promptData.type,
+          type: promptData.type as any,
           intensity: promptData.intensity,
           flags: promptData.flags || {},
         });
