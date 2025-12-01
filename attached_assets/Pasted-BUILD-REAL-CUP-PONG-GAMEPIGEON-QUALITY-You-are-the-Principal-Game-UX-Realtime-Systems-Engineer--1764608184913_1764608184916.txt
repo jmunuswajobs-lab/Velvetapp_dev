@@ -1,0 +1,260 @@
+BUILD REAL CUP PONG (GAMEPIGEON-QUALITY)
+
+You are the Principal Game UX + Realtime Systems Engineer for this project:
+
+https://github.com/jmunuswajobs-lab/Velvetapp_dev
+
+Your task is to completely rebuild Emotion Ping Pong into a TRUE Cup Pong game, identical in behavior and feel to GamePigeon / Plato Cup Pong, using the existing backend session + WebSocket actions.
+
+The current UI (flat board rectangle + grey blocks) is NOT acceptable.
+You must delete that UI entirely and replace it with a professional, fully playable Cup Pong experience.
+
+✅ WHAT MUST BE BUILT (MANDATORY)
+1️⃣ A REAL BEER PONG TABLE (3D PERSPECTIVE)
+
+Replace the flat green rounded rectangle with:
+
+A full 3D perspective table plane
+
+Use CSS perspective:
+
+transform: perspective(900px) rotateX(55deg);
+
+
+Add wooden or neon-lit rails, subtle shadow under the table, and a proper center line.
+
+2️⃣ REALISTIC CUPS (CYLINDERS, NOT SQUARES)
+
+Remove all square/rectangular cup placeholders.
+
+Create proper red/blue SOLO-style cups:
+
+Top ellipse (circle in perspective)
+
+Cylindrical body with gradient
+
+Shadow cast on the table
+
+Slight size scaling for depth (back cups smaller, front cups larger)
+
+Cup component must be:
+
+<Cup x={number} y={number} scale={number} active={boolean} />
+
+
+NOT div blocks.
+
+3️⃣ TRUE TRIANGULAR RACKS
+
+Cup layout must be exact 3-2-1 triangle (or 4-3-2-1 if 10-cup mode) at the far end for opponent and near end for player.
+
+Positions must:
+
+Be evenly spaced
+
+Match real Cup Pong geometry
+
+Use perspective scaling (back cups smaller)
+
+4️⃣ REAL SWIPE-TO-THROW MECHANICS
+
+Remove sliders completely.
+
+Implement GamePigeon-style throws:
+
+Player swipes upward on the table
+
+Horizontal movement → angle
+
+Swipe length + speed → power
+
+If swipe is tiny → cancel shot
+
+Only active player can shoot
+
+Expose shot to backend via existing WS message:
+
+{ type: "TAKE_SHOT", angle, power }
+
+5️⃣ BALL TRAJECTORY ANIMATION
+
+The ball must:
+
+Start at user-facing end of table
+
+Travel on a parabolic arc
+
+Scale up/down with distance
+
+Cast a shadow that moves & shrinks
+
+Move smoothly to the opponent’s rack
+
+On server update:
+
+If HIT: animate ball dropping into the correct cup → cup removal animation
+
+If MISS: animate overshoot or rim bounce
+
+6️⃣ CUP HIT + REMOVAL ANIMATIONS
+
+When a cup is hit:
+
+Cup shakes
+
+Glows
+
+Shrinks/fades
+
+Is removed from the rack
+
+Animations must use Framer Motion or GSAP for fluidity.
+
+7️⃣ FULL CUSTOM GAME SCREEN
+
+Create:
+
+client/src/games/BeerPongGameScreen.tsx
+
+This component must:
+
+Replace all old Beer Pong UI
+
+Auto-size for mobile first
+
+Render:
+
+Header (avatars + scores)
+
+Perspective table
+
+Opponent’s cup rack
+
+Player’s rack (near bottom)
+
+Throw interaction zone
+
+Turn indicators
+
+Server-driven updates
+
+8️⃣ PROPER SYNC & LIVE PLAY
+
+Ensure:
+
+Only active player sees “Swipe to throw”
+
+Opponent sees “Opponent is throwing…”
+
+Ball and cup events sync correctly via WS
+
+Reconnection loads correct current state
+
+No duplicate throws, no stutter
+
+❌ WHAT MUST BE REMOVED IMMEDIATELY
+
+Grey rectangular blocks pretending to be cups
+
+Flat green board with no depth
+
+Slider-controlled aim & power
+
+Layout with two separate boards (one top, one bottom)
+
+Any placeholder or debug UI
+
+This game must ONLY show:
+
+✔ Real table
+✔ Real cups
+✔ Real swipe input
+✔ Real ball physics
+✔ Real animations
+
+💡 TECHNICAL IMPLEMENTATION REQUIREMENTS
+ENGINE
+
+Keep backend API.
+On client:
+
+Build useBeerPongController() hook managing:
+
+swipe detection
+
+converting gestures to (angle, power)
+
+triggering WS events
+
+animating ball based on predicted path
+
+reconciling with server state
+
+TABLE RENDERING
+
+Table must be a single HTML element with CSS transforms:
+
+.table {
+  width: 100%;
+  height: 420px;
+  background: #0b5b2e radial-gradient(...);
+  border: 12px solid #ffffff20;
+  border-radius: 16px;
+  transform: perspective(900px) rotateX(55deg);
+}
+
+CUP RENDERING
+
+Cups are composed of:
+
+Top ellipse <svg>
+
+Body rectangle
+
+Drop shadow
+
+Motion wrapper
+
+Place cups in table coordinates (not DOM flow).
+
+BALL
+
+Ball is a floating <div> or <svg> animated along:
+
+x = lerp(startX, targetX, t)
+y = parabolic(t)
+scale = lerp(1.0, 0.4, t)
+
+🧪 VALIDATION BEFORE YOU STOP
+
+Test from two tabs:
+
+Game loads > table looks like real Cup Pong
+
+Opponent rack = triangular and correctly positioned
+
+Swipe throws ball
+
+Ball moves smoothly in perspective
+
+Cup hit accurately removes cup
+
+Score updates reflect real gameplay
+
+State stays consistent on reload
+
+No UI jank, no overlapping elements
+
+If ANY of these fail → fix before completing response.
+
+📌 FINAL REQUIREMENT
+
+When you complete the changes, reply with:
+
+List of files added/removed/updated
+
+How gesture → angle/power is computed
+
+How perspective cup coordinates are mapped
+
+How ball trajectory is synchronized with backend

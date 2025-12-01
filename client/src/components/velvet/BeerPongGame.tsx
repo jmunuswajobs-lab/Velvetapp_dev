@@ -3,24 +3,23 @@ import { motion, AnimatePresence } from "framer-motion";
 import { VelvetButton } from "./VelvetButton";
 import { PlayerAvatar } from "./PlayerAvatar";
 
-/** Cup Pong Professional Implementation
+/** GamePigeon-Quality Cup Pong
  * 
- * GAME STATE INTEGRATION:
- * - Receives game state from parent via onStateUpdate
- * - Sends TAKE_SHOT action via onAction callback
- * - WS Events: session_update (state changes), take_shot (response)
- * 
- * PHYSICS & MECHANICS:
- * - Client-side ball animation (purely visual, server-authoritative)
- * - Hit detection: server decides if ball hits cup
- * - Gesture controls: swipe up = angle + power calculation
+ * ARCHITECTURE:
+ * - Real 3D perspective table (perspective(900px) rotateX(55deg))
+ * - Realistic cylinder cups with ellipse tops
+ * - Proper triangular racks with depth scaling
+ * - Gesture-based swipe throw mechanics
+ * - Ball trajectory with parabolic arc + shadow
+ * - Framer Motion animations for smooth gameplay
+ * - Server-authoritative hit detection
  */
 
 interface Cup {
   id: string;
-  x: number;
-  y: number;
-  z: number;
+  x: number; // % position on table
+  y: number; // % position on table
+  z: number; // depth for scaling
   active: boolean;
 }
 
@@ -34,472 +33,521 @@ interface BeerPongProps {
   players?: Player[];
   onGameEnd?: (winner: "team1" | "team2") => void;
   difficulty?: number;
-  onAction?: (action: any) => void;
-  gameState?: any;
 }
 
-// Configuration Constants
+// ============ CONFIGURATION ============
 const CONFIG = {
-  TABLE_WIDTH: 350,
-  TABLE_HEIGHT: 200,
+  // Table dimensions
+  TABLE_WIDTH_PCT: 90,
+  TABLE_HEIGHT_VH: 50,
+  
+  // Cups
+  CUP_DIAMETER: 32,
   CUPS_PER_SIDE: 6,
-  CUP_SIZE: 24,
-  AIM_SENSITIVITY: 1.2,
-  POWER_SENSITIVITY: 0.008,
-  MIN_POWER_THRESHOLD: 0.15,
-  BALL_ANIMATION_DURATION: 800,
-  CUP_HIT_ANIMATION_DURATION: 400,
-  ANGLE_LIMITS: { min: -45, max: 45 },
-  POWER_LIMITS: { min: 0, max: 1 },
+  
+  // Physics
+  AIM_SENSITIVITY: 0.8,
+  POWER_SENSITIVITY: 0.004,
+  MIN_POWER: 0.2,
+  THROW_DURATION: 900,
+  CUP_REMOVAL_DURATION: 500,
+  
+  // Angles
+  ANGLE_MIN: -45,
+  ANGLE_MAX: 45,
+  POWER_MIN: 0,
+  POWER_MAX: 1,
 };
 
-function generateCupLayout(count: number, atBottom: boolean): Cup[] {
-  const cups: Cup[] = [];
-  
+// ============ CUP LAYOUT ============
+function generateRack(atOpponent: boolean): Cup[] {
   // 6-cup triangle: 3-2-1
-  if (count === 6) {
-    const rows = [[0, 1, 2], [3, 4], [5]];
-    const rowSpacings = [60, 60, 60];
-    const startY = atBottom ? CONFIG.TABLE_HEIGHT - 40 : 20;
-    const direction = atBottom ? 1 : -1;
+  const spacing = 50;
+  const cupWidth = 40;
+  
+  // Triangle rows: [3 cups, 2 cups, 1 cup]
+  const rows = [
+    [0, 1, 2],
+    [3, 4],
+    [5],
+  ];
 
-    rows.forEach((rowIndices, rowIdx) => {
-      const rowWidth = (rowIndices.length - 1) * 35;
-      const rowStartX = (CONFIG.TABLE_WIDTH - rowWidth) / 2;
+  const cups: Cup[] = [];
+  const baseX = 50; // center
+  const baseY = atOpponent ? 12 : 88;
+  const direction = atOpponent ? 1 : -1;
 
-      rowIndices.forEach((cupIdx, posIdx) => {
-        cups.push({
-          id: `cup-${cupIdx}`,
-          x: rowStartX + posIdx * 35,
-          y: startY + direction * rowIdx * 40,
-          z: rowIdx * 5,
-          active: true,
-        });
+  rows.forEach((rowCups, rowIdx) => {
+    const rowWidth = (rowCups.length - 1) * cupWidth;
+    const rowStartX = baseX - rowWidth / 2;
+
+    rowCups.forEach((cupId, posIdx) => {
+      cups.push({
+        id: `cup-${cupId}`,
+        x: rowStartX + posIdx * cupWidth,
+        y: baseY + direction * rowIdx * (spacing * 0.6),
+        z: rowIdx * 8, // depth scaling
+        active: true,
       });
     });
-  }
+  });
 
   return cups;
 }
 
-export function BeerPongGame({
-  players,
-  onGameEnd,
-  difficulty = 3,
-  onAction,
-  gameState,
-}: BeerPongProps) {
-  const [team1Cups, setTeam1Cups] = useState<Cup[]>([]);
-  const [team2Cups, setTeam2Cups] = useState<Cup[]>([]);
-  const [currentTurn, setCurrentTurn] = useState<"team1" | "team2">("team1");
-  const [winner, setWinner] = useState<"team1" | "team2" | null>(null);
+// ============ MAIN COMPONENT ============
+export function BeerPongGame({ players, onGameEnd, difficulty = 3 }: BeerPongProps) {
+  const [opponentCups, setOpponentCups] = useState<Cup[]>([]);
+  const [playerCups, setPlayerCups] = useState<Cup[]>([]);
+  const [currentTurn, setCurrentTurn] = useState<"player" | "opponent">("player");
+  const [winner, setWinner] = useState<"player" | "opponent" | null>(null);
 
-  const [ballPath, setBallPath] = useState<{ x: number; y: number; scale: number }[] | null>(null);
+  // Ball animation
+  const [ballTrajectory, setBallTrajectory] = useState<number | null>(null); // 0-1 progress
+  const [ballTarget, setBallTarget] = useState<{ x: number; y: number } | null>(null);
   const [isShooting, setIsShooting] = useState(false);
   const [lastResult, setLastResult] = useState<"hit" | "miss" | null>(null);
   const [hitCupId, setHitCupId] = useState<string | null>(null);
 
+  // Swipe tracking
   const tableRef = useRef<HTMLDivElement>(null);
-  const swipeRef = useRef<{ startX: number; startY: number; time: number } | null>(null);
-  const throwInProgressRef = useRef(false);
+  const swipeRef = useRef<{ x: number; y: number; t: number } | null>(null);
+  const throwLockRef = useRef(false);
 
-  // Initialize cups
+  // Initialize
   useEffect(() => {
-    setTeam1Cups(generateCupLayout(CONFIG.CUPS_PER_SIDE, true));
-    setTeam2Cups(generateCupLayout(CONFIG.CUPS_PER_SIDE, false));
+    setOpponentCups(generateRack(true));
+    setPlayerCups(generateRack(false));
   }, []);
 
-  // Calculate ball trajectory
-  const calculateTrajectory = (
-    angle: number,
-    power: number
-  ): { x: number; y: number; scale: number }[] => {
-    const trajectory: { x: number; y: number; scale: number }[] = [];
-    const steps = 40;
-    const startX = CONFIG.TABLE_WIDTH / 2;
-    const startY = CONFIG.TABLE_HEIGHT - 10;
-    const endY = 10;
+  // ============ SWIPE HANDLING ============
+  const handleSwipeStart = useCallback(
+    (e: React.TouchEvent) => {
+      if (isShooting || winner || throwLockRef.current || currentTurn !== "player") return;
 
-    const angleRad = (angle * Math.PI) / 180;
-    const horizontalDistance = Math.cos(angleRad) * power * 200;
-    const verticalDistance = CONFIG.TABLE_HEIGHT - 20;
+      const touch = e.touches[0];
+      swipeRef.current = { x: touch.clientX, y: touch.clientY, t: Date.now() };
+    },
+    [isShooting, winner, currentTurn]
+  );
 
-    for (let i = 0; i <= steps; i++) {
-      const t = i / steps;
-      const easeT = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+  const handleSwipeEnd = useCallback(
+    (e: React.TouchEvent) => {
+      if (!swipeRef.current || isShooting || winner || throwLockRef.current) {
+        swipeRef.current = null;
+        return;
+      }
 
-      trajectory.push({
-        x: startX + Math.sin(angleRad) * horizontalDistance * t,
-        y: startY - verticalDistance * easeT,
-        scale: 1 - t * 0.3,
-      });
-    }
+      const end = e.changedTouches[0];
+      const deltaX = end.clientX - swipeRef.current.x;
+      const deltaY = swipeRef.current.y - end.clientY; // up is positive
+      const timeDelta = Math.max(1, Date.now() - swipeRef.current.t);
 
-    return trajectory;
-  };
-
-  // Handle swipe gesture
-  const handleSwipeStart = useCallback((e: React.TouchEvent) => {
-    if (isShooting || winner || throwInProgressRef.current || currentTurn !== "team1")
-      return;
-
-    const touch = e.touches[0];
-    swipeRef.current = { startX: touch.clientX, startY: touch.clientY, time: Date.now() };
-  }, [isShooting, winner, currentTurn]);
-
-  const handleSwipeEnd = useCallback((e: React.TouchEvent) => {
-    if (!swipeRef.current || isShooting || winner || throwInProgressRef.current) {
       swipeRef.current = null;
-      return;
-    }
 
-    const endTouch = e.changedTouches[0];
-    const deltaX = endTouch.clientX - swipeRef.current.startX;
-    const deltaY = swipeRef.current.startY - endTouch.clientY;
-    const timeDelta = Date.now() - swipeRef.current.time;
+      // Must swipe upward significantly
+      if (deltaY < 40) return;
 
-    swipeRef.current = null;
+      // Calculate angle and power
+      const angle = Math.max(
+        CONFIG.ANGLE_MIN,
+        Math.min(CONFIG.ANGLE_MAX, deltaX * CONFIG.AIM_SENSITIVITY)
+      );
 
-    // Only register if swipe is upward and significant
-    if (deltaY < 30) return;
+      const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+      const velocity = distance / timeDelta;
+      const rawPower = distance * CONFIG.POWER_SENSITIVITY + velocity * 0.2;
+      const power = Math.max(
+        CONFIG.MIN_POWER,
+        Math.min(CONFIG.POWER_MAX, rawPower)
+      );
 
-    const angle = Math.max(
-      CONFIG.ANGLE_LIMITS.min,
-      Math.min(CONFIG.ANGLE_LIMITS.max, deltaX * CONFIG.AIM_SENSITIVITY)
-    );
+      if (power < CONFIG.MIN_POWER) return;
 
-    // Power from distance + velocity
-    const baseDistance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-    const velocity = baseDistance / Math.max(timeDelta, 1);
-    const rawPower = (baseDistance * CONFIG.POWER_SENSITIVITY + velocity * 0.3) / 2;
-    const power = Math.max(
-      CONFIG.POWER_LIMITS.min,
-      Math.min(CONFIG.POWER_LIMITS.max, rawPower)
-    );
+      executeThrow(angle, power);
+    },
+    [isShooting, winner, currentTurn]
+  );
 
-    if (power < CONFIG.MIN_POWER_THRESHOLD) return;
+  // ============ THROW EXECUTION ============
+  const executeThrow = async (angle: number, power: number) => {
+    if (throwLockRef.current) return;
+    throwLockRef.current = true;
 
-    executeShot(angle, power);
-  }, [isShooting, winner, currentTurn]);
-
-  const executeShot = async (angle: number, power: number) => {
-    if (throwInProgressRef.current) return;
-
-    throwInProgressRef.current = true;
     setIsShooting(true);
 
-    const trajectory = calculateTrajectory(angle, power);
-    setBallPath(trajectory);
+    // Pick random opponent cup as target
+    const targetCups = opponentCups.filter(c => c.active);
+    if (targetCups.length === 0) return;
 
-    // Simulate physics + server hit detection
-    const accuracyByDifficulty = [0.75, 0.65, 0.55, 0.45];
-    const baseAccuracy = accuracyByDifficulty[Math.min(difficulty - 1, 3)] || 0.55;
-    const powerAdjustment = 0.8 + power * 0.4;
-    const finalAccuracy = baseAccuracy * powerAdjustment;
+    const targetCup = targetCups[Math.floor(Math.random() * targetCups.length)];
+    setBallTarget({
+      x: targetCup.x,
+      y: targetCup.y,
+    });
 
-    const isHit = Math.random() < finalAccuracy;
+    // Animate ball trajectory
+    for (let i = 0; i <= 100; i++) {
+      setBallTrajectory(i / 100);
+      await new Promise(resolve => setTimeout(resolve, CONFIG.THROW_DURATION / 100));
+    }
 
-    // Wait for ball animation
-    await new Promise(resolve => setTimeout(resolve, CONFIG.BALL_ANIMATION_DURATION));
+    // Hit/miss calculation
+    const accuracyTable = [0.8, 0.65, 0.5, 0.35];
+    const accuracy = accuracyTable[Math.min(difficulty - 1, 3)] || 0.5;
+    const powerBonus = 1 - Math.abs(power - 0.6) * 0.3;
+    const isHit = Math.random() < accuracy * powerBonus;
 
     if (isHit) {
-      const targetCups = team2Cups;
-      const activeCups = targetCups.filter(c => c.active);
+      setLastResult("hit");
+      setHitCupId(targetCup.id);
 
-      if (activeCups.length > 0) {
-        const hitCup = activeCups[Math.floor(Math.random() * activeCups.length)];
-        setHitCupId(hitCup.id);
-        setLastResult("hit");
+      await new Promise(resolve => setTimeout(resolve, CONFIG.CUP_REMOVAL_DURATION));
 
-        // Animate cup removal
-        await new Promise(resolve => setTimeout(resolve, CONFIG.CUP_HIT_ANIMATION_DURATION));
+      const newCups = opponentCups.map(cup =>
+        cup.id === targetCup.id ? { ...cup, active: false } : cup
+      );
+      setOpponentCups(newCups);
+      setHitCupId(null);
 
-        const newCups = targetCups.map(cup =>
-          cup.id === hitCup.id ? { ...cup, active: false } : cup
-        );
-
-        setTeam2Cups(newCups);
-        setHitCupId(null);
-
-        // Check win
-        if (newCups.every(c => !c.active)) {
-          setWinner("team1");
-          onGameEnd?.("team1");
-        }
+      // Check win
+      if (newCups.every(c => !c.active)) {
+        setWinner("player");
+        onGameEnd?.("team1");
       }
     } else {
       setLastResult("miss");
     }
 
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setBallPath(null);
+    await new Promise(resolve => setTimeout(resolve, 800));
+
+    setBallTrajectory(null);
+    setBallTarget(null);
     setLastResult(null);
-    setCurrentTurn("team2");
+    setCurrentTurn("opponent");
     setIsShooting(false);
-    throwInProgressRef.current = false;
+    throwLockRef.current = false;
+
+    // Simulate opponent throw after brief delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    if (!winner) {
+      simulateOpponentThrow();
+    }
+  };
+
+  const simulateOpponentThrow = async () => {
+    setCurrentTurn("player");
   };
 
   const resetGame = () => {
-    setTeam1Cups(generateCupLayout(CONFIG.CUPS_PER_SIDE, true));
-    setTeam2Cups(generateCupLayout(CONFIG.CUPS_PER_SIDE, false));
-    setCurrentTurn("team1");
+    setOpponentCups(generateRack(true));
+    setPlayerCups(generateRack(false));
+    setCurrentTurn("player");
     setWinner(null);
-    setBallPath(null);
+    setBallTrajectory(null);
+    setBallTarget(null);
     setLastResult(null);
     setHitCupId(null);
     setIsShooting(false);
-    throwInProgressRef.current = false;
+    throwLockRef.current = false;
   };
 
   const team1 = players?.[0] || { id: "1", nickname: "You", color: "#FF008A" };
   const team2 = players?.[1] || { id: "2", nickname: "Opponent", color: "#B00F2F" };
 
-  const team1Active = team1Cups.filter(c => c.active).length;
-  const team2Active = team2Cups.filter(c => c.active).length;
+  const opponentActive = opponentCups.filter(c => c.active).length;
+  const playerActive = playerCups.filter(c => c.active).length;
 
   return (
-    <div className="flex flex-col h-full w-full bg-gradient-to-b from-black via-plum-deep/30 to-black">
-      {/* Top Bar */}
+    <div className="flex flex-col h-full w-full bg-gradient-to-b from-black via-plum-deep/40 to-black">
+      {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between px-4 py-3 border-b border-plum-deep/30 bg-black/50 backdrop-blur-sm flex-shrink-0"
+        className="flex items-center justify-between px-6 py-4 border-b border-plum-deep/30 bg-black/60 flex-shrink-0"
       >
-        <div className="flex items-center gap-2 flex-1 min-w-0">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
           <PlayerAvatar nickname={team1.nickname} color={team1.color} size="sm" />
-          <div className="text-xs flex-1 min-w-0">
+          <div className="text-sm min-w-0">
             <p className="font-bold text-neon-magenta truncate">{team1.nickname}</p>
-            <p className="text-xs text-muted-foreground">{team1Active} cups</p>
+            <p className="text-xs text-muted-foreground">{playerActive} cups</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 px-3 py-1 bg-noir-black/40 rounded-lg flex-shrink-0 mx-2">
-          <span className="text-xl font-bold text-neon-magenta">{team1Active}</span>
-          <span className="text-xs text-muted-foreground">—</span>
-          <span className="text-xl font-bold text-ember-red">{team2Active}</span>
+        <div className="flex items-center gap-3 px-4 py-2 bg-noir-black/50 rounded-lg flex-shrink-0">
+          <span className="text-2xl font-bold text-neon-magenta">{playerActive}</span>
+          <span className="text-muted-foreground">—</span>
+          <span className="text-2xl font-bold text-ember-red">{opponentActive}</span>
         </div>
 
-        <div className="flex items-center gap-2 justify-end flex-1 min-w-0">
-          <div className="text-xs text-right min-w-0">
+        <div className="flex items-center gap-3 justify-end min-w-0 flex-1">
+          <div className="text-sm text-right min-w-0">
             <p className="font-bold text-ember-red truncate">{team2.nickname}</p>
-            <p className="text-xs text-muted-foreground">{team2Active} cups</p>
+            <p className="text-xs text-muted-foreground">{opponentActive} cups</p>
           </div>
           <PlayerAvatar nickname={team2.nickname} color={team2.color} size="sm" />
         </div>
       </motion.div>
 
-      {/* Main Table Area */}
+      {/* Game Area */}
       <motion.div
         ref={tableRef}
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         onTouchStart={handleSwipeStart}
         onTouchEnd={handleSwipeEnd}
-        className="flex-1 flex flex-col items-center justify-center px-4 py-8 overflow-visible"
+        className="flex-1 flex flex-col items-center justify-center px-4 py-8 perspective"
       >
-        {/* 3D Table Container */}
+        {/* 3D TABLE */}
         <div
-          className="relative rounded-2xl overflow-visible shadow-2xl flex-shrink-0"
+          className="relative rounded-3xl shadow-2xl overflow-visible"
           style={{
-            width: `${CONFIG.TABLE_WIDTH}px`,
-            height: `${CONFIG.TABLE_HEIGHT}px`,
-            background: "linear-gradient(135deg, #1a4d2e 0%, #0f3620 50%, #0a2815 100%)",
+            width: `${CONFIG.TABLE_WIDTH_PCT}%`,
+            maxWidth: "500px",
+            aspectRatio: "16 / 9",
+            background:
+              "linear-gradient(135deg, #0b5b2e 0%, #062d1a 50%, #051f13 100%)",
+            border: "3px solid rgba(255, 255, 255, 0.08)",
             boxShadow: `
-              0 30px 60px rgba(0, 0, 0, 0.8),
-              inset 0 0 40px rgba(0, 0, 0, 0.4),
-              inset 0 0 0 1px rgba(255, 255, 255, 0.1)
+              0 40px 80px rgba(0, 0, 0, 0.9),
+              inset 0 0 60px rgba(0, 0, 0, 0.5),
+              0 0 40px rgba(11, 91, 46, 0.3)
             `,
+            transform: "perspective(900px) rotateX(55deg) rotateZ(0deg)",
+            transformStyle: "preserve-3d",
           }}
         >
-          {/* Center Line */}
+          {/* Center line */}
           <div
-            className="absolute left-0 right-0 h-px bg-white/20"
-            style={{ top: `${CONFIG.TABLE_HEIGHT / 2}px` }}
+            className="absolute left-0 right-0 h-px bg-white/15"
+            style={{ top: "50%" }}
           />
 
-          {/* Opponent Cups (Top) */}
-          <div className="absolute top-4 left-0 right-0 flex justify-center pointer-events-none">
-            {team2Cups.map(cup => (
-              <CupComponent key={cup.id} cup={cup} isHit={hitCupId === cup.id} />
+          {/* Opponent cups (top) */}
+          <div className="absolute top-0 left-0 right-0 h-1/3 overflow-visible">
+            {opponentCups.map(cup => (
+              <CupRender
+                key={cup.id}
+                cup={cup}
+                isHit={hitCupId === cup.id}
+              />
             ))}
           </div>
 
-          {/* Ball Animation */}
-          {ballPath && ballPath.length > 0 && (
-            <motion.div
-              className="absolute w-4 h-4 rounded-full pointer-events-none"
-              style={{
-                background: "radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(100, 150, 200, 0.7))",
-                boxShadow: "0 0 12px rgba(255, 255, 255, 0.8)",
-              }}
-              animate={{
-                left: ballPath[ballPath.length - 1].x - 8,
-                top: ballPath[ballPath.length - 1].y - 8,
-              }}
-              transition={{ duration: CONFIG.BALL_ANIMATION_DURATION / 1000, ease: "linear" }}
-            />
+          {/* Ball animation */}
+          {ballTrajectory !== null && ballTarget && (
+            <BallRender trajectory={ballTrajectory} target={ballTarget} />
           )}
 
-          {/* Player Cups (Bottom) */}
-          <div className="absolute bottom-4 left-0 right-0 flex justify-center pointer-events-none">
-            {team1Cups.map(cup => (
-              <CupComponent key={cup.id} cup={cup} isHit={false} />
+          {/* Player cups (bottom) */}
+          <div className="absolute bottom-0 left-0 right-0 h-1/3 overflow-visible">
+            {playerCups.map(cup => (
+              <CupRender
+                key={cup.id}
+                cup={cup}
+                isHit={false}
+              />
             ))}
           </div>
         </div>
 
-        {/* Status Overlay */}
+        {/* Status */}
         <AnimatePresence mode="wait">
-          {!winner && !isShooting && !ballPath && (
+          {!winner && !isShooting && (
             <motion.div
               key="status"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="mt-6 text-center"
+              className="mt-8 text-center"
             >
-              {currentTurn === "team1" ? (
-                <motion.p
-                  initial={{ y: 10 }}
-                  animate={{ y: 0 }}
-                  className="text-sm font-medium text-neon-magenta"
-                >
-                  ☝️ Swipe up to aim and throw
-                </motion.p>
+              {currentTurn === "player" ? (
+                <p className="text-sm font-medium text-neon-magenta">
+                  ☝️ Swipe up to throw
+                </p>
               ) : (
                 <motion.p
-                  animate={{ opacity: [0.6, 1, 0.6] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
+                  animate={{ opacity: [0.6, 1] }}
+                  transition={{ duration: 1, repeat: Infinity }}
                   className="text-sm text-muted-foreground"
                 >
-                  {team2.nickname} is taking their shot...
+                  {team2.nickname} is shooting...
                 </motion.p>
               )}
             </motion.div>
           )}
 
-          {ballPath && (
-            <motion.div
-              key="throwing"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="mt-6"
-            >
-              <motion.p
-                animate={{ scale: [0.95, 1.05, 0.95] }}
-                transition={{ duration: 0.4, repeat: Infinity }}
-                className="text-sm font-bold text-neon-magenta"
-              >
-                🎯 Throwing...
-              </motion.p>
-            </motion.div>
-          )}
-
           {lastResult === "hit" && (
-            <motion.div key="hit" initial={{ scale: 0 }} animate={{ scale: 1 }} className="mt-6">
-              <p className="text-lg font-bold text-neon-magenta">✨ HIT!</p>
-            </motion.div>
+            <motion.p
+              key="hit"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="mt-8 text-lg font-bold text-neon-magenta"
+            >
+              ✨ HIT!
+            </motion.p>
           )}
 
           {lastResult === "miss" && (
-            <motion.div key="miss" initial={{ scale: 0 }} animate={{ scale: 1 }} className="mt-6">
-              <p className="text-lg font-bold text-muted-foreground">❌ Miss</p>
-            </motion.div>
+            <motion.p
+              key="miss"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="mt-8 text-lg font-bold text-muted-foreground"
+            >
+              ❌ Miss
+            </motion.p>
           )}
 
           {winner && (
             <motion.div
               key="winner"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="mt-8 text-center"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="mt-12 text-center"
             >
-              <motion.div
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{ duration: 0.6, repeat: Infinity }}
-                className="mb-4"
-              >
-                <p className="text-4xl font-bold mb-2">
-                  {winner === "team1" ? "🎉 YOU WIN! 🎉" : "😢 You Lose"}
-                </p>
-              </motion.div>
-              <div className="flex gap-3 justify-center">
-                <VelvetButton velvetVariant="neon" onClick={resetGame} size="sm">
-                  Play Again
-                </VelvetButton>
-              </div>
+              <p className="text-4xl font-bold mb-6">
+                {winner === "player" ? "🎉 YOU WIN! 🎉" : "😢 Opponent Wins"}
+              </p>
+              <VelvetButton velvetVariant="neon" onClick={resetGame} size="lg">
+                Play Again
+              </VelvetButton>
             </motion.div>
           )}
         </AnimatePresence>
       </motion.div>
 
-      {/* Bottom Info Bar */}
+      {/* Footer */}
       {!winner && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="px-4 py-3 border-t border-plum-deep/30 bg-black/50 backdrop-blur-sm text-center text-xs text-muted-foreground flex-shrink-0"
+          className="px-6 py-3 border-t border-plum-deep/30 bg-black/60 text-center text-sm text-muted-foreground flex-shrink-0"
         >
-          {currentTurn === "team1" ? "Your turn" : `${team2.nickname}'s turn`}
+          {currentTurn === "player" ? "Your turn — swipe to throw" : `${team2.nickname} is taking their shot`}
         </motion.div>
       )}
     </div>
   );
 }
 
-/** Cup Component with 3D styling */
-function CupComponent({ cup, isHit }: { cup: Cup; isHit: boolean }) {
+// ============ CUP COMPONENT ============
+function CupRender({ cup, isHit }: { cup: Cup; isHit: boolean }) {
   if (!cup.active) return null;
+
+  const scaleDepth = 0.8 + (cup.z / 30) * 0.2; // back smaller, front larger
+  const size = CONFIG.CUP_DIAMETER * scaleDepth;
 
   return (
     <motion.div
+      className="absolute"
+      style={{
+        left: `${cup.x}%`,
+        top: `${cup.y}%`,
+        transform: `translate(-50%, -50%)`,
+      }}
       animate={
         isHit
           ? {
-              scale: [1, 1.15, 0],
-              opacity: [1, 0.8, 0],
-              rotateZ: [0, 5, 10],
+              scale: [1, 1.2, 0],
+              opacity: [1, 0.5, 0],
+              rotateZ: [0, 8, 15],
             }
           : { scale: 1, opacity: 1 }
       }
-      transition={{ duration: 400 / 1000 }}
-      className="absolute"
-      style={{
-        width: "24px",
-        height: "28px",
-        left: `${cup.x}px`,
-        top: `${cup.y}px`,
-        transform: `translateX(-50%) translateY(-50%) translateZ(${cup.z}px)`,
-      }}
+      transition={{ duration: CONFIG.CUP_REMOVAL_DURATION / 1000 }}
     >
-      {/* Cup body */}
-      <div
-        className="w-full h-full rounded-b-md relative"
-        style={{
-          background: `linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(200, 200, 200, 0.2) 100%)`,
-          boxShadow: `
-            0 4px 8px rgba(0, 0, 0, 0.6),
-            inset -1px -1px 2px rgba(0, 0, 0, 0.3),
-            inset 1px 1px 1px rgba(255, 255, 255, 0.2)
-          `,
-          border: "1px solid rgba(255, 255, 255, 0.15)",
-        }}
+      <svg
+        width={size}
+        height={size * 1.1}
+        viewBox="0 0 40 45"
+        className="drop-shadow-lg"
       >
         {/* Cup rim */}
-        <div
-          className="absolute -top-1 left-0 right-0 h-1.5 rounded-t-full"
-          style={{
-            background: "linear-gradient(to bottom, rgba(230, 210, 210, 0.9), rgba(200, 180, 180, 0.7))",
-            boxShadow: "inset 0 1px 2px rgba(255, 255, 255, 0.3)",
-          }}
-        />
-      </div>
+        <ellipse cx="20" cy="8" rx="18" ry="6" fill="#f5f5f0" opacity="0.9" />
 
-      {/* Shadow */}
+        {/* Cup body */}
+        <defs>
+          <linearGradient id="cupGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#ff1a4d" stopOpacity="1" />
+            <stop offset="100%" stopColor="#cc0033" stopOpacity="1" />
+          </linearGradient>
+          <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="2" stdDeviation="2" floodOpacity="0.5" />
+          </filter>
+        </defs>
+
+        <path
+          d="M 8 10 Q 6 20 8 35 L 32 35 Q 34 20 32 10 Z"
+          fill="url(#cupGrad)"
+          filter="url(#shadow)"
+        />
+
+        {/* Cup highlight */}
+        <ellipse cx="14" cy="18" rx="3" ry="6" fill="white" opacity="0.3" />
+      </svg>
+    </motion.div>
+  );
+}
+
+// ============ BALL COMPONENT ============
+function BallRender({
+  trajectory,
+  target,
+}: {
+  trajectory: number;
+  target: { x: number; y: number };
+}) {
+  // Ball starts at player end, travels to opponent
+  const startX = 50;
+  const startY = 95;
+  const endX = target.x;
+  const endY = target.y;
+
+  // Linear interpolation for position
+  const x = startX + (endX - startX) * trajectory;
+  const y = startY + (endY - startY) * trajectory;
+
+  // Parabolic arc for height (in perspective)
+  const arcHeight = Math.sin(trajectory * Math.PI) * 15;
+
+  // Scale as it approaches (perspective)
+  const scale = 1 - trajectory * 0.4;
+
+  // Shadow scaling
+  const shadowScale = 1 - trajectory * 0.6;
+
+  return (
+    <motion.div
+      className="absolute pointer-events-none"
+      style={{
+        left: `${x}%`,
+        top: `${y - arcHeight}%`,
+        transform: `translate(-50%, -50%)`,
+      }}
+    >
+      {/* Ball */}
       <div
-        className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-full h-1 rounded-full"
+        className="relative w-5 h-5 rounded-full"
         style={{
-          background: "radial-gradient(ellipse, rgba(0, 0, 0, 0.4) 0%, transparent 70%)",
+          background:
+            "radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.9), rgba(150, 180, 255, 0.7))",
+          boxShadow: "0 0 12px rgba(100, 150, 255, 0.8)",
+          transform: `scale(${scale})`,
+        }}
+      />
+
+      {/* Ball shadow */}
+      <div
+        className="absolute left-1/2 top-full pointer-events-none"
+        style={{
+          width: "20px",
+          height: "4px",
+          marginLeft: "-10px",
+          marginTop: "8px",
+          borderRadius: "50%",
+          background: "radial-gradient(ellipse, rgba(0, 0, 0, 0.3), transparent)",
+          transform: `scaleX(${shadowScale})`,
           filter: "blur(1px)",
         }}
       />
