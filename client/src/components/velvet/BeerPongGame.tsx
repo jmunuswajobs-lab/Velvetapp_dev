@@ -200,8 +200,8 @@ export function BeerPongGame({ onGameEnd, difficulty = 3, players }: BeerPongPro
     setIsShooting(false);
   };
 
-  const team1 = players?.[0] || { id: "1", nickname: "You", avatarColor: "#FF008A" };
-  const team2 = players?.[1] || { id: "2", nickname: "Opponent", avatarColor: "#B00F2F" };
+  const team1 = players?.[0] || { id: "1", nickname: "You", color: "#FF008A" };
+  const team2 = players?.[1] || { id: "2", nickname: "Opponent", color: "#B00F2F" };
 
   return (
     <div className="flex flex-col h-full w-full bg-gradient-to-b from-black via-plum-deep/30 to-black">
@@ -212,7 +212,7 @@ export function BeerPongGame({ onGameEnd, difficulty = 3, players }: BeerPongPro
         className="flex items-center justify-between px-4 py-3 border-b border-plum-deep/30 bg-black/40"
       >
         <div className="flex items-center gap-2">
-          <PlayerAvatar color={team1.avatarColor} size="sm" />
+          <PlayerAvatar nickname={team1.nickname} color={team1.color} size="sm" />
           <div className="text-sm">
             <p className="font-bold text-neon-magenta">{team1.nickname}</p>
             <p className="text-xs text-muted-foreground">{team1Cups.filter(c => c.active).length} cups</p>
@@ -234,7 +234,7 @@ export function BeerPongGame({ onGameEnd, difficulty = 3, players }: BeerPongPro
             <p className="font-bold text-ember-red">{team2.nickname}</p>
             <p className="text-xs text-muted-foreground">{team2Cups.filter(c => c.active).length} cups</p>
           </div>
-          <PlayerAvatar color={team2.avatarColor} size="sm" />
+          <PlayerAvatar nickname={team2.nickname} color={team2.color} size="sm" />
         </div>
       </motion.div>
 
