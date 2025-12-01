@@ -13,6 +13,7 @@ import { FadeIn, SlideIn } from "@/components/velvet/PageTransition";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { getRandomAvatarColor, createLocalGameSession } from "@/lib/gameState";
+import { getEngineType } from "@/lib/engineTypeRouter";
 import type { Game, Prompt, RoomSettings } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 
@@ -44,6 +45,9 @@ export default function LocalSetup() {
     enabled: !!slug,
   });
 
+  // Only fetch prompts for prompt-based games
+  const needsPrompts = game && (game.engineType === "prompt-party" || game.engineType === "prompt-couple");
+  
   const { data: prompts, isLoading: promptsLoading, error: promptsError } = useQuery<Prompt[]>({
     queryKey: [`/api/prompts`, { gameId: game?.id, intensity: settings.intensity }],
     queryFn: async () => {
@@ -58,7 +62,7 @@ export default function LocalSetup() {
       console.log("Fetched prompts:", data.length);
       return data;
     },
-    enabled: !!game?.id,
+    enabled: !!game?.id && needsPrompts,
     staleTime: 5000, // Cache for 5 seconds
     retry: 2,
   });
@@ -88,16 +92,26 @@ export default function LocalSetup() {
     setPlayers([...players].sort(() => Math.random() - 0.5));
   };
 
+  // For non-prompt games, we don't need prompts loaded
   const isValid = players.every((p) => p.nickname.trim().length > 0) &&
                   players.length >= 2 &&
-                  prompts && prompts.length > 0 &&
-                  !promptsLoading;
+                  (needsPrompts ? (prompts && prompts.length > 0 && !promptsLoading) : !promptsLoading);
 
   const startGame = () => {
-    if (!isValid || !game || !prompts || prompts.length === 0) {
+    if (!isValid || !game) {
       toast({
         title: "Cannot Start Game",
-        description: "Missing game data or prompts. Please try again.",
+        description: "Missing game data. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check prompts only if game needs them
+    if (needsPrompts && (!prompts || prompts.length === 0)) {
+      toast({
+        title: "Cannot Start Game",
+        description: "No prompts available for this game. Please try again.",
         variant: "destructive",
       });
       return;
@@ -109,8 +123,9 @@ export default function LocalSetup() {
     }));
 
     try {
-      // Create session synchronously - no race conditions
-      const sessionId = createLocalGameSession(game.id, validPlayers, settings, prompts);
+      // Create session synchronously - pass engineType
+      const engineType = getEngineType(slug || "");
+      const sessionId = createLocalGameSession(game.id, validPlayers, settings, prompts || [], engineType);
       
       // Navigate immediately with session ID
       setLocation(`/games/${slug}/play/${sessionId}`);

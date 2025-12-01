@@ -40,10 +40,14 @@ export function createLocalGameSession(
   gameId: string,
   players: { nickname: string; avatarColor: string }[],
   settings: SharedRoomSettings,
-  prompts: SharedPrompt[]
+  prompts: SharedPrompt[] = [],
+  engineType: string = "prompt-party"
 ): string {
-  if (!prompts || prompts.length === 0) {
-    throw new Error("Cannot create game session without prompts");
+  // Only require prompts for prompt-based games
+  const isPromptGame = engineType === "prompt-party" || engineType === "prompt-couple";
+  
+  if (isPromptGame && (!prompts || prompts.length === 0)) {
+    throw new Error("Cannot create game session without prompts for prompt-based games");
   }
 
   if (!players || players.length < 2) {
@@ -51,7 +55,7 @@ export function createLocalGameSession(
   }
 
   const sessionId = generateSessionId();
-  const shuffledPrompts = [...prompts].sort(() => Math.random() - 0.5);
+  const shuffledPrompts = prompts ? [...prompts].sort(() => Math.random() - 0.5) : [];
 
   const session: LocalPromptsSession = {
     id: sessionId,
