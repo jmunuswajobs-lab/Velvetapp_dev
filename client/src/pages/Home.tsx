@@ -81,60 +81,19 @@ export default function Home() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Base background - static, high performance */}
+      {/* Static background - zero performance cost */}
       <div
         className="fixed inset-0 -z-20"
         style={{
           background: `
-            linear-gradient(180deg, #050509 0%, #0A0A12 50%, #0F0515 100%)
+            linear-gradient(180deg, #050509 0%, #0A0A12 100%),
+            radial-gradient(ellipse 60% 60% at 20% 50%, rgba(90, 26, 140, 0.2) 0%, transparent 50%),
+            radial-gradient(ellipse 60% 60% at 80% 80%, rgba(176, 15, 47, 0.15) 0%, transparent 50%)
           `,
         }}
-      />
-      
-      {/* Subtle fixed gradient overlays - low performance cost */}
-      <div
-        className="fixed inset-0 -z-20 pointer-events-none"
-        style={{
-          background: `
-            radial-gradient(ellipse 80% 80% at 20% 50%, rgba(90, 26, 140, 0.25) 0%, transparent 60%),
-            radial-gradient(ellipse 80% 80% at 80% 80%, rgba(176, 15, 47, 0.2) 0%, transparent 60%)
-          `,
-        }}
-      />
-      
-      {/* Animated gradient orbs - optimized with GPU acceleration */}
-      <motion.div
-        className="fixed w-96 h-96 rounded-full -z-10 pointer-events-none"
-        style={{
-          background: "linear-gradient(135deg, #FF008A 0%, #B00F2F 100%)",
-          top: "-200px",
-          left: "-200px",
-          willChange: "transform",
-          filter: "blur(80px)",
-        }}
-        animate={{
-          x: [0, 80, 0],
-          y: [0, 40, 0],
-        }}
-        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="fixed w-96 h-96 rounded-full -z-10 pointer-events-none"
-        style={{
-          background: "linear-gradient(135deg, #5A1A8C 0%, #FF008A 100%)",
-          bottom: "-200px",
-          right: "-200px",
-          willChange: "transform",
-          filter: "blur(80px)",
-        }}
-        animate={{
-          x: [0, -80, 0],
-          y: [0, -40, 0],
-        }}
-        transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      <EmberParticles count={15} />
+      <EmberParticles count={8} />
 
       {/* Header */}
       <header className="sticky top-0 z-40 glass border-b border-plum-deep/30 backdrop-blur-xl">
@@ -175,27 +134,7 @@ export default function Home() {
         {/* Hero Section */}
         <FadeIn className="mb-16">
           <div className="relative overflow-hidden rounded-3xl">
-            {/* Hero background */}
-            <div
-              className="absolute inset-0 -z-10"
-              style={{
-                background: `
-                  radial-gradient(ellipse at 50% 0%, rgba(255, 0, 138, 0.2) 0%, transparent 60%),
-                  linear-gradient(180deg, rgba(90, 26, 140, 0.15) 0%, rgba(176, 15, 47, 0.05) 100%)
-                `,
-              }}
-            />
-
             <div className="glass-card rounded-3xl p-8 md:p-16 relative overflow-hidden">
-              {/* Subtle static gradient instead of animated grid */}
-              <div
-                className="absolute inset-0 opacity-5"
-                style={{
-                  backgroundImage:
-                    "linear-gradient(0deg, transparent 24%, rgba(255, 0, 138, 0.1) 25%, rgba(255, 0, 138, 0.1) 26%, transparent 27%, transparent 74%, rgba(255, 0, 138, 0.1) 75%, rgba(255, 0, 138, 0.1) 76%, transparent 77%, transparent)",
-                  backgroundSize: "50px 50px",
-                }}
-              />
 
               <div className="relative z-10">
                 <motion.div
@@ -284,16 +223,6 @@ export default function Home() {
                 </motion.div>
               </div>
 
-              {/* Animated border */}
-              <motion.div
-                className="absolute inset-0 rounded-3xl pointer-events-none"
-                style={{
-                  background: "linear-gradient(90deg, transparent, rgba(255, 0, 138, 0.3), transparent)",
-                  backgroundSize: "200% 100%",
-                }}
-                animate={{ backgroundPosition: ["200% 0", "-200% 0"] }}
-                transition={{ duration: 3, repeat: Infinity, repeatType: "loop" }}
-              />
             </div>
           </div>
         </FadeIn>
@@ -323,25 +252,20 @@ export default function Home() {
                   />
 
                   <div className="glass-card rounded-2xl p-6 h-full relative overflow-hidden">
-                    <motion.div
-                      className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4`}
-                      whileHover={{ scale: 1.1, rotate: 5 }}
-                      transition={{ type: "spring", stiffness: 400 }}
-                    >
+                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4 transition-transform hover:scale-105`}>
                       <Icon className="w-6 h-6 text-white" />
-                    </motion.div>
+                    </div>
 
                     <h3 className="text-lg font-semibold mb-2 text-white">{feature.title}</h3>
                     <p className="text-muted-foreground text-sm leading-relaxed">
                       {feature.description}
                     </p>
 
-                    <motion.div
-                      className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100"
+                    <div
+                      className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"
                       style={{
                         background: "radial-gradient(circle at 50% 0%, rgba(255, 0, 138, 0.1), transparent)",
                       }}
-                      transition={{ duration: 0.3 }}
                     />
                   </div>
                 </motion.div>
@@ -467,16 +391,10 @@ export default function Home() {
             className="relative rounded-3xl p-12 md:p-16 overflow-hidden glass-card"
             style={{
               background: `
-                linear-gradient(135deg, rgba(255, 0, 138, 0.1) 0%, rgba(176, 15, 47, 0.05) 50%, rgba(90, 26, 140, 0.1) 100%),
-                url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ff008a' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")
+                linear-gradient(135deg, rgba(255, 0, 138, 0.1) 0%, rgba(176, 15, 47, 0.05) 50%, rgba(90, 26, 140, 0.1) 100%)
               `,
             }}
           >
-            <motion.div
-              className="absolute inset-0 opacity-30"
-              animate={{ backgroundPosition: ["0px 0px", "60px 60px"] }}
-              transition={{ duration: 20, repeat: Infinity, repeatType: "loop" }}
-            />
 
             <div className="relative z-10 text-center">
               <h3 className="text-3xl md:text-4xl font-display font-bold mb-4">
