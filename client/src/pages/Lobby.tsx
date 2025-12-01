@@ -8,7 +8,7 @@ import { VelvetCard } from "@/components/velvet/VelvetCard";
 import { HeatMeter } from "@/components/velvet/HeatMeter";
 import { PlayerListItem } from "@/components/velvet/PlayerAvatar";
 import { FadeIn, SlideIn, StaggerChildren, staggerChildVariants } from "@/components/velvet/PageTransition";
-import { useOnlineRoom } from "@/lib/gameState";
+import { useOnlineRoom, useWebSocketConnection } from "@/lib/gameState";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Lobby() {
@@ -19,9 +19,7 @@ export default function Lobby() {
     joinCode, isHost, isConnected, players, gameStarted, gameSlug,
     setConnected, updatePlayers, setGameStarted, initGameState, setGameSlug
   } = useOnlineRoom();
-
-  // Add a ref for the WebSocket instance
-  const websocketRef = useRef<WebSocket | null>(null); // Renamed ws to websocketRef for clarity
+  const { ws, setWebSocket, setRoomAndPlayerId } = useWebSocketConnection();
 
   // Retrieve playerId from localStorage or generate one if it doesn't exist
   const storedPlayerId = localStorage.getItem(`playerId_${roomId}`);
@@ -31,8 +29,9 @@ export default function Lobby() {
   }
 
   const [copied, setCopied] = useState(false);
+  const connectionAttempted = useRef(false);
 
-  // WebSocket connection with proper cleanup
+  // WebSocket connection - persists across navigation
   useEffect(() => {
     // Ensure roomId and playerId are available before attempting to connect
     if (!roomId || !playerId) {
@@ -40,24 +39,33 @@ export default function Lobby() {
       return;
     }
 
+    // Skip if already connected or if we already tried
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      return;
+    }
+
+    if (connectionAttempted.current && ws && ws.readyState !== WebSocket.OPEN) {
+      return;
+    }
+
+    connectionAttempted.current = true;
+
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const host = window.location.host;
     const wsUrl = `${protocol}//${host}/ws`;
 
     console.log('Connecting to WebSocket:', wsUrl, 'with playerId:', playerId);
     const socket = new WebSocket(wsUrl);
-    let isCleanedUp = false;
-    let reconnectTimeout: NodeJS.Timeout | null = null;
 
     socket.onopen = () => {
-      if (isCleanedUp) return;
       setConnected(true);
+      setRoomAndPlayerId(roomId, playerId);
+      setWebSocket(socket);
       console.log("WebSocket connected, joining room:", roomId);
       socket.send(JSON.stringify({ type: "join_room", roomId, playerId }));
     };
 
     socket.onmessage = (event) => {
-      if (isCleanedUp) return;
       try {
         const data = JSON.parse(event.data);
         console.log("WebSocket message received:", data);
@@ -89,13 +97,11 @@ export default function Lobby() {
     };
 
     socket.onclose = () => {
-      if (isCleanedUp) return;
       setConnected(false);
       console.log('WebSocket disconnected');
     };
 
     socket.onerror = (error) => {
-      if (isCleanedUp) return;
       console.error('WebSocket error:', error);
       toast({
         title: "Connection Error",

@@ -171,6 +171,25 @@ export const useLocalGame = create(() => ({
   resetGame: () => {},
 }));
 
+// Persistent WebSocket connection store
+interface WebSocketState {
+  ws: WebSocket | null;
+  roomId: string | null;
+  playerId: string | null;
+  setWebSocket: (ws: WebSocket | null) => void;
+  setRoomAndPlayerId: (roomId: string, playerId: string) => void;
+  disconnect: () => void;
+}
+
+export const useWebSocketConnection = create<WebSocketState>((set) => ({
+  ws: null,
+  roomId: null,
+  playerId: null,
+  setWebSocket: (ws: WebSocket | null) => set({ ws }),
+  setRoomAndPlayerId: (roomId: string, playerId: string) => set({ roomId, playerId }),
+  disconnect: () => set({ ws: null, roomId: null, playerId: null }),
+}));
+
 // Online room state
 interface OnlineRoomState {
   roomId: string | null;
