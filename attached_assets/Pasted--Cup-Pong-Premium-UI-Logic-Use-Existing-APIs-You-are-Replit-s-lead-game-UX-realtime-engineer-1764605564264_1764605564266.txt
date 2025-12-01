@@ -1,0 +1,312 @@
+“Cup Pong” Premium UI + Logic (Use Existing APIs)
+
+You are Replit’s lead game UX + realtime engineer working in this repo:
+
+https://github.com/jmunuswajobs-lab/Velvetapp_dev
+
+The goal:
+
+Turn Emotion Ping Pong / Beer Pong into a high-quality Cup Pong experience with:
+
+A clean 3D-style table UI like the attached screenshot
+
+Real aiming and power controls
+
+Smooth ball animation and arc
+
+Clear cup knockouts and win state
+
+Fully wired to the existing beer-pong game API / session state / WebSocket events
+
+No mockups, no partial implementations
+
+You may refactor the frontend Beer Pong client, but must reuse the existing backend state and message schema where possible (only adjust it if absolutely necessary and in a backward-compatible way).
+
+1️⃣ Use the Existing Beer Pong / Emotion Ping Pong Game API
+
+Scan the repo for:
+
+The route/slug used by this game (likely emotion-ping-pong).
+
+The GameSession state structure for it (beer-pong / pong / emotion-ping-pong).
+
+The WebSocket messages/actions used for taking a shot and updating state.
+
+Do NOT invent a new backend API unless needed; instead:
+
+Reuse the current endpoints and WS messages.
+
+If state is awkward, you may wrap/normalize on the client, but try not to break existing flow.
+
+Document in code comments:
+
+Which WS events Beer Pong listens to (join_room, session_update, take_shot, etc.).
+
+The shape of the beer pong state that the UI expects.
+
+2️⃣ New Cup Pong Screen (Perfect Mobile UI)
+
+Create a dedicated React component:
+
+client/src/games/BeerPongGame.tsx
+
+and route it so that when the user navigates to the Beer Pong game (Emotion Ping Pong route), this component is rendered, not the old card-stack UI.
+
+Layout requirements (match the screenshot style):
+
+Full-screen, mobile-first vertical layout.
+
+Top bar:
+
+Left: current player avatar + name (“You”).
+
+Right: opponent avatar + name.
+
+Simple, flat avatars (no need to copy any particular app art; use our own style).
+
+Middle:
+
+3D-style table in perspective:
+
+Green felt surface (or thematically matching color for our brand).
+
+Center white line.
+
+Opponent’s cups racked near the far end of the table (3D foreshortened).
+
+Use CSS transforms or simple canvas/SVG to imply depth (no need for heavy 3D engine).
+
+Cups:
+
+6 or 10 cups arranged in a triangle.
+
+Use simple 3D-ish graphics (ellipse tops, gradient body, subtle shadows).
+
+Status banner:
+
+Center overlay at table bottom:
+
+When waiting: “WAITING FOR OPPONENT…”
+
+On your turn: “Swipe to aim and release to throw”
+
+On opponent turn: “Opponent is taking their shot…”
+
+Bottom bar (mobile):
+
+Turn indicator, remaining cups per side, and maybe a small “menu” button.
+
+Everything must be responsive; on desktop, center the vertical layout with margins.
+
+3️⃣ Aiming & Throw Interaction
+
+Implement swipe-to-throw controls inspired by GamePigeon / Plato:
+
+Gesture:
+
+Player drags/swipes upward from near the bottom of the table.
+
+Horizontal angle controlled by left/right movement.
+
+Power controlled by swipe speed and length.
+
+Visual aids:
+
+A thin aiming line from ball origin showing direction.
+
+Optional short projected arc for feedback (short fade-out).
+
+Translate gesture into an action payload using existing API shape, or a small wrapper:
+
+{
+  type: "TAKE_SHOT",
+  sessionId,
+  playerId,
+  angle: number,  // horizontal angle
+  power: number   // normalized 0–1
+}
+
+
+Only allow the local user to take a shot when:
+
+It is their team’s turn, and
+
+State indicates they’re the active player.
+
+4️⃣ Ball Physics & Animation
+
+Use a simple physics model on the client purely for animation, while hit/miss is still decided by the server (authoritative):
+
+Animate ball position over time with:
+
+Horizontal motion based on angle.
+
+Vertical height with a parabolic arc.
+
+Slight perspective scaling as it approaches cups.
+
+Steps:
+
+User swipes → you send TAKE_SHOT( angle, power ) to backend.
+
+Backend resolves shot:
+
+Marks hit/miss and which cup (using its existing logic).
+
+Updates GameSession state and broadcasts via WS.
+
+Frontend:
+
+Starts ball animation immediately (optimistic UI) using the same angle/power.
+
+When server state update arrives:
+
+If hit → animate ball dropping into target cup + cup “falling” or fading out.
+
+If miss → let ball overshoot or bounce off table edge.
+
+Ball & cup animation details:
+
+Use framer-motion or CSS transitions for:
+
+Ball movement (x, y, scale).
+
+Cup hit: quick shake + fade/scale out.
+
+Score/remaining cups updates with small pulse.
+
+Everything must be smooth, no frame jumps.
+
+5️⃣ Cup Layout & Knockouts
+
+Represent cups as:
+
+interface CupView {
+  id: string;
+  x: number; // in table coordinate space
+  y: number;
+  active: boolean;
+}
+
+
+Use the server’s cup state if it already defines positions; otherwise map server cup indices to coordinates client-side.
+
+Render only active === true cups.
+
+When a cup is hit (according to server state update):
+
+Animate it being removed:
+
+Quick shake → drop down / fade out → removed from DOM.
+
+Table & cup shadows:
+
+Add soft drop shadow under each cup for depth.
+
+Optionally add a subtle vignette on the table.
+
+6️⃣ Turn Flow & Realtime
+
+Use the existing session state (from backend) for:
+
+Whose turn it is.
+
+Score / remaining cups per side.
+
+Match over / winner.
+
+UI rules:
+
+When it’s this client’s turn:
+
+Show aiming controls.
+
+Show “Your turn” text.
+
+When it’s opponent’s turn:
+
+Disable input.
+
+Show “Opponent is shooting…” overlay.
+
+Update cups / ball only from server state.
+
+Handle reconnect:
+
+When reloading the page mid-game:
+
+Load the session by ID.
+
+Recreate cup layout and current turn.
+
+Do NOT restart from scratch.
+
+7️⃣ Remove Old Pink Card UI
+
+Completely remove or stop using the old “stack of pink tiles” Emotion Ping Pong UI:
+
+No card grids.
+
+No prompt-only interface on this screen.
+
+If there are optional prompts/consequences, show them only as small banners after a hit/miss, never as the main game.
+
+Make sure any leftover components are either:
+
+Deleted, or
+
+Clearly unused to avoid confusion.
+
+8️⃣ Testing Checklist (Required Before You Finish)
+
+Using two browser tabs (or devices) playing online:
+
+Start the Beer Pong / Emotion Ping Pong game from the lobby.
+
+Verify:
+
+New 3D-style table with cups is shown.
+
+Avatars are visible top left/right.
+
+“WAITING FOR OPPONENT…” text appears when appropriate.
+
+Take turns:
+
+Swipe up to throw from one side.
+
+Ball animates toward cups.
+
+When hit:
+
+Cup animates out and is removed.
+
+Score/remaining cups update.
+
+When miss:
+
+Ball overshoots/bounces.
+
+Confirm:
+
+Only active player can shoot.
+
+Opponent’s client sees the same updated rack and score immediately.
+
+Game ends when all cups on one side are gone, with a nice win/lose banner and “Play again / Exit” buttons.
+
+Check:
+
+No red errors in the browser console.
+
+No WS disconnects due to malformed messages.
+
+Typescript/build passes.
+
+Finally, in your response, summarize:
+
+Files created/updated (engine + UI).
+
+How the Beer Pong component connects to the existing API.
+
+Any configuration points (number of cups, friction, power curve) that can be tuned.
