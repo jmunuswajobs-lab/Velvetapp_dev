@@ -10,18 +10,12 @@ interface BeerPongState {
   gameActive: boolean;
   turnPhase: "throw" | "result";
   hitCup: number | null;
+  difficulty: number;
 }
 
 const INITIAL_CUPS = 10;
-const CUP_POSITIONS = [
-  // Triangle formation of cups
-  [0.5], // Back
-  [0.35, 0.65], // Row 2
-  [0.2, 0.5, 0.8], // Row 3
-  [0.1, 0.35, 0.65, 0.9], // Row 4
-];
 
-export function BeerPongGame({ onGameEnd }: { onGameEnd?: (winner: number) => void }) {
+export function BeerPongGame({ onGameEnd, difficulty = 3 }: { onGameEnd?: (winner: number) => void; difficulty?: number }) {
   const [gameState, setGameState] = useState<BeerPongState>({
     team1Cups: Array(INITIAL_CUPS).fill(true),
     team2Cups: Array(INITIAL_CUPS).fill(true),
@@ -31,6 +25,7 @@ export function BeerPongGame({ onGameEnd }: { onGameEnd?: (winner: number) => vo
     gameActive: true,
     turnPhase: "throw",
     hitCup: null,
+    difficulty,
   });
 
   const [message, setMessage] = useState("Team 1, take your shot!");
@@ -40,8 +35,10 @@ export function BeerPongGame({ onGameEnd }: { onGameEnd?: (winner: number) => vo
   const handleThrow = useCallback(() => {
     if (!gameState.gameActive || gameState.turnPhase !== "throw") return;
 
-    // Random chance to hit (60% hit rate)
-    const hitOrMiss = Math.random() < 0.6;
+    // Hit chance based on difficulty (1-4): Easy=70%, Medium=60%, Hard=50%, Extreme=40%
+    const hitChances = [0.7, 0.6, 0.5, 0.4];
+    const hitChance = hitChances[gameState.difficulty - 1] || 0.6;
+    const hitOrMiss = Math.random() < hitChance;
 
     if (hitOrMiss) {
       // Find a cup to eliminate

@@ -1,0 +1,246 @@
+Use Best Free Open-Source Engines for Arcade & Board Games
+
+You are Replit’s principal full-stack game engineer working in this repo:
+
+https://github.com/jmunuswajobs-lab/Velvetapp_dev
+
+Goal:
+Stop reinventing every arcade/board engine.
+Use mature, free, open-source JS/TS libraries to power the arcade and board games, while keeping our existing backend API and WebSocket structure.
+
+0. Constraints
+
+Use only free, open-source libraries available on npm (MIT/BSD/Apache or similarly permissive licenses).
+
+Do not integrate any paid SaaS, subscription SDK, or closed/paywalled API.
+
+Keep the existing REST + WebSocket API shape where possible (no heavy protocol rewrites).
+
+Frontend stays React + TS; backend stays Node/Express/WS (or current stack).
+
+1️⃣ Discover & Select Engines (Inside Replit)
+
+Within this project, you must:
+
+Inspect current games and engineType/kind mapping for:
+
+board-ludo (Velvet Ludo)
+
+memory-match (Velvet Memory Flip)
+
+pong (Emotion Ping-Pong)
+
+racer (Neon Drift—Couple Mode)
+
+tap-duel (Couples Duel Arena)
+
+rhythm (Duo Rhythm Sync)
+
+any other arcade/board styles
+
+Choose appropriate free libraries to back each style. For example (you pick exact ones after checking maturity & license):
+
+Board/turn-based engine:
+
+use a board-game framework such as boardgame.io or similar
+
+Arcade physics / 2D rendering:
+
+use a 2D engine like phaser, kontra, or a minimal canvas helper
+
+Simple physics:
+
+use matter-js or equivalent where needed
+
+Verify licenses are permissive (MIT/BSD/Apache). Do not use anything with commercial-only, trial, or unclear license.
+
+2️⃣ Integrate Engines With Existing APIs
+
+For each game type:
+
+A. Board-Ludo (board-ludo)
+
+Use a board-game engine (e.g. boardgame.io) to manage:
+
+turn order
+
+moves
+
+capture rules
+
+win conditions
+
+Keep our existing Ludo rules & state shape conceptually, but let the engine handle:
+
+legal moves
+
+transitions
+
+Adapt backend:
+
+GameSession state stored as the engine’s G/ctx (or equivalent) serialized into stateJSON.
+
+Server-side validation uses the engine’s move reducers instead of custom ad-hoc logic.
+
+B. Pong / Arcade (pong, racer, tap-duel, rhythm)
+
+Use a 2D arcade library (e.g. phaser+TypeScript or a light canvas engine) to handle:
+
+game loop
+
+sprite movement
+
+collisions
+
+Keep networking model:
+
+Use our existing WebSocket channels for input + state sync.
+
+Implement deterministic or semi-deterministic state updates:
+
+Either:
+
+server-authoritative (server runs the engine step and broadcasts snapshots), or
+
+lock-step tick with clients using the engine with same inputs.
+
+Abstract each game into:
+
+createXGame(sceneOrEngine, config) functions on client
+
+backend reducer functions that run using the same library logic or a parallel pure model.
+
+C. Memory Match / Guessing / Rhythm
+
+Use a minimal game-state framework (boardgame engine or a small TS module) for:
+
+card layouts
+
+flip/match logic
+
+scoring
+
+rhythm timing windows
+
+No more fragile custom conditionals; centralize game rules into these engines.
+
+3️⃣ Architecture Changes
+
+Create a /shared/game-engines folder (or similar):
+
+ludoEngine.ts (wrapping chosen board engine)
+
+pongEngine.ts
+
+racerEngine.ts
+
+duelEngine.ts
+
+memoryEngine.ts
+
+rhythmEngine.ts
+
+Each engine exposes:
+
+type EngineState = any; // strongly typed in code
+
+function createInitialState(config: EngineConfig): EngineState;
+function applyAction(state: EngineState, action: GameAction): EngineState;
+function isGameOver(state: EngineState): boolean;
+
+
+Backend:
+
+On start_game:
+
+call createInitialState from appropriate engine
+
+store serialized state in GameSession
+
+On action via WebSocket:
+
+load current state
+
+call applyAction
+
+store updated state
+
+broadcast to clients
+
+Frontend:
+
+For each engineType, use the engine’s state to:
+
+render board / sprites
+
+send actions back via WebSocket
+
+4️⃣ Keep Prompt/Card Games Untouched (But Separate)
+
+Leave the prompt-based games (Truth or Dare, NHIE, etc.) on the existing prompt engine.
+
+Ensure they do not depend on arcade libraries.
+
+Cleanly separate:
+
+if (engineType === "prompt-party" || engineType === "prompt-couple") {
+  usePromptEngine();
+} else {
+  useArcadeOrBoardEngine();
+}
+
+5️⃣ No Paid APIs, No Vendor Lock-In
+
+Do not integrate:
+
+game server SaaS
+
+paid multiplayer frameworks
+
+commercial asset stores that require keys
+
+Only use:
+
+npm packages that are free and open source
+
+local game logic in /shared/game-engines
+
+If you need assets (sprites, sounds), use:
+
+Simple vector / built-in shapes or create basic open/free placeholders; no paid/CDN-locked packs.
+
+6️⃣ Testing & Quality
+
+Before finishing:
+
+For each engineType:
+
+Start a game from the UI
+
+Verify it uses the new engine logic (you can log engine name)
+
+Interact from 2 browser tabs (for online modes) to verify real-time sync
+
+Confirm:
+
+No TypeScript or build errors
+
+No runtime errors in the console
+
+WebSocket messages correspond to engine actions and produce valid state
+
+Update README briefly:
+
+Which engines/libraries are used
+
+That all are free/open-source
+
+Basic dev instructions
+
+Then summarize in your response:
+
+Which libraries you chose for board and arcade
+
+Files created/updated in /shared/game-engines, backend, and frontend
+
+How to extend to more minigames in future using same pattern
