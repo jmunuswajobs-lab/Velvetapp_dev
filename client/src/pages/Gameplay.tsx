@@ -39,7 +39,7 @@ export default function Gameplay() {
   }, [sessionId, onlineRoom.gameState, setLocation, slug, toast]);
 
   // Show loading state
-  if (!gameState || (isOnlineGame && onlineRoom.isConnecting)) {
+  if (!gameState) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -49,25 +49,6 @@ export default function Gameplay() {
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
           />
           <h1 className="text-2xl font-display font-bold mb-2">Loading Game...</h1>
-        </div>
-      </div>
-    );
-  }
-
-  // Show error state
-  if (onlineRoom.error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Flame className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-          <h1 className="text-2xl font-display font-bold mb-2">Error Loading Game</h1>
-          <p className="text-muted-foreground mb-6">{onlineRoom.error}</p>
-          <Link href={`/games/${slug}`}>
-            <VelvetButton velvetVariant="neon">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Game
-            </VelvetButton>
-          </Link>
         </div>
       </div>
     );
@@ -220,7 +201,7 @@ export default function Gameplay() {
         </div>
 
         <div className="flex justify-center gap-2 mb-6 overflow-x-auto py-2">
-          {gameState.players.map((player, index) => (
+          {gameState.players.map((player: any, index: number) => (
             <PlayerAvatar
               key={player.nickname}
               nickname={player.nickname}

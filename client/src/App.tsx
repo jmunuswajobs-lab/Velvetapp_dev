@@ -46,6 +46,7 @@ function Router() {
 
         {/* Game routes */}
         <Route path="/games/:slug" component={GameDetail} />
+        <Route path="/games/:slug/local" component={LocalSetup} />
         <Route path="/games/:slug/setup" component={LocalSetup} />
         <Route path="/games/:slug/online" component={OnlineSetup} />
         <Route path="/games/:slug/play/:sessionId" component={GameRouter} />
