@@ -14,6 +14,15 @@ import { FadeIn } from "@/components/velvet/PageTransition";
 import { useLocalGameSession, useOnlineRoom } from "@/lib/gameState";
 import { useToast } from "@/hooks/use-toast";
 import { getNextPrompt, type PromptFilter } from "@/lib/promptEngine";
+import { getGameKind } from "@/lib/gameKindRouter";
+import {
+  PromptGameScreen,
+  MemoryMatchScreen,
+  PongScreen,
+  RacingScreen,
+  MiniDuelScreen,
+  BoardGameScreen,
+} from "@/components/velvet/GameScreens";
 
 export default function Gameplay() {
   const { slug, sessionId } = useParams<{ slug: string; sessionId: string }>();
@@ -26,6 +35,7 @@ export default function Gameplay() {
   // Determine if this is a local or online game
   const isOnlineGame = onlineRoom.gameState && !gameSession;
   const gameState = gameSession?.session || onlineRoom.gameState;
+  const gameKind = slug ? getGameKind(slug) : "prompt-round";
 
   // Redirect if session not found
   useEffect(() => {
@@ -56,13 +66,13 @@ export default function Gameplay() {
   }
 
   // Validate required data
-  if (!gameState.prompts || gameState.prompts.length === 0) {
+  if (!gameState.players || gameState.players.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <Flame className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-          <h1 className="text-2xl font-display font-bold mb-2">No Prompts Available</h1>
-          <p className="text-muted-foreground mb-6">This game has no prompts loaded.</p>
+          <h1 className="text-2xl font-display font-bold mb-2">No Players Found</h1>
+          <p className="text-muted-foreground mb-6">The game session has no players.</p>
           <Link href={`/games/${slug}`}>
             <VelvetButton velvetVariant="neon">
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -74,13 +84,17 @@ export default function Gameplay() {
     );
   }
 
-  if (!gameState.players || gameState.players.length === 0) {
+  // For prompt-based games, validate prompts exist
+  if (
+    (gameKind === "prompt-round" || gameKind === "couple-prompts") &&
+    (!gameState.prompts || gameState.prompts.length === 0)
+  ) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <Flame className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-          <h1 className="text-2xl font-display font-bold mb-2">No Players Found</h1>
-          <p className="text-muted-foreground mb-6">The game session has no players.</p>
+          <h1 className="text-2xl font-display font-bold mb-2">No Prompts Available</h1>
+          <p className="text-muted-foreground mb-6">This game has no prompts loaded.</p>
           <Link href={`/games/${slug}`}>
             <VelvetButton velvetVariant="neon">
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -151,6 +165,36 @@ export default function Gameplay() {
     setLocation(`/games/${slug}/summary/${sessionId}`);
   };
 
+  // Render game-specific UI based on kind
+  const renderGameScreen = () => {
+    const gameScreenProps = {
+      session: gameState as any,
+      game: { name: slug, iconName: "flame" } as any,
+      onNext: handleNext,
+      onPrevious: handlePrevious,
+      onSkip: handleSkip,
+      onEnd: handleEndGame,
+    };
+
+    switch (gameKind) {
+      case "prompt-round":
+      case "couple-prompts":
+        return <PromptGameScreen {...gameScreenProps} />;
+      case "memory-match":
+        return <MemoryMatchScreen />;
+      case "pong":
+        return <PongScreen />;
+      case "racing":
+        return <RacingScreen />;
+      case "mini-duel":
+        return <MiniDuelScreen />;
+      case "board-ludo":
+        return <BoardGameScreen />;
+      default:
+        return <PromptGameScreen {...gameScreenProps} />;
+    }
+  };
+
   return (
     <div className="min-h-screen relative flex flex-col">
       <div 
@@ -168,6 +212,11 @@ export default function Gameplay() {
       <header className="glass border-b border-plum-deep/30 shrink-0">
         <div className="max-w-4xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
+            <div className="text-sm font-semibold text-neon-magenta capitalize">
+              {gameKind === "prompt-round" || gameKind === "couple-prompts"
+                ? `${slug?.replace(/-/g, " ")} - Prompt Mode`
+                : slug?.replace(/-/g, " ")}
+            </div>
             <button
               onClick={handleEndGame}
               className="flex items-center gap-2 text-muted-foreground hover:text-white transition-colors"

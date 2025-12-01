@@ -3,6 +3,18 @@ import { pgTable, text, varchar, integer, boolean, timestamp, jsonb } from "driz
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// ===== GAME KINDS =====
+export const gameKinds = [
+  "prompt-round",
+  "couple-prompts",
+  "board-ludo",
+  "memory-match",
+  "pong",
+  "racing",
+  "mini-duel",
+] as const;
+export type GameKind = typeof gameKinds[number];
+
 // ===== PROMPT TYPES & FLAGS =====
 export const promptTypes = ["truth", "dare", "challenge", "confession", "vote", "rule"] as const;
 export type PromptType = typeof promptTypes[number];
@@ -41,6 +53,7 @@ export const games = pgTable("games", {
   slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
   description: text("description").notNull(),
+  kind: text("kind").notNull().$type<GameKind>().default("prompt-round"),
   minPlayers: integer("min_players").notNull().default(2),
   maxPlayers: integer("max_players").notNull().default(10),
   supportsOnline: boolean("supports_online").default(true),

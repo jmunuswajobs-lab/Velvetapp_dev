@@ -1,0 +1,314 @@
+Fix “Every Game Is Truth or Dare” & Implement Real Game Modes
+
+You are Replit’s principal engineer + game architect working in this repo:
+
+https://github.com/jmunuswajobs-lab/Velvetapp_dev
+
+The current bug:
+
+The game catalog shows many different games (Truth or Dare, Never Have I Ever, Velvet Ludo, Velvet Memory Flip, Emotion Ping-Pong, Neon Drift—Couple Mode, etc.)
+
+But clicking ANY game and starting it always launches the same prompt-based engine with actions like:
+
+truth, dare, confession, vote
+
+So all games behave like a Truth-or-Dare card game, which is wrong.
+
+Your job is to:
+
+🔴 Re-architect the gameplay layer so that each game actually launches its own correct gameplay experience (board games, memory, pong, racing, etc.), and the generic prompt engine is used only for games that are supposed to be prompt-based.
+
+You are allowed to refactor heavily as long as the result is clean, stable, and production-ready, with no placeholders.
+
+1️⃣ Analyze & Clean Up Current Game Architecture
+
+Scan the repo, especially:
+
+server/routes/*
+
+server/services/*
+
+server/websocket/*
+
+client/src/pages/Gameplay.tsx (or equivalent)
+
+client/src/pages/LocalSetup.tsx, OnlineRoom.tsx, LudoSetup.tsx, etc.
+
+client/src/lib/gameState.ts, ludoState.ts, or similar stores.
+
+Identify where the decision is made about:
+
+What gameplay component to render
+
+What game engine to use
+
+How GameSession is created (what type/mode it uses)
+
+Right now there is effectively one generic gameplay model (prompt rounds) that ignores which game was chosen.
+
+2️⃣ Introduce a Game “Kind” / “Mode” Concept
+
+Extend the Game model on both backend and frontend:
+
+Add a field like kind or engineType, e.g.:
+
+type GameKind =
+  | "prompt-round"
+  | "drinking-prompts"
+  | "couple-prompts"
+  | "board-ludo"
+  | "memory-match"
+  | "pong"
+  | "racing"
+  | "mini-duel";
+
+
+For each game in /api/games, set an appropriate kind, for example:
+
+truth-or-dare → "prompt-round"
+
+never-have-i-ever → "prompt-round" (different rules, same engine family)
+
+couples-challenge, deep-sync, temptation-trails, etc. → "couple-prompts"
+
+velvet-ludo → "board-ludo"
+
+velvet-memory-flip → "memory-match"
+
+emotion-ping-pong → "pong"
+
+neon-drift-couple → "racing"
+
+couples-duel-arena → "mini-duel"
+
+Expose this kind field in GET /api/games and GET /api/games/:slug responses.
+
+3️⃣ GameSession Type & Backend Engine Routing
+
+Update the GameSession creation logic (wherever sessions are created on start_game or similar):
+
+Add fields to the session object:
+
+{
+  id,
+  roomId,
+  gameId,
+  gameSlug,
+  kind: GameKind,
+  state: GameStateJSON,
+  ...
+}
+
+
+When start_game is called:
+
+Look up the selected Game by ID/slug.
+
+Use game.kind to:
+
+Choose the correct initial state generator, e.g.:
+
+switch (game.kind) {
+  case "prompt-round":
+  case "couple-prompts":
+    return createPromptGameState(config);
+  case "board-ludo":
+    return createLudoInitialState(players, config);
+  case "memory-match":
+    return createMemoryInitialState(players, config);
+  case "pong":
+    return createPongInitialState(players, config);
+  case "racing":
+    return createDriftInitialState(players, config);
+  case "mini-duel":
+    return createDuelInitialState(players, config);
+}
+
+
+Set session.kind accordingly.
+
+Save this to the DB / in-memory store.
+
+Notify clients via WebSocket that:
+
+The room has moved to status: in-game
+
+A GameSession of a given kind is now active.
+
+For online play, route subsequent game actions (roll_dice, move_token, flip_card, hit_ball, etc.) to the appropriate game engine based on session.kind.
+
+4️⃣ Frontend: Per-Game Gameplay Components
+
+Refactor Gameplay.tsx (or equivalent) so it:
+
+Loads the current GameSession (with kind and gameSlug).
+
+Instead of hardcoding truth/dare UI, it uses a component router, e.g.:
+
+function Gameplay() {
+  const session = useCurrentSession(); // includes session.kind, gameSlug, state
+  const game = useGameMetadata(session.gameId);
+
+  if (!session || !game) return <Loading />;
+
+  switch (session.kind) {
+    case "prompt-round":
+    case "couple-prompts":
+      return <PromptGameScreen session={session} game={game} />;
+
+    case "board-ludo":
+      return <VelvetLudoScreen session={session} game={game} />;
+
+    case "memory-match":
+      return <VelvetMemoryFlipScreen session={session} game={game} />;
+
+    case "pong":
+      return <EmotionPingPongScreen session={session} game={game} />;
+
+    case "racing":
+      return <NeonDriftCoupleScreen session={session} game={game} />;
+
+    case "mini-duel":
+      return <CouplesDuelArenaScreen session={session} game={game} />;
+
+    default:
+      return <div>Unknown game type</div>;
+  }
+}
+
+
+Implement each screen so that it:
+
+Uses the correct state shape for that game.
+
+Sends the correct action messages to the backend (e.g. via WebSocket).
+
+Renders a distinct UI (board, memory grid, pong paddles, racetrack, etc.), not the generic prompt card UI.
+
+5️⃣ At Least Basic, But Real Implementations for Each Game
+
+Implement real, minimal but functional gameplay for each game:
+
+Prompt games (truth-or-dare, never-have-i-ever, couples-challenge, etc.):
+
+Use the existing prompt engine (truth/dare/confession/vote), but adapt rules per slug if needed.
+
+Velvet Ludo (board-ludo):
+
+Use the existing Ludo engine files if present; otherwise implement a proper board state:
+
+2–4 players
+
+Tokens, dice, capture rules, win detection
+
+Render an actual Ludo board with moving tokens.
+
+Velvet Memory Flip (memory-match):
+
+Grid of face-down cards, flip two, match pairs, track score.
+
+Use the “sweet/spicy choice” when a pair is matched.
+
+Emotion Ping-Pong (pong):
+
+Simple pong implementation:
+
+Paddles (one per player), ball state, collisions.
+
+When a rally ends, trigger a prompt selection by category.
+
+Neon Drift—Couple Mode (racing):
+
+At minimum: a top-down lane/track game where players move left/right and avoid obstacles or race to finish.
+
+Use simple movement + collision logic that’s synced in real time.
+
+Couples Duel Arena (mini-duel):
+
+Turn-based or quick-tap duel:
+
+HP or score per player
+
+Attack/defend/charge actions
+
+Winner triggers fun consequence.
+
+If time/complexity is high, prioritize:
+
+All prompt-based games share a robust PromptGameScreen but with per-game rules.
+
+Velvet Ludo works and is clearly different.
+
+Velvet Memory Flip works and is clearly different.
+
+Emotion Ping-Pong has a functioning pong mini-game.
+
+Do not leave any of these as “TODO” / unimplemented stub screens.
+
+6️⃣ Local vs Online Flow
+
+Ensure:
+
+Local mode:
+
+Uses the same components but without WebSocket; state is purely local.
+
+Online mode:
+
+Uses WebSocket messages to:
+
+Join room
+
+Receive session state updates
+
+Send game actions
+
+Keeps both players in sync.
+
+Guard against:
+
+Client using local-only actions in online mode.
+
+Double-sending actions.
+
+7️⃣ Testing & Validation (Mandatory Before Finishing)
+
+Replit must:
+
+Run through these flows, in two browser tabs (or tab + private/incognito):
+
+Start Truth or Dare → verify it uses the prompt UI.
+
+Start Velvet Ludo → verify a Ludo board appears (no truth/dare).
+
+Start Velvet Memory Flip → see card grid, matching logic.
+
+Start Emotion Ping-Pong → see pong paddles + ball.
+
+Start Neon Drift—Couple Mode → see racing UI.
+
+Confirm:
+
+No game incorrectly shows “truth/dare/confession/vote” UI unless it is a prompt-based game.
+
+Gameplay doesn’t crash on start or during basic interaction.
+
+GET /api/games and GET /api/games/:slug now include kind and are used correctly by frontend & backend.
+
+Ensure:
+
+TypeScript/build passes with 0 errors.
+
+Browser console has no unhandled errors during these flows.
+
+WebSocket connections stay open and consistent.
+
+Finally, reply with a summary listing:
+
+Files modified/created
+
+How kind is defined and used
+
+Which games have distinct gameplay UIs now
+
+Any limitations (if any) that remain, e.g. advanced features not yet implemented

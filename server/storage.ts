@@ -90,6 +90,7 @@ export class MemStorage implements IStorage {
         slug: "truth-or-dare",
         name: "Truth or Dare",
         description: "The classic party game where players choose between revealing truths or completing daring challenges. Get ready to spill secrets and push boundaries!",
+        kind: "prompt-round" as any,
         minPlayers: 2,
         maxPlayers: 10,
         supportsOnline: true,
