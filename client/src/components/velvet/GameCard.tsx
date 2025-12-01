@@ -1,8 +1,22 @@
 import { memo, useMemo } from "react";
-import { Users, Flame, Heart, Zap, MessageSquare, Globe, Scale, HelpCircle } from "lucide-react";
+import { Users, Flame, Heart, Zap, MessageSquare, Globe, Scale, HelpCircle, Gamepad2 } from "lucide-react";
 import type { Game } from "@shared/schema";
 import { SpicyBadge, SpiceIndicator } from "./SpicyBadge";
 import { VelvetCard } from "./VelvetCard";
+
+const engineTypeBadges: Record<string, { label: string; color: string }> = {
+  "prompt-party": { label: "CARD GAME", color: "bg-amber-500/20 text-amber-300" },
+  "prompt-couple": { label: "CARD GAME", color: "bg-rose-500/20 text-rose-300" },
+  "board-ludo": { label: "BOARD GAME", color: "bg-violet-500/20 text-violet-300" },
+  "memory-match": { label: "MEMORY", color: "bg-blue-500/20 text-blue-300" },
+  "pong": { label: "ARCADE", color: "bg-cyan-500/20 text-cyan-300" },
+  "racer": { label: "RACE", color: "bg-orange-500/20 text-orange-300" },
+  "tap-duel": { label: "ARCADE", color: "bg-red-500/20 text-red-300" },
+  "guessing": { label: "PARTY", color: "bg-green-500/20 text-green-300" },
+  "rhythm": { label: "ARCADE", color: "bg-pink-500/20 text-pink-300" },
+  "roulette": { label: "PARTY", color: "bg-indigo-500/20 text-indigo-300" },
+  "tool-randomizer": { label: "PARTY", color: "bg-yellow-500/20 text-yellow-300" },
+};
 
 interface GameCardProps {
   game: Game;
@@ -70,11 +84,17 @@ export const GameCard = memo(function GameCard({ game, onClick }: GameCardProps)
           </div>
         </div>
 
-        {/* Tags */}
+        {/* Engine Type Badge + Tags */}
         <div className="flex flex-wrap gap-1.5 mb-4">
+          {game.engineType && (
+            <div className={`px-2 py-0.5 rounded text-xs font-semibold ${engineTypeBadges[game.engineType]?.color || "bg-gray-500/20 text-gray-300"}`}>
+              {engineTypeBadges[game.engineType]?.label || "GAME"}
+            </div>
+          )}
+          {game.audience === "couple" && <SpicyBadge variant="couple" />}
+          {game.audience === "friends" && <span className="px-2 py-0.5 rounded text-xs font-semibold bg-blue-500/20 text-blue-300">FRIENDS</span>}
           {game.supportsLocal && <SpicyBadge variant="local" />}
           {game.supportsOnline && <SpicyBadge variant="online" />}
-          {game.isCoupleFocused && <SpicyBadge variant="couple" />}
           {game.isSpicy && <SpicyBadge variant="spicy" />}
         </div>
 

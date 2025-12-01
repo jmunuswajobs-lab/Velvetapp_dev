@@ -14,7 +14,7 @@ import { FadeIn } from "@/components/velvet/PageTransition";
 import { useLocalGameSession, useOnlineRoom } from "@/lib/gameState";
 import { useToast } from "@/hooks/use-toast";
 import { getNextPrompt, type PromptFilter } from "@/lib/promptEngine";
-import { getGameKind } from "@/lib/gameKindRouter";
+import { getEngineType } from "@/lib/engineTypeRouter";
 import {
   PromptGameScreen,
   MemoryMatchScreen,
@@ -35,7 +35,7 @@ export default function Gameplay() {
   // Determine if this is a local or online game
   const isOnlineGame = onlineRoom.gameState && !gameSession;
   const gameState = gameSession?.session || onlineRoom.gameState;
-  const gameKind = slug ? getGameKind(slug) : "prompt-round";
+  const engineType = slug ? getEngineType(slug) : "prompt-party";
 
   // Redirect if session not found
   useEffect(() => {
@@ -86,7 +86,7 @@ export default function Gameplay() {
 
   // For prompt-based games, validate prompts exist
   if (
-    (gameKind === "prompt-round" || gameKind === "couple-prompts") &&
+    (engineType === "prompt-party" || engineType === "prompt-couple") &&
     (!gameState.prompts || gameState.prompts.length === 0)
   ) {
     return (
@@ -165,7 +165,7 @@ export default function Gameplay() {
     setLocation(`/games/${slug}/summary/${sessionId}`);
   };
 
-  // Render game-specific UI based on kind
+  // Render game-specific UI based on engineType
   const renderGameScreen = () => {
     const gameScreenProps = {
       session: gameState as any,
@@ -176,20 +176,27 @@ export default function Gameplay() {
       onEnd: handleEndGame,
     };
 
-    switch (gameKind) {
-      case "prompt-round":
-      case "couple-prompts":
+    switch (engineType) {
+      case "prompt-party":
+      case "prompt-couple":
         return <PromptGameScreen {...gameScreenProps} />;
       case "memory-match":
         return <MemoryMatchScreen />;
       case "pong":
         return <PongScreen />;
-      case "racing":
+      case "racer":
         return <RacingScreen />;
-      case "mini-duel":
+      case "tap-duel":
         return <MiniDuelScreen />;
       case "board-ludo":
         return <BoardGameScreen />;
+      case "guessing":
+        return <MemoryMatchScreen />; // Placeholder
+      case "rhythm":
+        return <MemoryMatchScreen />; // Placeholder
+      case "roulette":
+      case "tool-randomizer":
+        return <MemoryMatchScreen />; // Placeholder
       default:
         return <PromptGameScreen {...gameScreenProps} />;
     }
@@ -213,8 +220,8 @@ export default function Gameplay() {
         <div className="max-w-4xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="text-sm font-semibold text-neon-magenta capitalize">
-              {gameKind === "prompt-round" || gameKind === "couple-prompts"
-                ? `${slug?.replace(/-/g, " ")} - Prompt Mode`
+              {engineType === "prompt-party" || engineType === "prompt-couple"
+                ? `${slug?.replace(/-/g, " ")} - Card Game`
                 : slug?.replace(/-/g, " ")}
             </div>
             <button
