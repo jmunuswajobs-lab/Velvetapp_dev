@@ -9,6 +9,7 @@ export interface PromptFilter {
   tagsExclude?: string[];
   alreadyUsedIds?: string[];
   types?: string[];
+  isRemoteMode?: boolean;
 }
 
 export interface PromptOptions {
@@ -35,6 +36,7 @@ export function getNextPrompt(
     tagsExclude = [],
     alreadyUsedIds = [],
     types = ["truth", "dare", "challenge", "confession", "vote", "rule"],
+    isRemoteMode = false,
   } = filter;
 
   const { targetSpice = 3, preferVariety = true } = options;
@@ -58,6 +60,11 @@ export function getNextPrompt(
 
     // Filter by type
     if (!types.includes(prompt.type)) return false;
+
+    // Filter by remote compatibility (critical for remote mode)
+    if (isRemoteMode && prompt.flags?.safeForRemote === false) {
+      return false;
+    }
 
     return true;
   });

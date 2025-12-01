@@ -1,0 +1,219 @@
+{
+  "id": "pack-distance-desire",
+  "name": "Distance Desire",
+  "description": "Emotional and sensual prompts focused on longing, anticipation, reminiscing, and planning future dates. Perfect for long-distance couples who want to deepen their connection without being explicit.",
+  "gameId": "truth-or-dare",
+  "intensity": 2,
+  "prompts": [
+    {
+      "id": "dd-001",
+      "text": "What's something about being far from your partner that has actually brought you closer?",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "dd-002",
+      "text": "Send your partner a video message describing the first thing you want to do together when you're reunited.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "dd-003",
+      "text": "What moment with your partner do you replay in your head when you miss them most?",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "dd-004",
+      "text": "Plan a future date together over video call: describe in detail what you both want it to be like.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "dd-005",
+      "text": "Tell your partner about a small moment with them you wish you could experience again right now.",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "dd-006",
+      "text": "Write a love note to your partner and read it aloud during a video call.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "dd-007",
+      "text": "What's something your partner does that makes you feel more connected even when you're apart?",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "dd-008",
+      "text": "Send a voice message describing exactly what your partner smells like and what memories that brings up.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "dd-009",
+      "text": "What physical feature of your partner do you think about most often?",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "dd-010",
+      "text": "Create a playlist together—each song should represent a moment or feeling between you two.",
+      "type": "dare",
+      "intensity": 1,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "dd-011",
+      "text": "What's the most romantic gesture your partner has ever made for you?",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "dd-012",
+      "text": "Send a photo of something that reminds you of your partner and explain why.",
+      "type": "dare",
+      "intensity": 1,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "dd-013",
+      "text": "Describe how you felt the first time you knew your partner was special.",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "dd-014",
+      "text": "Record a voice message: describe five reasons why you're grateful for your partner.",
+      "type": "dare",
+      "intensity": 1,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "dd-015",
+      "text": "What's something your partner has done that made you feel deeply loved and understood?",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "dd-016",
+      "text": "Plan your next trip together, discussing every detail from what you'll wear to where you'll go.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "dd-017",
+      "text": "What's your favorite inside joke or memory that's uniquely yours?",
+      "type": "truth",
+      "intensity": 1,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "dd-018",
+      "text": "Create a vision board or mood board together over video call about your future together.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "dd-019",
+      "text": "Describe a quiet moment with your partner that meant more than any big romantic gesture.",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "dd-020",
+      "text": "Send your partner a voice message singing (or speaking) a portion of your song or a love song to them.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "dd-021",
+      "text": "What quality of your partner has grown more attractive to you over time?",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "dd-022",
+      "text": "Write down three things you want to do with your partner and share them on a video call.",
+      "type": "dare",
+      "intensity": 1,
+      "flags": { "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "dd-023",
+      "text": "What's something about your partner's personality that makes you feel safe and loved?",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "dd-024",
+      "text": "Create a 'when we're together' bucket list by texting ideas back and forth.",
+      "type": "dare",
+      "intensity": 1,
+      "flags": { "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "dd-025",
+      "text": "What moment with your partner made you realize this relationship was different from the others?",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "dd-026",
+      "text": "Describe the feeling you get when your partner sends you a surprise message or call.",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "dd-027",
+      "text": "Send a selfie looking your best and tell your partner why you wanted them to see you like this.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "dd-028",
+      "text": "What's the best compliment your partner has ever given you?",
+      "type": "truth",
+      "intensity": 1,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "dd-029",
+      "text": "Write a poem (serious or silly) about your partner and read it to them over voice or video.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "dd-030",
+      "text": "How do you feel knowing your partner is thinking of you right now?",
+      "type": "truth",
+      "intensity": 1,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    }
+  ]
+}

@@ -1,0 +1,219 @@
+{
+  "id": "pack-remote-heatwave",
+  "name": "Remote Heatwave",
+  "description": "Video & voice teasing, body-language games, and remote dares designed for couples who want to turn up the heat from a distance. Flirty, daring, and playful.",
+  "gameId": "truth-or-dare",
+  "intensity": 3,
+  "prompts": [
+    {
+      "id": "rh-001",
+      "text": "Send your partner a voice message describing exactly what you'd do if you were in the same room right now.",
+      "type": "dare",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "rh-002",
+      "text": "Make eye contact on camera and slowly remove one item of clothing while describing why you find them attractive.",
+      "type": "dare",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "rh-003",
+      "text": "What's the most daring thing you'd do if no one could find out?",
+      "type": "truth",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "rh-004",
+      "text": "Send your partner a selfie in your current outfit with a flirty caption.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "rh-005",
+      "text": "Describe the exact moment you first realized you were attracted to your partner.",
+      "type": "truth",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "rh-006",
+      "text": "Record a 30-second voice message telling your partner your favorite thing about their body.",
+      "type": "dare",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "rh-007",
+      "text": "What would you wear if you knew your partner would see you in it?",
+      "type": "truth",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "rh-008",
+      "text": "Play a song that reminds you of your partner and explain why—be as romantic and flirty as possible.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "rh-009",
+      "text": "What's your go-to move to get your partner's attention when you want them?",
+      "type": "truth",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "rh-010",
+      "text": "Send your partner a flirty emoji sequence that describes what you're thinking right now.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "rh-011",
+      "text": "Describe your partner's best physical feature in exaggerated, playful detail.",
+      "type": "dare",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "rh-012",
+      "text": "How would your partner describe you in bed? Guess and then ask them to rate your accuracy.",
+      "type": "truth",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "rh-013",
+      "text": "Share your phone's most recently used emoji and explain why it's there.",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "rh-014",
+      "text": "Create a video call photobomb: silently do something silly or flirty behind the frame and wait for them to notice.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "rh-015",
+      "text": "If you could have one fantasy with your partner come true this week, what would it be?",
+      "type": "truth",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "rh-016",
+      "text": "Send a voice message impersonating what you think your partner sounds like during a particular activity.",
+      "type": "dare",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "rh-017",
+      "text": "What's the most spontaneous, risk-taking thing you'd like to do together?",
+      "type": "truth",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "rh-018",
+      "text": "Describe your partner's laugh, smile, or other feature you find irresistible in a love-letter style.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "rh-019",
+      "text": "What's one compliment about your partner that you don't say out loud enough?",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "rh-020",
+      "text": "On a video call, slowly describe what you see when you look at your partner right now—be as sensual as possible.",
+      "type": "dare",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "rh-021",
+      "text": "If you could relive one moment with your partner, what would it be and why?",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "rh-022",
+      "text": "Send your partner a photo of something on your body you find attractive and ask if they agree.",
+      "type": "dare",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "rh-023",
+      "text": "Describe in detail the physical reaction your partner has that drives you wild.",
+      "type": "truth",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "rh-024",
+      "text": "Create a TikTok-style voiceover: describe your partner as if you're introducing them to the world in 15 seconds.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "rh-025",
+      "text": "What outfit or look of yours has gotten the best reaction from your partner?",
+      "type": "truth",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "rh-026",
+      "text": "Send your partner a voice message listing three things you'd love to do together if you were together right now.",
+      "type": "dare",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "rh-027",
+      "text": "What's the most attractive quality your partner has that nobody else sees?",
+      "type": "truth",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "rh-028",
+      "text": "On video call, make a 'come here' gesture and explain exactly what you'd do if they were.",
+      "type": "dare",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "rh-029",
+      "text": "What's your favorite memory of feeling desired by your partner?",
+      "type": "truth",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "rh-030",
+      "text": "Send a voice memo of you recreating your sexiest laugh for your partner.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    }
+  ]
+}

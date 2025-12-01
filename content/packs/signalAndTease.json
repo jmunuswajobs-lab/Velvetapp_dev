@@ -1,0 +1,184 @@
+{
+  "id": "pack-signal-and-tease",
+  "name": "Signal & Tease",
+  "description": "Kinky-tease cards using code words, emoji games, reactions, and clever role-play scenarios. Strongly spicy and daring, but PG-17 compliant. Remote-first design.",
+  "gameId": "truth-or-dare",
+  "intensity": 4,
+  "prompts": [
+    {
+      "id": "st-001",
+      "text": "Create a secret code word between you two that means 'I want you right now.' Use it in a text and show their reaction.",
+      "type": "dare",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "st-002",
+      "text": "What's the boldest thing you've ever wanted to ask your partner to do?",
+      "type": "truth",
+      "intensity": 5,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "st-003",
+      "text": "Send your partner a series of increasingly suggestive emojis that tell a story.",
+      "type": "dare",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "st-004",
+      "text": "Have you ever tried to seduce your partner in public without being too obvious?",
+      "type": "truth",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "st-005",
+      "text": "Create a role-play scenario text exchange: you're a mysterious stranger and your partner doesn't know it's you.",
+      "type": "dare",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "st-006",
+      "text": "What position or scenario would you be too embarrassed to suggest out loud?",
+      "type": "truth",
+      "intensity": 5,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "st-007",
+      "text": "Send a voice message in a sultry voice describing exactly what you're imagining right now.",
+      "type": "dare",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "st-008",
+      "text": "If you could choreograph a seduction scene with your partner, what would it look like?",
+      "type": "truth",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "st-009",
+      "text": "Play a game: you send a suggestive photo, your partner responds with one emoji that judges your level of boldness.",
+      "type": "dare",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "st-010",
+      "text": "What's the dirtiest thing your partner has whispered to you or asked you to do?",
+      "type": "truth",
+      "intensity": 5,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "st-011",
+      "text": "Send a voice message as if you're narrating a romantic/spicy scene starring you both.",
+      "type": "dare",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "st-012",
+      "text": "Describe your partner's most seductive quality in three provocative sentences.",
+      "type": "truth",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "st-013",
+      "text": "Create a text-based game: you type one word at a time, building a spicy story together.",
+      "type": "dare",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "st-014",
+      "text": "What's your biggest fantasy that you've never fully articulated to your partner?",
+      "type": "truth",
+      "intensity": 5,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "st-015",
+      "text": "Send your partner a 'choose your adventure' text: Option A, B, or C—what would you prefer right now?",
+      "type": "dare",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "st-016",
+      "text": "If there were no judgment, what would you ask your partner to do?",
+      "type": "truth",
+      "intensity": 5,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "st-017",
+      "text": "Describe your partner's reaction to something scandalous in a slow-motion, dramatic voice message.",
+      "type": "dare",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "st-018",
+      "text": "What's your secret weapon for getting your partner to say yes?",
+      "type": "truth",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "st-019",
+      "text": "Send a photo of something you're holding (innocently) with a completely suggestive caption.",
+      "type": "dare",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "st-020",
+      "text": "Describe what your partner was wearing the last time you felt completely turned on by them.",
+      "type": "truth",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "st-021",
+      "text": "Create a coded message using only reaction emojis that describes what you want to do with your partner.",
+      "type": "dare",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "st-022",
+      "text": "If you could relive any intimate moment exactly as it was, which would it be?",
+      "type": "truth",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "st-023",
+      "text": "Send a voice message in different accents/characters describing why you're attracted to your partner.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "st-024",
+      "text": "What's the most spontaneous, risky thing you'd like to do with your partner?",
+      "type": "truth",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "st-025",
+      "text": "Play emoji roulette: randomize emoji reactions to spicy scenarios and respond with only emojis.",
+      "type": "dare",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": true }
+    }
+  ]
+}

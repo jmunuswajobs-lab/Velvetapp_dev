@@ -1,0 +1,229 @@
+Replace Offline Dares With Remote-Friendly Spicy Couple Cards
+
+You are Replit’s senior content engineer working in this repo (Velvetapp / Midnight Bond style card games).
+
+Right now, some cards are clearly offline-only, e.g.:
+
+“Give a shoulder massage to the person next to you.”
+
+These do not work for remote couples and break the experience.
+
+Your job is to:
+
+Find and flag all offline-only prompts.
+
+Add a large set of new, unique, remote-friendly spicy/kinky/steamy/flirty prompts for couples.
+
+Update the game logic so remote mode only uses remote-compatible prompts.
+
+1️⃣ Content Rules (Very Important)
+
+For all new and modified prompts:
+
+Audience: 18+ couples only
+
+Tone allowed:
+
+Flirty, seductive, daring
+
+Spicy, wild, kinky-tease, steamy
+
+Romantic, emotional, playful
+
+Tone NOT allowed:
+
+Explicit sexual acts or graphic anatomy
+
+Pornographic detail
+
+Non-consensual behavior
+
+Violence or humiliation
+
+Anything involving minors or illegal acts
+
+Prompts must be remote-doable for couples on:
+
+Video call
+
+Voice call
+
+Chat / DMs
+
+In-app room
+
+So no “touch the person next to you”, “kiss their neck”, “swap clothes”, etc.
+
+Focus on things like:
+
+Verbal teasing
+
+Descriptions, fantasies (non-graphic)
+
+Emotional confessions
+
+Challenges that use camera, voice, emojis, objects they have at home
+
+Role-play setups, dares, choices, storytelling, etc.
+
+2️⃣ Data Model & Flags
+
+Wherever prompts are stored (JSON/TS/DB), ensure they have at least:
+
+{
+  id: string;
+  text: string;
+  type: "truth" | "dare" | "challenge" | "question" | "fantasy-tease";
+  spiceLevel: 1 | 2 | 3 | 4 | 5;
+  isCoupleOnly: boolean;
+  safeForRemote: boolean;  // <— enforce this
+  tags: string[];          // e.g. ["remote","flirty","kinky-tease","video-call"]
+}
+
+
+Tasks:
+
+Add or normalize the safeForRemote field on all prompts:
+
+safeForRemote = false for any that clearly require in-person physical contact or proximity.
+
+safeForRemote = true for prompts that can be done over video/voice/chat.
+
+Add tags like:
+
+"remote", "video-call", "voice-call", "chat-only" where appropriate.
+
+3️⃣ Scan & Fix Existing Prompts
+
+Search all prompt files/content modules in the repo (e.g. content/packs/, data/prompts, etc.).
+
+Identify prompts that:
+
+Require touching someone physically
+
+Reference “in this room” or “next to you”
+
+Clearly assume everyone is physically together
+
+For each such prompt:
+
+Either:
+
+Mark safeForRemote: false (for offline/local mode only), and
+
+Add a remote-friendly variant with a similar flavor but doable online
+(e.g. shoulder massage → guided tension-relief talk, compliment storm, camera pose challenge, etc.)
+
+Or replace the text entirely if the card is low-quality.
+
+Do not leave any offline-only prompts without safeForRemote: false clearly set.
+
+4️⃣ Create New Remote-Only Spicy Couple Packs
+
+Create at least 3 new packs of remote-first prompts:
+
+Remote Heatwave (Spice 3–4)
+
+Video/voice teasing, body-language games, remote dares.
+
+Couples only, all safeForRemote: true.
+
+Signal & Tease (Spice 4–5)
+
+Kinky-tease cards using:
+
+code words
+
+emojis
+
+reactions
+
+short role-play scenarios
+
+Strongly spicy but still PG-17 (no explicit acts).
+
+Distance Desire (Spice 2–3)
+
+Emotional + sensual prompts focused on:
+
+longing, anticipation, reminiscing past moments, planning future dates
+
+Great for long-distance couples winding up the connection without being explicit.
+
+Each pack should have 40–60 unique prompts:
+
+No repeats
+
+No formulaic “copy/paste with one word changed”
+
+Mix of:
+
+truths
+
+dares
+
+challenges
+
+fantasy-tease cards
+
+questions
+
+Mark them all:
+
+isCoupleOnly: true
+safeForRemote: true
+tags: include "remote"
+
+5️⃣ Wire safeForRemote into Game Logic
+
+Find the code responsible for selecting prompts for a game session (e.g. promptEngine, getNextPrompt, or equivalent).
+
+Update it so:
+
+When game mode is remote / online-couple:
+
+Filter prompts with safeForRemote === true only.
+
+Prefer packs / tags with "remote".
+
+When game mode is local / in-person:
+
+You may include both remote and non-remote prompts, OR
+
+Optionally give a preference to safeForRemote === false for more physical dares.
+
+Make sure:
+
+The remote mode never shows cards like “give a shoulder massage to the person next to you”.
+
+Selection logic respects spice level and couple preferences like before.
+
+6️⃣ Validation & Testing
+
+Before finishing, Replit must:
+
+Run the app and start a remote couple game:
+
+Ensure only remote-doable cards appear in several rounds.
+
+Confirm no “touch the person next to you” type cards.
+
+Start a local/offline party game:
+
+Confirm physical dares still exist if allowed for that mode.
+
+Check:
+
+TypeScript / build passes
+
+No runtime errors in console when drawing new prompts
+
+All new prompts conform to the schema, no missing keys.
+
+Finally, in the response, list:
+
+Files changed (prompt data and selection logic).
+
+Packs added and approximate number of new remote-friendly prompts.
+
+How to configure/choose remote vs local mode in the UI.
