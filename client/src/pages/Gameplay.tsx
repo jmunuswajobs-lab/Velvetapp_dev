@@ -11,7 +11,7 @@ import { PromptCard } from "@/components/velvet/VelvetCard";
 import { HeatMeter } from "@/components/velvet/HeatMeter";
 import { PlayerAvatar } from "@/components/velvet/PlayerAvatar";
 import { FadeIn } from "@/components/velvet/PageTransition";
-import { useLocalGameSession } from "@/lib/gameState";
+import { useLocalGameSession, useOnlineRoom } from "@/lib/gameState";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Gameplay() {
@@ -20,10 +20,15 @@ export default function Gameplay() {
   const { toast } = useToast();
 
   const gameSession = useLocalGameSession(sessionId || "");
+  const onlineRoom = useOnlineRoom();
+  
+  // Determine if this is a local or online game
+  const isOnlineGame = onlineRoom.gameState && !gameSession;
+  const gameState = gameSession?.session || onlineRoom.gameState;
 
   // Redirect if session not found
   useEffect(() => {
-    if (!sessionId || !gameSession) {
+    if (!sessionId) {
       toast({
         title: "No Active Game",
         description: "Start a new game to begin playing",
@@ -31,9 +36,9 @@ export default function Gameplay() {
       });
       setLocation(`/games/${slug}`);
     }
-  }, [sessionId, gameSession, setLocation, slug, toast]);
+  }, [sessionId, setLocation, slug, toast]);
 
-  if (!sessionId || !gameSession) {
+  if (!sessionId || !gameState) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -48,27 +53,41 @@ export default function Gameplay() {
     );
   }
 
-  const { session } = gameSession;
-  const currentPrompt = session.prompts[session.currentPromptIndex];
-  const currentPlayer = session.players[session.turnIndex];
-  const promptsRemaining = session.prompts.length - session.currentPromptIndex - 1;
+  const currentPrompt = gameState.prompts?.[gameState.currentPromptIndex];
+  const currentPlayer = gameState.players?.[gameState.turnIndex];
+  const promptsRemaining = gameState.prompts?.length - gameState.currentPromptIndex - 1 || 0;
 
   const handleNext = () => {
-    const prompt = gameSession.nextPrompt();
-    if (!prompt) {
-      setLocation(`/games/${slug}/summary/${sessionId}`);
-      return;
+    if (isOnlineGame) {
+      // Online games handled via WebSocket - just move to next
+      if (gameState.currentPromptIndex >= gameState.prompts.length - 1) {
+        setLocation(`/games/${slug}/summary/${sessionId}`);
+        return;
+      }
+      // Send move to server
+      console.log("Move to next prompt in online game");
+    } else {
+      // Local game
+      const prompt = gameSession?.nextPrompt();
+      if (!prompt) {
+        setLocation(`/games/${slug}/summary/${sessionId}`);
+        return;
+      }
+      gameSession?.advanceTurn();
+      gameSession?.updateHeatLevel((prompt.intensity || 0) * 2);
     }
-    gameSession.advanceTurn();
-    gameSession.updateHeatLevel(prompt.intensity * 2);
   };
 
   const handlePrevious = () => {
-    gameSession.previousPrompt();
+    if (!isOnlineGame) {
+      gameSession?.previousPrompt();
+    }
   };
 
   const handleSkip = () => {
-    gameSession.skipPrompt();
+    if (!isOnlineGame) {
+      gameSession?.skipPrompt();
+    }
     handleNext();
   };
 
