@@ -258,30 +258,30 @@ export function BeerPongGame({
   const team2Active = team2Cups.filter(c => c.active).length;
 
   return (
-    <div className="flex flex-col h-full w-full bg-gradient-to-b from-black via-plum-deep/30 to-black overflow-hidden">
+    <div className="flex flex-col h-full w-full bg-gradient-to-b from-black via-plum-deep/30 to-black">
       {/* Top Bar */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between px-4 py-3 border-b border-plum-deep/30 bg-black/50 backdrop-blur-sm"
+        className="flex items-center justify-between px-4 py-3 border-b border-plum-deep/30 bg-black/50 backdrop-blur-sm flex-shrink-0"
       >
-        <div className="flex items-center gap-2 flex-1">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
           <PlayerAvatar nickname={team1.nickname} color={team1.color} size="sm" />
-          <div className="text-xs flex-1">
-            <p className="font-bold text-neon-magenta">{team1.nickname}</p>
+          <div className="text-xs flex-1 min-w-0">
+            <p className="font-bold text-neon-magenta truncate">{team1.nickname}</p>
             <p className="text-xs text-muted-foreground">{team1Active} cups</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 px-3 py-1 bg-noir-black/40 rounded-lg">
+        <div className="flex items-center gap-2 px-3 py-1 bg-noir-black/40 rounded-lg flex-shrink-0 mx-2">
           <span className="text-xl font-bold text-neon-magenta">{team1Active}</span>
           <span className="text-xs text-muted-foreground">—</span>
           <span className="text-xl font-bold text-ember-red">{team2Active}</span>
         </div>
 
-        <div className="flex items-center gap-2 justify-end flex-1">
-          <div className="text-xs text-right">
-            <p className="font-bold text-ember-red">{team2.nickname}</p>
+        <div className="flex items-center gap-2 justify-end flex-1 min-w-0">
+          <div className="text-xs text-right min-w-0">
+            <p className="font-bold text-ember-red truncate">{team2.nickname}</p>
             <p className="text-xs text-muted-foreground">{team2Active} cups</p>
           </div>
           <PlayerAvatar nickname={team2.nickname} color={team2.color} size="sm" />
@@ -295,11 +295,11 @@ export function BeerPongGame({
         animate={{ opacity: 1, scale: 1 }}
         onTouchStart={handleSwipeStart}
         onTouchEnd={handleSwipeEnd}
-        className="flex-1 flex flex-col items-center justify-center px-4 py-6"
+        className="flex-1 flex flex-col items-center justify-center px-4 py-8 overflow-visible"
       >
         {/* 3D Table Container */}
         <div
-          className="relative rounded-2xl overflow-hidden shadow-2xl"
+          className="relative rounded-2xl overflow-visible shadow-2xl flex-shrink-0"
           style={{
             width: `${CONFIG.TABLE_WIDTH}px`,
             height: `${CONFIG.TABLE_HEIGHT}px`,
@@ -309,8 +309,6 @@ export function BeerPongGame({
               inset 0 0 40px rgba(0, 0, 0, 0.4),
               inset 0 0 0 1px rgba(255, 255, 255, 0.1)
             `,
-            perspective: "1200px",
-            transform: "perspective(1200px) rotateX(8deg)",
           }}
         >
           {/* Center Line */}
@@ -440,7 +438,7 @@ export function BeerPongGame({
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="px-4 py-3 border-t border-plum-deep/30 bg-black/50 backdrop-blur-sm text-center text-xs text-muted-foreground"
+          className="px-4 py-3 border-t border-plum-deep/30 bg-black/50 backdrop-blur-sm text-center text-xs text-muted-foreground flex-shrink-0"
         >
           {currentTurn === "team1" ? "Your turn" : `${team2.nickname}'s turn`}
         </motion.div>
