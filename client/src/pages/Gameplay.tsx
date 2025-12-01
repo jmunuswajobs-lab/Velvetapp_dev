@@ -121,12 +121,12 @@ export default function Gameplay() {
             </button>
 
             <div className="flex items-center gap-3">
-              <span className="text-muted-foreground">Round {session.round}</span>
+              <span className="text-muted-foreground">Round {gameState.round}</span>
               <span className="text-muted-foreground">•</span>
               <span className="text-muted-foreground">{promptsRemaining} left</span>
             </div>
 
-            <HeatMeter value={session.heatLevel} showLabel={false} size="sm" className="w-24" />
+            <HeatMeter value={gameState.heatLevel} showLabel={false} size="sm" className="w-24" />
           </div>
         </div>
       </header>
@@ -163,12 +163,12 @@ export default function Gameplay() {
         </div>
 
         <div className="flex justify-center gap-2 mb-6 overflow-x-auto py-2">
-          {session.players.map((player, index) => (
+          {gameState.players.map((player, index) => (
             <PlayerAvatar
               key={player.nickname}
               nickname={player.nickname}
               color={player.avatarColor}
-              isCurrentTurn={index === session.turnIndex}
+              isCurrentTurn={index === gameState.turnIndex}
               size="sm"
             />
           ))}
@@ -179,7 +179,7 @@ export default function Gameplay() {
             velvetVariant="ghost-glow"
             size="icon"
             onClick={handlePrevious}
-            disabled={session.currentPromptIndex === 0}
+            disabled={gameState.currentPromptIndex === 0}
           >
             <ArrowLeft className="w-5 h-5" />
           </VelvetButton>
