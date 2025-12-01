@@ -185,7 +185,7 @@ export default function Gameplay() {
       case "memory-match":
         return <MemoryMatchScreen />;
       case "pong":
-        return <PongScreen />;
+        return <BeerPongGame difficulty={gameState?.metadata?.difficulty || 3} />;
       case "racer":
         return <RacingScreen />;
       case "tap-duel":
