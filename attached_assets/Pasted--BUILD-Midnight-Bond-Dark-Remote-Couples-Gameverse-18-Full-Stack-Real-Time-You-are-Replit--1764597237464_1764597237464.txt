@@ -1,0 +1,528 @@
+— BUILD “Midnight Bond: Dark Remote Couples Gameverse” (18+, Full Stack, Real-Time)
+
+You are Replit’s principal full-stack engineer, game architect, real-time systems designer, and UX director working inside this Replit project.
+
+You must design and implement a complete, production-grade, full-stack app called:
+
+🖤 Midnight Bond – The Wild 18+ Remote Couples Gameverse
+
+This is a private, online game hub for long-distance couples (18+) and close friends to play dark, kinky, fun games together:
+
+Card games (Truth/Dare, confessions, fantasy prompts)
+
+Board game (Ludo-style couples variant)
+
+Puzzle game (memory/intimacy hybrid)
+
+GamePigeon-style arcade games (ping pong, basketball, paintball-like)
+
+Tone: dark, neon, seductive, flirty, kinky, wild, steamy — but strictly PG-17:
+
+Allowed: teasing, daring, kink-themed prompts, suggestive language
+
+Not allowed: explicit sexual acts, graphic content, minors, illegal/unsafe acts
+
+You must build everything end-to-end: no placeholders, no broken flows, no stub games.
+
+1️⃣ Architecture (Replit Monorepo, Production-Grade)
+
+Inside this single Replit project, create a clear monorepo-style structure:
+
+/frontend   -> SPA (React + TS + Vite + Tailwind + Framer Motion)
+/backend    -> API + WebSocket server (Node + TS)
+/shared     -> Shared types & pure game engines
+
+Frontend
+
+React 18 + TypeScript
+
+Vite (or existing bundler if already set, but cleanly configured)
+
+TailwindCSS with a custom dark neon / velvet theme
+
+Framer Motion for:
+
+Page transitions
+
+Card flips
+
+Token moves
+
+Arcade animations
+
+React Router for routing
+
+React Query (or equivalent) for server state
+
+Mobile-first responsive design
+
+PWA-ready (manifest + service worker) if feasible
+
+Backend
+
+Node.js + TypeScript
+
+Either:
+
+Express/Fastify with modular routers, OR
+
+NestJS style modular app
+
+WebSockets (Socket.io or ws) for real-time rooms + game sync
+
+Prisma ORM (or similar)
+
+Dev: SQLite
+
+Prepared for Postgres by configuration
+
+JWT-based auth plus anonymous/guest mode:
+
+Quick “play as guest with nickname” path
+
+Shared
+
+Strict TypeScript types for:
+
+User, Room, Game, GameSession, TurnLog, etc.
+
+Pure deterministic game engines for:
+
+Midnight Ludo
+
+Core card/prompt flow
+
+Arcade game logic where possible
+
+Key rule:
+Backend is authoritative for online games.
+Frontend only sends intents (ROLL_DICE, MOVE_TOKEN, HIT_BALL, etc.); backend validates and broadcasts final state to all clients.
+
+2️⃣ Core Domain Models (Must Actually Exist and Be Used)
+
+Define and use consistently the following domain entities (in /shared and backend DB):
+
+User
+
+id, displayName, avatarStyle, ageVerified, isGuest
+
+CoupleProfile
+
+id, users (2 users), nickname, heatLevel (0–100), preferredSpiceLevel (1–5)
+
+Game
+
+id, slug, title, category (card | board | puzzle | arcade),
+description, supportsRemote, supportsLocal, minPlayers, maxPlayers, isSpicy
+
+GameVariant
+
+id, gameId, label (“Soft”, “Spicy”, “Wild”), spiceLevel (1–5), notes
+
+Prompt
+
+id, gameId, variantId?, text, type (truth | dare | confession | question | challenge),
+tags, spiceLevel (1–5), isCoupleOnly, safeForRemote
+
+Room
+
+id, code (short string), inviteUrl, createdBy, players[],
+status (waiting | in-game | finished), currentGameId, currentSessionId
+
+GameSession
+
+id, roomId, gameId, variantId, mode (local | remote),
+stateJSON (stringified state object),
+currentTurnPlayerId, isCompleted, startedAt, endedAt
+
+TurnLog
+
+id, gameSessionId, playerId, actionType, payloadJSON, createdAt
+
+ChatMessage
+
+id, roomId, senderId, text, createdAt
+
+stateJSON must be a well-defined schema per game, not a random dump.
+
+3️⃣ Pages / Routes & UX Flows
+
+Implement clean routes and pages:
+
+1. Landing / Age Gate (/)
+
+Brand: “Midnight Bond”
+
+Dark neon hero section
+
+18+ confirmation
+
+Button: “Enter the Gameverse” → redirect to /home
+
+2. Home Hub (/home)
+
+If not authenticated: quick guest login / nickname entry
+
+Show:
+
+“Create Private Room” button
+
+“Join Room by Code” input
+
+Game catalog grid:
+
+Cards grouped by category (Card, Board, Puzzle, Arcade)
+
+Each card: title, tags (“Remote”, “Couples”, “Spicy”), spice indicator, mini description
+
+3. Room Lobby (/room/:code)
+
+Show:
+
+Room code + “Copy invite link”
+
+Player list (avatars, nicknames, ready status)
+
+Selected game & variant
+
+Spice slider (1–5)
+
+Actions:
+
+Choose game (opens selector)
+
+Choose variant/spice
+
+Toggle “Ready”
+
+Host-only “Start Game”
+
+Real-time:
+
+All participants see updates instantly via WebSocket events + query invalidation.
+
+4. Gameplay Shell (/play/:sessionId)
+
+Single generic shell that:
+
+Loads GameSession by sessionId
+
+Determines which game is active by gameId/game.slug
+
+Renders a game-specific React component inside:
+
+Top: game name, current player, heat meter
+
+Center: game UI (cards/board/arcade)
+
+Bottom: actions & chat
+
+5. Settings (/settings)
+
+Manage display name, avatarStyle
+
+Couple linking / preferences (spice level)
+
+Optionally an admin route for editing game metadata and prompts.
+
+4️⃣ Required Games (ALL Must Work 100%)
+
+You must implement at least these four flagship games, fully working in both local and online modes.
+
+A. CARD GAME — “Velvet Truths”
+
+Couples Truth/Dare/Confession/Fantasy prompt game.
+
+Uses Prompt records with game.slug = "velvet-truths"
+
+Setup:
+
+Select variant (Soft / Playful / Bold / Wild / Chaos)
+
+Gameplay:
+
+Turn-based:
+
+Highlight whose turn it is
+
+Animate card flip with Framer Motion
+
+Show prompt text (flirty, kinky-tease, emotional, but non-explicit)
+
+Actions:
+
+“We Did It” → log action
+
+“Skip” → mark prompt as skipped
+
+Logic:
+
+Keep list of used prompt IDs in stateJSON
+
+No repeats until deck exhausts
+
+Respect spice level and flags (isCoupleOnly, safeForRemote)
+
+Online sync:
+
+Both players always see same card, same history, and whose turn it is.
+
+B. BOARD GAME — “Midnight Ludo” (Couples Ludo Variant)
+
+A REAL Ludo-style game, not abstract nonsense.
+
+2 players (focus), support 2–4 if simple
+
+Each player has 3 tokens
+
+Must roll 6 to exit home
+
+Tokens move along a defined path array
+
+Capture sends opponent token back home
+
+Player wins when all tokens reach home
+
+Engine in /shared/midnightLudoEngine.ts (pure functions):
+
+createInitialState(players, config)
+
+rollDice(state, playerId)
+
+getValidMoves(state, playerId, diceValue)
+
+applyMove(state, playerId, tokenId, diceValue)
+
+checkWinner(state)
+
+stateJSON for Ludo session:
+
+{
+  tokens: { id, ownerId, position: "home" | "finished" | number }[],
+  currentPlayerId: string,
+  lastDiceRoll: number | null,
+  validMoves: { tokenId: string, targetPosition: number }[],
+  winnerId: string | null
+}
+
+
+Backend:
+
+Validates rolls and moves
+
+Only active player can roll/move
+
+Broadcast updated state via WebSocket
+
+Frontend:
+
+Draws a recognizable Ludo-style board (cross layout), styled in neon/velvet
+
+Tokens animated to new positions
+
+Shows whose turn it is, dice result, and valid tokens to move
+
+This must look like a polished, mobile-ready Ludo implementation, not broken squares.
+
+C. PUZZLE GAME — “Secret Pairs” (Memory Match)
+
+4x4 or 5x4 grid of face-down cards
+
+Each pair maps to a “secret” (short spicy prompt or label, PG-17)
+
+Turn-based:
+
+Player flips 2 cards
+
+If match:
+
+Mark pair as matched
+
+Show small modal with pair’s prompt
+
+If not match:
+
+Flip back after short delay
+
+Store in stateJSON:
+
+card list with fields { id, pairId, isRevealed, isMatched }
+
+whose turn it is
+
+score per player
+
+Game ends when all pairs matched → show stats.
+
+D. ARCADE GAMES — GamePigeon Style
+
+Implement at least 2 fully working arcade games:
+
+1. Neon Pong (Ping Pong)
+
+2 paddles (one per player)
+
+One ball with x, y, vx, vy
+
+Paddle positions updated from client input; ball movement computed on server or a designated authority
+
+Logic in shared or backend engine:
+
+collision with paddles and walls
+
+scoring when ball exits side
+
+State stored in stateJSON:
+
+ball: { x, y, vx, vy }
+
+paddles: { playerId, y }[]
+
+scores
+
+Sync:
+
+Use frequent server ticks (e.g. 20–30 fps equivalent) OR discrete steps triggered by client, but keep things smooth within Replit constraints
+
+Clients render based on authoritative state
+
+2. Skyline Hoops (Basketball Flick)
+
+Turn-based trick-shot game
+
+Each turn: player selects angle + power (slider/drag)
+
+Backend computes trajectory and decides if basket is made
+
+Animate ball arc on frontend based on computed result
+
+Track attempts and scores, first to N points wins
+
+(Optional) Neon Paint Clash (paintball-like):
+
+Grid of tiles; tapping “shoots” color onto a tile
+
+After N turns, count tiles by color to decide winner.
+
+Each arcade game must have:
+
+Intro state
+
+Gameplay loop
+
+Clear end condition
+
+Summary screen
+
+Working online sync
+
+5️⃣ Real-Time & State Sync (No Hacks)
+
+Implement WebSocket rooms:
+
+Each Room has a WS channel
+
+Events:
+
+room:state – current Room + GameSession snapshot
+
+game:action – client → server intent (roll, move, draw, hit, etc.)
+
+game:state – server → client updated state
+
+Combine with React Query (or similar) so state is synchronized and cached.
+
+Avoid hacky timing fixes:
+
+No navigation “race condition” hacks like arbitrary setTimeout or requestAnimationFrame as a persistence bandaid.
+
+Gameplay pages must load by sessionId and rehydrate from backend.
+
+6️⃣ Visual Identity & Interactions
+
+Use a coherent “Midnight Bond” design system:
+
+Backgrounds: deep black → violet → neon magenta gradients
+
+Particles: ember-like, slow motion
+
+Panels: slightly transparent, blurred, with neon borders
+
+Buttons: large, pill-shaped, glowing
+
+Cards: 3D-ish tilt on hover/tap, soft glow, smooth flip animation
+
+Heat meter: animated gradient bar reflecting couple’s heatLevel
+
+All major screens must look intentional and premium, not like default boilerplate.
+
+7️⃣ Performance, Memory, and Quality
+
+You MUST:
+
+Fix all TypeScript errors
+
+Run and pass npm run build (or equivalent) for frontend and backend
+
+Ensure React dev console has no red errors during normal flows
+
+Ensure WebSocket connections do not leak:
+
+Clean up listeners in useEffect cleanups
+
+Avoid multiple subscriptions per component
+
+Avoid unnecessary re-renders:
+
+Use React.memo, useMemo, useCallback where needed
+
+Keep animations smooth:
+
+Use transform/opacity, no layout thrashing
+
+Do not leave TODO or “coming soon” in core game flows
+
+8️⃣ 18+ Safety Rules
+
+All content:
+
+May be flirty, spicy, bold, kink-themed, emotionally intense
+
+Must not:
+
+Describe explicit sexual acts or genitals
+
+Include minors
+
+Encourage unsafe, illegal, or non-consensual behavior
+
+Each prompt-based action must allow a Skip option.
+
+Display a small consent note somewhere:
+“Always prioritize consent and comfort. Skip anything you’re not okay with.”
+
+9️⃣ Final QA & Summary (Required)
+
+Before you stop modifying code, you MUST:
+
+Test all four main games (Velvet Truths, Midnight Ludo, Secret Pairs, Neon Pong / Skyline Hoops) from:
+
+Home → create room → invite second client (another tab) → lobby → start → full playthrough → summary.
+
+Refresh play/:sessionId mid-game:
+
+Ensure state rehydrates and game is still playable.
+
+Confirm there are no console errors in browser dev tools.
+
+Confirm builds succeed with zero errors.
+
+Remove noisy dev logs.
+
+Then, in the Replit Assistant response, provide:
+
+Short summary of the architecture (frontend, backend, shared)
+
+List of implemented games & their expected flows
+
+Any minor known limitations (should be very few, and not core-flow-breaking)
