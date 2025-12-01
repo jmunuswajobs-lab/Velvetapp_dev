@@ -1,0 +1,375 @@
+PROFESSIONAL CUP PONG REIMPLEMENTATION
+
+You are Replit’s principal game UI + realtime engineer working in this repo:
+
+https://github.com/jmunuswajobs-lab/Velvetapp_dev
+
+Game in focus:
+
+Emotion Ping Pong — now intended to be a Beer Pong / Cup Pong–style game.
+
+Current implementation problems (to FIX):
+
+The board is a flat rounded rectangle with a weird vertical stack of rectangles instead of a triangular cup rack.
+
+The composition doesn’t resemble a Beer Pong table (no perspective, no sense of depth).
+
+Aim/power controls feel like debug sliders, not natural game controls.
+
+The overall UX feels like a prototype, not a finished mini-game.
+
+Your job:
+
+🔴 Rebuild Emotion Ping Pong into a professional-quality, GamePigeon-like Cup Pong experience with:
+
+Clean, 3D-ish table and cup visuals
+
+Proper triangular cup racks
+
+Swipe/drag aiming + power controls
+
+Smooth ball arc & cup hit animations
+
+Correct use of existing Beer Pong game APIs (no new backend unless strictly necessary)
+
+Mobile-first layout that feels polished
+
+No placeholders. No temporary “debug” sliders. This must feel shippable.
+
+1️⃣ Use Existing Beer Pong State & APIs (Don’t Throw Them Away)
+
+Locate all code related to Emotion Ping Pong / Beer Pong:
+
+Backend:
+
+Any game-engine file (beerPongEngine, emotionPongEngine, etc.)
+
+GameSession handling for this game.
+
+WebSocket events (take_shot, beer_pong_action, etc.).
+
+Frontend:
+
+Emotion Ping Pong route/page (games/emotion-ping-pong/play).
+
+The current Beer Pong UI component(s) (table + sliders + THROW button).
+
+Any Zustand/Redux store or hooks used for this game.
+
+Keep the backend API shape as much as possible:
+
+Keep the same actions for “take shot” and “session update”.
+
+Keep the game state fields (remaining cups, whose turn, etc.) unless truly broken.
+
+If you must change them, do so once, clearly, and update all consumers.
+
+Clearly document in comments:
+
+What state fields the frontend relies upon.
+
+What WS actions are sent/received for this game.
+
+2️⃣ New Component: BeerPongGameScreen
+
+Create a dedicated React component for this game:
+
+client/src/games/BeerPongGameScreen.tsx
+
+This component will be the only gameplay view for Emotion Ping Pong.
+
+Bind to route
+
+Update the routing / Gameplay switch so that:
+
+When game.slug === "emotion-ping-pong" or engineType === "beer-pong",
+
+We render <BeerPongGameScreen session={session} /> instead of the old UI.
+
+Remove or stop using the rectangular “stack of cups + sliders” component.
+
+3️⃣ Visual Design — Make It Look Like Real Cup Pong
+
+Design constraints:
+
+Perspective table, not a flat rectangle:
+
+Use CSS transforms (transform: perspective(...) rotateX(...)) or an SVG/trapezoid to suggest depth.
+
+Keep a 16:9-ish table area, centered on screen.
+
+Table
+
+Surface color: rich green (pool-table vibe) or a branded neon green; add subtle noise or gradient.
+
+White center line.
+
+Edge: subtle bevel or border to suggest thickness.
+
+Optional: super soft drop shadow underneath.
+
+Cups
+
+Circular tops (ellipses in perspective), not squares.
+
+Body as a cylinder:
+
+Gradient from mid-tone to darker at bottom for depth.
+
+Color: e.g., bright magenta or blue that matches brand; ensure contrast with table.
+
+Each cup has:
+
+Top ellipse
+
+Rectangular body
+
+Soft shadow on the table behind/below.
+
+Cup layout
+
+Opponent rack: triangular arrangement near the far end:
+
+For 6 cups: 3-2-1 triangle.
+
+For 10: 4-3-2-1 triangle.
+
+Keep cups centered horizontally; slight perspective scaling (back row slightly smaller).
+
+Ball
+
+Small circle with highlight + subtle shadow.
+
+Appears from the near end of the table, travels in an arcing motion.
+
+Use Framer Motion or CSS animations for:
+
+Cup hit (shake + fade/scale out).
+
+Ball flight (x/y/scale, maybe opacity).
+
+4️⃣ Layout & HUD
+
+Layout the screen like this:
+
+Top bar (fixed height):
+
+Left: local player avatar + name + “X cups left”.
+
+Center: score like You 6 — 6 Opponent.
+
+Right: opponent avatar + name + “X cups left”.
+
+Middle:
+
+Main table and cup rack.
+
+When waiting:
+
+Center overlay: “Waiting for opponent…” (semi-transparent panel over table).
+
+When active:
+
+Optional subtle hint: “Swipe up to aim and release to throw”.
+
+Bottom:
+
+For mobile:
+
+Thin bar showing:
+
+Current turn (“Your turn” / “Opponent’s turn”).
+
+Small icons/buttons: exit, sound toggle, etc.
+
+Remove the giant aim/power sliders — replace with swipe/drag controls.
+
+5️⃣ Aiming & Power Controls (Swipe/Drag)
+
+Implement gesture-based controls to feel like Cup Pong:
+
+On the table area:
+
+When it is your turn:
+
+Player touches near the bottom edge of the table and swipes up.
+
+Horizontal offset of swipe → aim (left/right).
+
+Swipe length + speed → power.
+
+Implement:
+
+interface ShotInput {
+  angle: number;  // degrees or radians (left/right)
+  power: number;  // normalized 0–1
+}
+
+
+Steps:
+
+On pointerdown / touchstart:
+
+Store starting position.
+
+On pointerup / touchend:
+
+Compute:
+
+deltaX = end.x - start.x
+
+deltaY = start.y - end.y (upwards swipe)
+
+Derive:
+
+angle = clamp(deltaX * ANGLE_FACTOR, MIN_ANGLE, MAX_ANGLE)
+
+power = clamp(deltaY * POWER_FACTOR, 0, 1)
+
+If power below small threshold → ignore (no accidental flicks).
+
+Send a TAKE_SHOT action using existing WS API, including angle+power (if backend can accept them) or mapping them to whatever fields server expects.
+
+Disable further throws until server responds with updated state.
+
+6️⃣ Ball Animation & Hit Feedback
+
+Client-side ball animation:
+
+Once a shot gesture is completed, immediately start animating a ball from near bottom of table along a parabolic arc:
+
+Use a small physics helper:
+
+t goes 0 → 1 over ~700–900 ms.
+
+x(t) interpolates based on angle.
+
+y(t) moves from near player to opponent cups.
+
+height(t) uses a simple parabola for vertical arc (for shadow scale/opacities).
+
+Show a shadow under the ball that grows smaller as it approaches the farther end.
+
+Server result integration:
+
+Backend decides hit/miss and which cup (as it already does).
+
+When state update arrives:
+
+If hit and a cupId is returned:
+
+Identify that cup in client layout.
+
+Trigger a “hit” animation:
+
+Quick scale up + rotation wiggle.
+
+Fade to 0 and remove from state.
+
+If miss:
+
+Nothing changes; maybe show a small “MISS” label at top for a second.
+
+Ensure that ball animation concludes even if server message arrives quickly; avoid visual popping.
+
+7️⃣ Turn Logic & Realtime Sync
+
+Using the existing session state:
+
+Show whose turn it is clearly:
+
+Bold/colored nickname on the HUD.
+
+Dim the inactive player.
+
+Client rules:
+
+Local player can only initiate a shot if:
+
+session.currentPlayerId === localPlayerId.
+
+Game not finished.
+
+Opponent’s turn:
+
+Ignore swipe gestures for shooting.
+
+Only animate ball & cups based on server updates.
+
+Reconnection:
+
+On reload:
+
+Fetch session state.
+
+Rebuild table + cups from state (remaining cups and positions).
+
+Do not replay previous shots; just show current state.
+
+8️⃣ Remove Old Beer Pong UI + Dead Code
+
+Remove or de-register the old Beer Pong / Emotion Ping Pong UI that used:
+
+Flat rectangular “cups”.
+
+Aim + Power plain sliders.
+
+THROW button as only interaction.
+
+Ensure there is exactly one UI implementation for this game: BeerPongGameScreen.
+
+Clean up unused CSS/JS to avoid confusion.
+
+9️⃣ QA Checklist (Mandatory Before Stopping)
+
+From two different browser tabs (or devices), run through these scenarios:
+
+Start a new Emotion Ping Pong game online:
+
+Both players see the new table, cups in triangular rack, and avatars.
+
+If one player joins first, they see a center “Waiting for opponent…” message.
+
+Take turns shooting:
+
+On your turn, swiping up causes the ball to animate.
+
+Cups disappear on hit with nice animation.
+
+Scores / “X cups left” update correctly on both sides.
+
+Edge cases:
+
+Extremely small swipe → no shot.
+
+Rapid repeated swipes → only one request is sent until state update.
+
+Reload tab mid-game → state rehydrates and UI renders correctly.
+
+End of game:
+
+When one side’s cups = 0:
+
+Show a clear “You Win” / “You Lose” modal or banner.
+
+Provide buttons: “Play again” and “Exit to lobby”.
+
+Technical:
+
+No runtime errors in browser console.
+
+No unhandled promise rejections.
+
+TypeScript build passes with 0 errors.
+
+WebSocket remains stable, no spam reconnections.
+
+🔚 Final Response From You (Replit)
+
+After implementing, respond with:
+
+Files created/modified (especially BeerPongGameScreen, engine integration, routing).
+
+How gestures map to angle/power numerically.
+
+Any configuration constants (cup count, table size, aim sensitivity) and where to tweak them.
