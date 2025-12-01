@@ -13,7 +13,6 @@ import { FadeIn, SlideIn } from "@/components/velvet/PageTransition";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { getRandomAvatarColor, createLocalGameSession } from "@/lib/gameState";
-import { getEngineType } from "@/lib/engineTypeRouter";
 import type { Game, Prompt, RoomSettings } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 
@@ -123,9 +122,8 @@ export default function LocalSetup() {
     }));
 
     try {
-      // Create session synchronously - pass engineType
-      const engineType = getEngineType(slug || "");
-      const sessionId = createLocalGameSession(game.id, validPlayers, settings, prompts || [], engineType);
+      // Create session synchronously - pass engineType from game object
+      const sessionId = createLocalGameSession(game.id, validPlayers, settings, prompts || [], game.engineType);
       
       // Navigate immediately with session ID
       setLocation(`/games/${slug}/play/${sessionId}`);
