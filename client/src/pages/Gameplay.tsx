@@ -108,12 +108,14 @@ export default function Gameplay() {
       // Send move to server
       console.log("Move to next prompt in online game");
     } else {
-      // Local game - use weighted prompt selection
+      // Local game - use weighted prompt selection with remote mode filter
       const usedIds = gameState.usedPromptIds || [];
+      const isRemoteMode = gameState.config?.remoteMode || false;
       const filter: PromptFilter = {
         minSpice: Math.max(1, targetSpice - 1),
         maxSpice: Math.min(5, targetSpice + 1),
         alreadyUsedIds: usedIds,
+        isRemoteMode,
       };
       
       const nextPrompt = getNextPrompt(gameState.prompts, filter, {

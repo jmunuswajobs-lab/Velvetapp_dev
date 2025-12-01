@@ -116,6 +116,7 @@ export interface RoomSettings {
   allowNSFW: boolean;
   allowMovement: boolean;
   coupleMode: boolean;
+  remoteMode: boolean;
   packs: string[];
 }
 
