@@ -106,11 +106,12 @@ export default function Gameplay() {
     );
   }
 
-  // Use weighted prompt selection when available
+  // Use weighted prompt selection when available (only for prompt games)
+  const isPromptGame = engineType === "prompt-party" || engineType === "prompt-couple";
   const targetSpice = gameState.config?.intensity || 3;
-  const currentPrompt = gameState.prompts[gameState.currentPromptIndex];
-  const currentPlayer = gameState.players[gameState.turnIndex];
-  const promptsRemaining = gameState.prompts.length - gameState.currentPromptIndex - 1;
+  const currentPrompt = isPromptGame ? gameState.prompts?.[gameState.currentPromptIndex] : null;
+  const currentPlayer = gameState.players?.[gameState.turnIndex];
+  const promptsRemaining = isPromptGame ? (gameState.prompts?.length || 0) - gameState.currentPromptIndex - 1 : 0;
 
   const handleNext = () => {
     if (isOnlineGame) {
@@ -202,6 +203,45 @@ export default function Gameplay() {
     }
   };
 
+  // For arcade/board games, render just the game screen
+  if (!isPromptGame) {
+    return (
+      <div className="min-h-screen relative flex flex-col">
+        <div 
+          className="fixed inset-0 -z-20"
+          style={{
+            background: `
+              radial-gradient(ellipse at 50% 30%, rgba(176, 15, 47, 0.25) 0%, transparent 50%),
+              radial-gradient(ellipse at 50% 70%, rgba(59, 15, 92, 0.3) 0%, transparent 50%),
+              linear-gradient(180deg, #050509 0%, #0A0A12 100%)
+            `,
+          }}
+        />
+        <EmberParticles count={20} />
+
+        <header className="glass border-b border-plum-deep/30 shrink-0">
+          <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div className="text-sm font-semibold text-neon-magenta capitalize">
+              {slug?.replace(/-/g, " ")}
+            </div>
+            <button
+              onClick={handleEndGame}
+              className="flex items-center gap-2 text-muted-foreground hover:text-white transition-colors"
+            >
+              <X className="w-4 h-4" />
+              <span className="hidden sm:inline">Exit</span>
+            </button>
+          </div>
+        </header>
+
+        <main className="flex-1 flex flex-col w-full">
+          {renderGameScreen()}
+        </main>
+      </div>
+    );
+  }
+
+  // For prompt games, show the full UI with prompts
   return (
     <div className="min-h-screen relative flex flex-col">
       <div 
@@ -220,9 +260,7 @@ export default function Gameplay() {
         <div className="max-w-4xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="text-sm font-semibold text-neon-magenta capitalize">
-              {engineType === "prompt-party" || engineType === "prompt-couple"
-                ? `${slug?.replace(/-/g, " ")} - Card Game`
-                : slug?.replace(/-/g, " ")}
+              {slug?.replace(/-/g, " ")} - Card Game
             </div>
             <button
               onClick={handleEndGame}
@@ -248,28 +286,28 @@ export default function Gameplay() {
           <p className="text-sm text-muted-foreground mb-2">It's your turn</p>
           <div className="flex items-center justify-center gap-3">
             <PlayerAvatar
-              nickname={currentPlayer.nickname}
-              color={currentPlayer.avatarColor}
+              nickname={currentPlayer?.nickname}
+              color={currentPlayer?.avatarColor}
               isCurrentTurn
               size="lg"
             />
             <span className="text-xl font-display font-semibold gradient-text">
-              {currentPlayer.nickname}
+              {currentPlayer?.nickname}
             </span>
           </div>
         </FadeIn>
 
         <div className="flex-1 flex items-center justify-center py-4">
           <motion.div
-            key={currentPrompt.id}
+            key={currentPrompt?.id}
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             className="w-full max-w-sm"
           >
             <PromptCard
-              text={currentPrompt.text}
-              type={currentPrompt.type}
-              intensity={currentPrompt.intensity}
+              text={currentPrompt?.text || ""}
+              type={currentPrompt?.type || "truth"}
+              intensity={currentPrompt?.intensity || 3}
             />
           </motion.div>
         </div>
