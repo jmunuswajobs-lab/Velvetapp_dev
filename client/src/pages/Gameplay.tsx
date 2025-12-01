@@ -15,6 +15,7 @@ import { useLocalGameSession, useOnlineRoom } from "@/lib/gameState";
 import { useToast } from "@/hooks/use-toast";
 import { getNextPrompt, type PromptFilter } from "@/lib/promptEngine";
 import { getEngineType } from "@/lib/engineTypeRouter";
+import { BeerPongGame } from "@/components/velvet/BeerPongGame";
 import {
   PromptGameScreen,
   MemoryMatchScreen,

@@ -1,0 +1,323 @@
+Rebuild Emotion Ping Pong into Real Beer Pong (GamePigeon/Plato Style)
+
+You are Replit’s lead game UX + realtime engineer working in this repo:
+
+https://github.com/jmunuswajobs-lab/Velvetapp_dev
+
+Current problem:
+
+The “Emotion Ping Pong” game is trying to be beer pong, but:
+
+The UI is just pink cards in a triangle
+
+No aiming arc, no ball physics, no satisfying hits/misses
+
+Architecture is “prompt game in disguise”, not a proper arcade mini-game
+
+Your job:
+
+🔴 Completely re-implement Emotion Ping Pong as a proper Beer Pong–style game, inspired by GamePigeon / Plato beer pong, with:
+
+Advanced aiming + power mechanics
+
+Clean mobile-first UI
+
+Real ball trajectory, cup hits, and knockouts
+
+Stable realtime architecture that fits the existing game/session system
+
+No placeholders, no TODOs, no card-based UI. This must ship as a real, fun, party-grade minigame.
+
+1️⃣ Re-define the Game: “Emotion Ping Pong” = Beer Pong
+
+Keep the slug/route (emotion-ping-pong) but treat it as Beer Pong with a twist:
+
+Two sides: Team 1 vs Team 2
+
+Each side has a triangle rack of cups (6 or 10 cups; choose one and be consistent)
+
+Players take turns “throwing” a ball:
+
+Aim + power
+
+Ball arcs toward the opponent’s cups
+
+If it lands in a cup → that cup is removed
+
+First team to clear all cups wins
+
+Optional “emotion” twist (secondary, not core):
+
+Each hit triggers a category (e.g., silly, bold, emotional, wild) that can show a small prompt/consequence
+
+But the core loop is: aim → throw → hit/miss → cups update
+
+2️⃣ Engine & Architecture
+
+Use the existing engineType system, and ensure:
+
+emotion-ping-pong has engineType = "beer-pong" (or "pong" if reusing)
+
+Add a dedicated engine module, e.g.:
+
+shared/game-engines/beerPongEngine.ts
+
+Expose:
+
+export interface BeerPongState {
+  currentPlayerId: string;
+  teams: {
+    id: "team1" | "team2";
+    playerIds: string[];
+    remainingCups: CupState[]; // cup positions + active flag
+    score: number;
+  }[];
+  shotNumber: number;
+  lastShot?: {
+    fromTeamId: string;
+    hit: boolean;
+    hitCupId?: string;
+  };
+  winnerTeamId?: string;
+}
+
+export interface CupState {
+  id: string;
+  x: number;
+  y: number;
+  active: boolean;
+}
+
+export type BeerPongAction =
+  | { type: "START_MATCH"; roomId: string; players: string[] }
+  | { type: "TAKE_SHOT"; playerId: string; aimAngle: number; power: number }
+  | { type: "RESOLVE_SHOT"; hit: boolean; cupId?: string };
+
+
+Engine functions:
+
+export function createInitialBeerPongState(players: string[]): BeerPongState;
+export function applyBeerPongAction(
+  state: BeerPongState,
+  action: BeerPongAction
+): BeerPongState;
+export function isBeerPongOver(state: BeerPongState): boolean;
+
+
+Rules:
+
+State lives on the server (authoritative)
+
+Client sends TAKE_SHOT intent (angle + power + playerId)
+
+Server decides hit/miss + which cup (simple physics or probabilistic model based on aim)
+
+Server broadcasts updated state to both clients via WebSocket
+
+Integrate this engine into the existing session handling:
+
+When start_game for Emotion Ping Pong:
+
+Create BeerPongState via createInitialBeerPongState(players)
+
+Store in GameSession.stateJSON
+
+Set session.engineType = "beer-pong"
+
+On beer pong actions from clients:
+
+Route through applyBeerPongAction
+
+Persist new state
+
+Broadcast to all clients in the room
+
+3️⃣ Frontend: GamePigeon-style Beer Pong UI
+
+Create a dedicated React component, e.g.:
+
+client/src/games/BeerPongGame.tsx
+
+This component:
+
+Layout
+
+Dark velvet background with subtle ember particles (same theme as rest of app)
+
+Top: “Team 1 vs Team 2” scoreboard
+
+Center:
+
+A stylized top-down or slightly angled table
+
+Opponent’s cups at the top in a proper triangular rack
+
+Player’s cups at the bottom for reference
+
+Bottom: aim + power controls and throw button
+
+Cup Visuals
+
+Neon cups with:
+
+Glow
+
+Small depth (gradient + shadow)
+
+When a cup is hit:
+
+Short impact animation (shake/scale/fade)
+
+Then fade out / shrink away so the rack visually empties
+
+Use a consistent coordinate system (cup x, y from engine state)
+
+Aim + Power Mechanics
+
+Show a vertical or arc aiming guide:
+
+Drag left/right to adjust horizontal aim
+
+Drag up/down or press-and-hold to adjust power
+
+Visual feedback:
+
+A line or arc representing the predicted trajectory
+
+Power bar with gradient and small glow
+
+Throw Animation
+
+When the player taps “Throw”:
+
+Disable the button while the shot resolves
+
+Animate a ball along the predicted trajectory:
+
+Use simple parabolic motion (x, y, height) with easing
+
+Trigger cup hit/miss based on server result:
+
+If hit → animate ball disappearing into that cup + cup removal
+
+If miss → ball flies past or bounces
+
+Turns & Messaging
+
+Always show “It’s Team X’s turn” with clear highlight (border/underline team label)
+
+If remote, only allow the active player/team to interact with aim/power/throw
+
+Mobile-first
+
+UI must work perfectly on phone screens:
+
+Aim via thumb drag/tap
+
+Big hitbox for cups/controls
+
+Use responsive layout (flex + media queries or Tailwind)
+
+4️⃣ Wiring Into Gameplay Screen
+
+In the main Gameplay component / route switch:
+
+When session.engineType === "beer-pong" (or engineType assigned for Emotion Ping Pong):
+
+Render <BeerPongGame session={session} />
+
+Do not render any truth/dare/confession cards in this mode
+
+Make sure that when we navigate to /games/emotion-ping-pong/play/:sessionId, we hit this beer pong component directly
+
+5️⃣ Advanced Logic Touches
+
+Make the game feel smart and advanced, not janky:
+
+Shot Resolution
+
+Use angle + power + a tiny randomness factor:
+
+Slightly better accuracy for “centered” aim/power
+
+Add a controlled random offset to avoid feeling robotic
+
+Map the final simulated position to nearest active cup; decide hit/miss
+
+Cup Re-Racking (Optional)
+
+When a team drops to a certain number of cups (e.g., 3), allow a simple “auto rack” into a smaller triangle
+
+Represent with new CupState coordinates
+
+Overtime / Sudden Death (Optional)
+
+If both sides hit final cup in same round, trigger sudden death:
+
+1 cup each, alternating turns
+
+Emotion Integration (Optional, Lightweight)
+
+On hit, optionally show a small banner:
+
+“Emotion: Wild!” / “Emotion: Tease!” / “Emotion: Hype!”
+
+This can later tie into prompts, but should NOT replace the core Beer Pong loop
+
+6️⃣ Networking and State Sync
+
+Ensure:
+
+Only the active player can send TAKE_SHOT
+
+When a shot is taken:
+
+Disable further throws until server responds with updated state
+
+All clients subscribe to GameSession via WebSocket:
+
+On state change → UI re-renders with new cup layout, scores, and turn
+
+Handle:
+
+Reconnection: if a player refreshes, re-load BeerPongState from session and render current rack+turn
+
+No duplicate shots if latency spikes
+
+7️⃣ Testing Checklist (Do This Before Finishing)
+
+From two browser tabs (Team 1 & Team 2):
+
+Start Emotion Ping Pong game from lobby:
+
+Confirm Beer Pong UI appears (table, cups, aim, throw button).
+
+Take turns throwing:
+
+Ball animates toward cups
+
+Hits remove cups
+
+Misses do nothing except maybe a small “Miss!” indicator
+
+Scoreboard and turn indicator update correctly.
+
+When one side’s cups reach 0:
+
+Show a clear win screen (“Team X wins”) with “Play Again” or “Back to Lobby”.
+
+Confirm:
+
+No truth/dare/confession UI appears anywhere in this game
+
+No console errors
+
+Session resumes correctly after refresh
+
+Finally, summarize in your reply:
+
+Files created/updated (engine, component, session routing)
+
+How to tweak number of cups and power curve
+
+Any optional advanced features implemented (re-racks, sudden death, etc.)

@@ -1,28 +1,108 @@
 import type { GameEngineState, GameAction, GameEngineConfig, GameEngineInterface } from "./types";
 
+interface CupState {
+  id: string;
+  x: number;
+  y: number;
+  active: boolean;
+}
+
 interface BeerPongState {
-  team1Cups: boolean[];
-  team2Cups: boolean[];
-  currentTeam: 1 | 2;
-  score1: number;
-  score2: number;
-  round: number;
+  team1: {
+    id: "team1";
+    cups: CupState[];
+    score: number;
+  };
+  team2: {
+    id: "team2";
+    cups: CupState[];
+    score: number;
+  };
+  currentTeamId: "team1" | "team2";
+  shotNumber: number;
   difficulty: number;
+  lastShot?: {
+    teamId: "team1" | "team2";
+    hit: boolean;
+    hitCupId?: string;
+    aimAngle: number;
+    power: number;
+  };
+  winnerTeamId?: "team1" | "team2";
+}
+
+// Generate cup positions in triangle formation (6 cups)
+function generateCupPositions(): CupState[] {
+  const cups: CupState[] = [];
+  const rows = [1, 2, 3]; // Triangle: 1, 2, 3 cups
+  let id = 0;
+
+  rows.forEach((count, rowIdx) => {
+    for (let i = 0; i < count; i++) {
+      const x = 50 + (i - count / 2 + 0.5) * 20; // Centered
+      const y = 20 + rowIdx * 25;
+      cups.push({
+        id: `cup-${id}`,
+        x,
+        y,
+        active: true,
+      });
+      id++;
+    }
+  });
+
+  return cups;
+}
+
+// Physics-based hit detection
+function calculateHit(
+  aimAngle: number,
+  power: number,
+  difficulty: number,
+  cups: CupState[]
+): { hit: boolean; cupId?: string } {
+  // Base accuracy: difficulty 1=easy(70%), 2=medium(60%), 3=hard(50%), 4=extreme(40%)
+  const accuracyChances = [0.7, 0.6, 0.5, 0.4];
+  const baseAccuracy = accuracyChances[difficulty - 1] || 0.6;
+
+  // Power affects aim consistency (more power = slightly less accurate)
+  const powerAdjustment = 1 - power * 0.15;
+  const finalAccuracy = baseAccuracy * powerAdjustment;
+
+  // Determine if hit
+  const isHit = Math.random() < finalAccuracy;
+
+  if (!isHit) {
+    return { hit: false };
+  }
+
+  // Select random active cup
+  const activeCups = cups.filter(c => c.active);
+  if (activeCups.length === 0) {
+    return { hit: false };
+  }
+
+  const selectedCup = activeCups[Math.floor(Math.random() * activeCups.length)];
+  return { hit: true, cupId: selectedCup.id };
 }
 
 export const beerPongEngine: GameEngineInterface = {
   createInitialState(config: GameEngineConfig): GameEngineState {
-    const cupsPerTeam = 10;
-
     return {
       type: "beer-pong",
       data: {
-        team1Cups: Array(cupsPerTeam).fill(true),
-        team2Cups: Array(cupsPerTeam).fill(true),
-        currentTeam: 1,
-        score1: cupsPerTeam,
-        score2: cupsPerTeam,
-        round: 1,
+        team1: {
+          id: "team1",
+          cups: generateCupPositions(),
+          score: 6,
+        },
+        team2: {
+          id: "team2",
+          cups: generateCupPositions(),
+          score: 6,
+        },
+        currentTeamId: "team1",
+        shotNumber: 1,
         difficulty: config.difficulty || 3,
       } as BeerPongState,
     };
@@ -31,64 +111,47 @@ export const beerPongEngine: GameEngineInterface = {
   applyAction(state: GameEngineState, action: GameAction): GameEngineState {
     const bpState = state.data as BeerPongState;
 
-    if (action.type === "throw") {
+    if (action.type === "shoot") {
       const newState = { ...state };
+      const { aimAngle, power } = action.payload || {};
 
-      // Hit chance based on difficulty (1-4): Easy=70%, Medium=60%, Hard=50%, Extreme=40%
-      const hitChances = [0.7, 0.6, 0.5, 0.4];
-      const hitChance = hitChances[bpState.difficulty - 1] || 0.6;
-      const isHit = Math.random() < hitChance;
+      const targetTeam = bpState.currentTeamId === "team1" ? bpState.team2 : bpState.team1;
+      const { hit, cupId } = calculateHit(aimAngle, power, bpState.difficulty, targetTeam.cups);
 
-      if (isHit) {
-        const targetCups = bpState.currentTeam === 1 ? bpState.team2Cups : bpState.team1Cups;
-        const activeCups = targetCups
-          .map((cup, idx) => (cup ? idx : -1))
-          .filter(idx => idx !== -1);
-
-        if (activeCups.length > 0) {
-          const targetIdx = activeCups[Math.floor(Math.random() * activeCups.length)];
-
-          if (bpState.currentTeam === 1) {
-            const newTeam2Cups = [...bpState.team2Cups];
-            newTeam2Cups[targetIdx] = false;
-            const remainingCups = newTeam2Cups.filter(c => c).length;
-
-            newState.data = {
-              ...bpState,
-              team2Cups: newTeam2Cups,
-              score2: remainingCups,
-              currentTeam: remainingCups === 0 ? 1 : 2,
-            };
-          } else {
-            const newTeam1Cups = [...bpState.team1Cups];
-            newTeam1Cups[targetIdx] = false;
-            const remainingCups = newTeam1Cups.filter(c => c).length;
-
-            newState.data = {
-              ...bpState,
-              team1Cups: newTeam1Cups,
-              score1: remainingCups,
-              currentTeam: remainingCups === 0 ? 2 : 1,
-            };
-          }
-        }
-      } else {
-        // Miss - switch team
-        newState.data = {
-          ...bpState,
-          currentTeam: bpState.currentTeam === 1 ? 2 : 1,
+      let newTargetTeam = targetTeam;
+      if (hit && cupId) {
+        newTargetTeam = {
+          ...targetTeam,
+          cups: targetTeam.cups.map(cup =>
+            cup.id === cupId ? { ...cup, active: false } : cup
+          ),
+          score: targetTeam.cups.filter(c => c.id !== cupId && c.active).length,
         };
       }
 
-      return newState;
-    }
+      const nextTeam = bpState.currentTeamId === "team1" ? "team2" : "team1";
+      let winnerTeamId = undefined;
 
-    if (action.type === "nextRound") {
-      const newState = { ...state };
+      if (newTargetTeam.score === 0) {
+        winnerTeamId = bpState.currentTeamId as any;
+      }
+
       newState.data = {
         ...bpState,
-        round: bpState.round + 1,
+        team1: bpState.currentTeamId === "team1" ? bpState.team1 : newTargetTeam,
+        team2: bpState.currentTeamId === "team2" ? bpState.team2 : newTargetTeam,
+        currentTeamId: nextTeam,
+        shotNumber: bpState.shotNumber + 1,
+        lastShot: {
+          teamId: bpState.currentTeamId,
+          hit,
+          hitCupId: cupId,
+          aimAngle,
+          power,
+        },
+        winnerTeamId,
       };
+
       return newState;
     }
 
@@ -97,34 +160,27 @@ export const beerPongEngine: GameEngineInterface = {
 
   isGameOver(state: GameEngineState) {
     const bpState = state.data as BeerPongState;
-    const winner =
-      bpState.score1 === 0 ? 1 : bpState.score2 === 0 ? 2 : undefined;
-
     return {
-      isOver: !!winner,
-      winner,
+      isOver: !!bpState.winnerTeamId,
+      winner: bpState.winnerTeamId === "team1" ? 1 : bpState.winnerTeamId === "team2" ? 2 : undefined,
     };
   },
 
   getValidMoves(state: GameEngineState) {
-    return [
-      {
-        type: "throw",
-        payload: { targetTeam: state.data.currentTeam === 1 ? 2 : 1 },
-      },
-    ];
+    return [{ type: "shoot", payload: { aimAngle: 0, power: 1 } }];
   },
 
   getGameStatus(state: GameEngineState) {
     const bpState = state.data as BeerPongState;
     return {
-      team1Cups: bpState.team1Cups,
-      team2Cups: bpState.team2Cups,
-      currentTeam: bpState.currentTeam,
-      score1: bpState.score1,
-      score2: bpState.score2,
-      round: bpState.round,
-      difficulty: bpState.difficulty,
+      team1Cups: bpState.team1.cups,
+      team1Score: bpState.team1.score,
+      team2Cups: bpState.team2.cups,
+      team2Score: bpState.team2.score,
+      currentTeamId: bpState.currentTeamId,
+      shotNumber: bpState.shotNumber,
+      lastShot: bpState.lastShot,
+      winner: bpState.winnerTeamId,
     };
   },
 };

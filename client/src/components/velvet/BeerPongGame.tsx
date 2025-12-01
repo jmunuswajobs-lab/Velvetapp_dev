@@ -1,372 +1,386 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { VelvetButton } from "./VelvetButton";
 
-interface BeerPongState {
-  team1Cups: boolean[];
-  team2Cups: boolean[];
-  currentTeam: 1 | 2;
-  score1: number;
-  score2: number;
-  gameActive: boolean;
-  turnPhase: "throw" | "result";
-  hitCup: number | null;
-  difficulty: number;
-  lastResult: "hit" | "miss" | null;
+interface Cup {
+  id: string;
+  x: number;
+  y: number;
+  active: boolean;
 }
 
-const INITIAL_CUPS = 10;
+interface BeerPongProps {
+  onGameEnd?: (winner: "team1" | "team2") => void;
+  difficulty?: number;
+}
 
-export function BeerPongGame({ 
-  onGameEnd, 
-  difficulty = 3 
-}: { 
-  onGameEnd?: (winner: number) => void
-  difficulty?: number 
-}) {
-  const [gameState, setGameState] = useState<BeerPongState>({
-    team1Cups: Array(INITIAL_CUPS).fill(true),
-    team2Cups: Array(INITIAL_CUPS).fill(true),
-    currentTeam: 1,
-    score1: INITIAL_CUPS,
-    score2: INITIAL_CUPS,
-    gameActive: true,
-    turnPhase: "throw",
-    hitCup: null,
-    difficulty,
-    lastResult: null,
-  });
+export function BeerPongGame({ onGameEnd, difficulty = 3 }: BeerPongProps) {
+  // Game state
+  const [team1Cups, setTeam1Cups] = useState<Cup[]>([]);
+  const [team2Cups, setTeam2Cups] = useState<Cup[]>([]);
+  const [currentTeam, setCurrentTeam] = useState<"team1" | "team2">("team1");
+  const [winner, setWinner] = useState<"team1" | "team2" | null>(null);
 
-  const [timeLeft, setTimeLeft] = useState(4);
-  const [ballAnimation, setBallAnimation] = useState(false);
+  // UI state
+  const [aimAngle, setAimAngle] = useState(0); // -30 to 30 degrees
+  const [power, setPower] = useState(0.5); // 0 to 1
+  const [isShooting, setIsShooting] = useState(false);
+  const [lastResult, setLastResult] = useState<"hit" | "miss" | null>(null);
+  const [throwCount, setThrowCount] = useState(0);
 
-  const handleThrow = useCallback(() => {
-    if (!gameState.gameActive || gameState.turnPhase !== "throw") return;
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const aimDragRef = useRef<{ startX: number } | null>(null);
+  const powerDragRef = useRef<{ startY: number } | null>(null);
 
-    setBallAnimation(true);
-    const hitChances = [0.7, 0.6, 0.5, 0.4];
-    const hitChance = hitChances[gameState.difficulty - 1] || 0.6;
-    const isHit = Math.random() < hitChance;
+  // Initialize cups
+  useEffect(() => {
+    const generateCups = (): Cup[] => {
+      const cups: Cup[] = [];
+      const rows = [1, 2, 3];
+      let id = 0;
+      rows.forEach((count, rowIdx) => {
+        for (let i = 0; i < count; i++) {
+          cups.push({
+            id: `cup-${id}`,
+            x: 50 + (i - count / 2 + 0.5) * 15,
+            y: 15 + rowIdx * 20,
+            active: true,
+          });
+          id++;
+        }
+      });
+      return cups;
+    };
 
-    setTimeout(() => {
-      if (isHit) {
-        const targetCups = gameState.currentTeam === 1 ? gameState.team2Cups : gameState.team1Cups;
-        const activeCups = targetCups
-          .map((cup, idx) => (cup ? idx : -1))
-          .filter(idx => idx !== -1);
+    setTeam1Cups(generateCups());
+    setTeam2Cups(generateCups());
+  }, []);
 
-        if (activeCups.length > 0) {
-          const targetIdx = activeCups[Math.floor(Math.random() * activeCups.length)];
+  // Draw canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-          if (gameState.currentTeam === 1) {
-            const newTeam2Cups = [...gameState.team2Cups];
-            newTeam2Cups[targetIdx] = false;
-            const remainingCups = newTeam2Cups.filter(c => c).length;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-            setGameState(prev => ({
-              ...prev,
-              team2Cups: newTeam2Cups,
-              score2: remainingCups,
-              turnPhase: "result",
-              hitCup: targetIdx,
-              lastResult: "hit",
-            }));
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
 
-            if (remainingCups === 0) {
-              setGameState(prev => ({ ...prev, gameActive: false }));
-              onGameEnd?.(1);
-              return;
-            }
-          } else {
-            const newTeam1Cups = [...gameState.team1Cups];
-            newTeam1Cups[targetIdx] = false;
-            const remainingCups = newTeam1Cups.filter(c => c).length;
+    const scale = canvas.width / 100;
 
-            setGameState(prev => ({
-              ...prev,
-              team1Cups: newTeam1Cups,
-              score1: remainingCups,
-              turnPhase: "result",
-              hitCup: targetIdx,
-              lastResult: "hit",
-            }));
+    // Clear
+    ctx.fillStyle = "rgba(20, 10, 30, 0.8)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            if (remainingCups === 0) {
-              setGameState(prev => ({ ...prev, gameActive: false }));
-              onGameEnd?.(2);
-              return;
-            }
+    // Draw aiming guide
+    if (!isShooting) {
+      const centerX = canvas.width / 2;
+      const startY = canvas.height * 0.85;
+
+      ctx.strokeStyle = `rgba(255, 0, 138, ${0.3 + power * 0.3})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(centerX, startY);
+
+      const angle = (aimAngle * Math.PI) / 180;
+      const trajectoryLength = 200 * (0.5 + power * 0.5);
+      const endX = centerX + Math.sin(angle) * trajectoryLength;
+      const endY = startY - Math.cos(angle) * trajectoryLength;
+
+      ctx.lineTo(endX, endY);
+      ctx.stroke();
+
+      // Draw arc
+      ctx.strokeStyle = `rgba(255, 0, 138, ${0.2 + power * 0.2})`;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      for (let t = 0; t <= 1; t += 0.1) {
+        const x = centerX + Math.sin(angle) * trajectoryLength * t;
+        const y = startY - (Math.cos(angle) * trajectoryLength * t - (t * t * 50 * (1 - power)));
+        if (t === 0) {
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // Draw cups
+    const drawCups = (cups: Cup[], y: number, color: string) => {
+      cups.forEach(cup => {
+        const x = (cup.x / 100) * canvas.width;
+        const cupY = (y / 100) * canvas.height;
+        const cupSize = 8 * scale;
+
+        if (cup.active) {
+          ctx.fillStyle = color;
+          ctx.shadowColor = color;
+          ctx.shadowBlur = 10;
+          ctx.fillRect(x - cupSize / 2, cupY - cupSize / 2, cupSize, cupSize);
+          ctx.shadowColor = "transparent";
+        }
+      });
+    };
+
+    drawCups(currentTeam === "team1" ? team2Cups : team1Cups, 15, "rgba(255, 0, 138, 0.8)");
+    drawCups(currentTeam === "team1" ? team1Cups : team2Cups, 80, "rgba(176, 15, 47, 0.8)");
+
+    // Draw player indicator
+    ctx.fillStyle = currentTeam === "team1" ? "rgb(255, 0, 138)" : "rgb(176, 15, 47)";
+    ctx.font = "12px system-ui";
+    ctx.textAlign = "center";
+    ctx.fillText(currentTeam === "team1" ? "🟣 TEAM 1" : "🔴 TEAM 2", canvas.width / 2, 30);
+
+    // Draw power bar
+    ctx.fillStyle = "rgba(255, 0, 138, 0.2)";
+    ctx.fillRect(10, canvas.height - 50, 100, 8);
+    ctx.fillStyle = `rgba(255, 0, 138, ${0.5 + power * 0.5})`;
+    ctx.fillRect(10, canvas.height - 50, 100 * power, 8);
+    ctx.strokeStyle = "rgba(255, 0, 138, 0.5)";
+    ctx.strokeRect(10, canvas.height - 50, 100, 8);
+  }, [team1Cups, team2Cups, currentTeam, aimAngle, power, isShooting]);
+
+  // Handle shooting
+  const handleShoot = async () => {
+    if (isShooting) return;
+
+    setIsShooting(true);
+    setThrowCount(prev => prev + 1);
+
+    // Simulate server-side hit detection
+    const accuracyChances = [0.7, 0.6, 0.5, 0.4];
+    const baseAccuracy = accuracyChances[difficulty - 1] || 0.6;
+    const powerAdjustment = 1 - power * 0.15;
+    const finalAccuracy = baseAccuracy * powerAdjustment;
+
+    const hit = Math.random() < finalAccuracy;
+
+    // Animation delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+
+    if (hit) {
+      const targetCups = currentTeam === "team1" ? team2Cups : team1Cups;
+      const activeCups = targetCups.filter(c => c.active);
+
+      if (activeCups.length > 0) {
+        const hitCup = activeCups[Math.floor(Math.random() * activeCups.length)];
+        const newCups = targetCups.map(cup =>
+          cup.id === hitCup.id ? { ...cup, active: false } : cup
+        );
+
+        if (currentTeam === "team1") {
+          setTeam2Cups(newCups);
+          if (newCups.every(c => !c.active)) {
+            setWinner("team1");
+            onGameEnd?.("team1");
+          }
+        } else {
+          setTeam1Cups(newCups);
+          if (newCups.every(c => !c.active)) {
+            setWinner("team2");
+            onGameEnd?.("team2");
           }
         }
-      } else {
-        setGameState(prev => ({
-          ...prev,
-          turnPhase: "result",
-          hitCup: null,
-          lastResult: "miss",
-        }));
       }
 
-      setTimeLeft(4);
-      setBallAnimation(false);
-    }, 600);
-  }, [gameState, onGameEnd]);
+      setLastResult("hit");
+    } else {
+      setLastResult("miss");
+    }
 
-  // Auto-advance turns
-  useEffect(() => {
-    if (!gameState.gameActive || gameState.turnPhase === "throw") return;
-
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          setGameState(prev => ({
-            ...prev,
-            currentTeam: prev.currentTeam === 1 ? 2 : 1,
-            turnPhase: "throw",
-            hitCup: null,
-            lastResult: null,
-          }));
-          return 4;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [gameState.turnPhase, gameState.gameActive]);
-
-  const resetGame = () => {
-    setGameState({
-      team1Cups: Array(INITIAL_CUPS).fill(true),
-      team2Cups: Array(INITIAL_CUPS).fill(true),
-      currentTeam: 1,
-      score1: INITIAL_CUPS,
-      score2: INITIAL_CUPS,
-      gameActive: true,
-      turnPhase: "throw",
-      hitCup: null,
-      difficulty,
-      lastResult: null,
-    });
-    setTimeLeft(4);
-    setBallAnimation(false);
+    // Reset for next turn
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    setCurrentTeam(currentTeam === "team1" ? "team2" : "team1");
+    setAimAngle(0);
+    setPower(0.5);
+    setLastResult(null);
+    setIsShooting(false);
   };
 
-  const renderCups = (cups: boolean[], isTeam2: boolean) => {
-    const cupsPerRow = [1, 2, 3, 4];
-    let cupIndex = 0;
+  // Aim controls
+  const handleAimDown = (e: React.MouseEvent | React.TouchEvent) => {
+    const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+    aimDragRef.current = { startX: clientX };
+  };
 
-    return (
-      <div className="flex flex-col items-center gap-3">
-        {cupsPerRow.map((count, rowIdx) => (
-          <div key={rowIdx} className="flex gap-3 justify-center">
-            {Array(count)
-              .fill(0)
-              .map((_, idx) => {
-                const currentCup = cups[cupIndex];
-                const cupNum = cupIndex;
-                cupIndex++;
-                const isHit = gameState.hitCup === cupNum && gameState.turnPhase === "result";
+  const handleAimMove = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!aimDragRef.current) return;
+    const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+    const delta = clientX - aimDragRef.current.startX;
+    const newAngle = Math.max(-30, Math.min(30, (delta / 2)));
+    setAimAngle(newAngle);
+  };
 
-                return (
-                  <motion.div
-                    key={cupNum}
-                    animate={isHit ? { scale: [1, 1.2, 0.3], opacity: [1, 1, 0] } : { scale: 1 }}
-                    transition={{ duration: 0.4 }}
-                    className={`
-                      w-10 h-14 rounded-md transition-all cursor-pointer
-                      flex items-center justify-center font-bold text-lg
-                      ${
-                        currentCup
-                          ? `${
-                              isHit
-                                ? "bg-gradient-to-b from-ember-red to-heat-pink shadow-lg shadow-ember-red/50"
-                                : "bg-gradient-to-b from-neon-magenta to-plum-deep shadow-lg shadow-neon-magenta/40 hover:shadow-neon-magenta/60"
-                            }`
-                          : "bg-plum-deep/20 opacity-20 cursor-default"
-                      }
-                    `}
-                  >
-                    {currentCup && "🍺"}
-                  </motion.div>
-                );
-              })}
-          </div>
-        ))}
-      </div>
-    );
+  const handleAimUp = () => {
+    aimDragRef.current = null;
+  };
+
+  // Power controls
+  const handlePowerDown = (e: React.MouseEvent | React.TouchEvent) => {
+    const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
+    powerDragRef.current = { startY: clientY };
+  };
+
+  const handlePowerMove = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!powerDragRef.current) return;
+    const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
+    const delta = powerDragRef.current.startY - clientY;
+    const newPower = Math.max(0.3, Math.min(1, power + delta / 100));
+    setPower(newPower);
+    powerDragRef.current.startY = clientY;
+  };
+
+  const handlePowerUp = () => {
+    powerDragRef.current = null;
+  };
+
+  const resetGame = () => {
+    const generateCups = (): Cup[] => {
+      const cups: Cup[] = [];
+      const rows = [1, 2, 3];
+      let id = 0;
+      rows.forEach((count, rowIdx) => {
+        for (let i = 0; i < count; i++) {
+          cups.push({
+            id: `cup-${id}`,
+            x: 50 + (i - count / 2 + 0.5) * 15,
+            y: 15 + rowIdx * 20,
+            active: true,
+          });
+          id++;
+        }
+      });
+      return cups;
+    };
+
+    setTeam1Cups(generateCups());
+    setTeam2Cups(generateCups());
+    setCurrentTeam("team1");
+    setWinner(null);
+    setAimAngle(0);
+    setPower(0.5);
+    setLastResult(null);
+    setThrowCount(0);
+    setIsShooting(false);
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full gap-8 p-6">
-      {/* Score Header */}
+    <div className="flex flex-col items-center justify-center h-full gap-4 p-4 w-full max-w-4xl mx-auto">
+      {/* Score Display */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="w-full">
-        <div className="flex items-center justify-between max-w-2xl mx-auto">
-          <motion.div
-            className={`text-center flex-1 p-4 rounded-lg transition-all ${
-              gameState.currentTeam === 1
-                ? "bg-gradient-to-br from-neon-magenta/20 to-neon-magenta/5 border border-neon-magenta/50"
-                : "bg-transparent border border-transparent"
-            }`}
-          >
-            <p className="text-sm text-muted-foreground font-semibold tracking-wide">TEAM 1</p>
-            <motion.p
-              key={gameState.score1}
-              animate={{ scale: [1, 1.1, 1] }}
-              className="text-5xl font-bold text-neon-magenta mt-2"
-            >
-              {gameState.score1}
+        <div className="flex items-center justify-between gap-8">
+          <div className={`flex-1 p-4 rounded-lg transition-all ${currentTeam === "team1" ? "bg-neon-magenta/20 border border-neon-magenta" : "bg-black/40"}`}>
+            <p className="text-xs text-muted-foreground">TEAM 1</p>
+            <motion.p key={team1Cups.filter(c => c.active).length} animate={{ scale: [1, 1.1, 1] }} className="text-4xl font-bold text-neon-magenta">
+              {team1Cups.filter(c => c.active).length}
             </motion.p>
-          </motion.div>
-
-          <div className="text-2xl font-bold text-muted-foreground/50 px-6">VS</div>
-
-          <motion.div
-            className={`text-center flex-1 p-4 rounded-lg transition-all ${
-              gameState.currentTeam === 2
-                ? "bg-gradient-to-br from-ember-red/20 to-ember-red/5 border border-ember-red/50"
-                : "bg-transparent border border-transparent"
-            }`}
-          >
-            <p className="text-sm text-muted-foreground font-semibold tracking-wide">TEAM 2</p>
-            <motion.p
-              key={gameState.score2}
-              animate={{ scale: [1, 1.1, 1] }}
-              className="text-5xl font-bold text-ember-red mt-2"
-            >
-              {gameState.score2}
+          </div>
+          <div className="text-muted-foreground">VS</div>
+          <div className={`flex-1 p-4 rounded-lg transition-all ${currentTeam === "team2" ? "bg-ember-red/20 border border-ember-red" : "bg-black/40"}`}>
+            <p className="text-xs text-muted-foreground">TEAM 2</p>
+            <motion.p key={team2Cups.filter(c => c.active).length} animate={{ scale: [1, 1.1, 1] }} className="text-4xl font-bold text-ember-red">
+              {team2Cups.filter(c => c.active).length}
             </motion.p>
-          </motion.div>
+          </div>
         </div>
       </motion.div>
 
-      {/* Game Status */}
-      <AnimatePresence mode="wait">
-        {gameState.gameActive ? (
-          <motion.div
-            key="active"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="text-center"
-          >
-            <p className="text-sm text-muted-foreground mb-2">
-              {gameState.currentTeam === 1 ? "🟣 TEAM 1" : "🔴 TEAM 2"}'s Turn
-            </p>
-            {gameState.turnPhase === "result" && (
-              <motion.p
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className={`text-2xl font-bold ${
-                  gameState.lastResult === "hit" ? "text-neon-magenta" : "text-muted-foreground"
-                }`}
-              >
-                {gameState.lastResult === "hit" ? "🎯 HIT!" : "❌ MISS"}
-              </motion.p>
-            )}
-          </motion.div>
-        ) : (
-          <motion.div
-            key="gameover"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="text-center"
-          >
-            <p className="text-3xl font-bold mb-2">
-              {gameState.score1 === 0 ? "🎉 TEAM 2 WINS! 🎉" : "🎉 TEAM 1 WINS! 🎉"}
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Cup Table */}
+      {/* Canvas Table */}
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-gradient-to-b from-black/60 to-black/30 rounded-2xl p-8 border border-plum-deep/30 backdrop-blur-sm"
+        className="w-full bg-gradient-to-b from-black/60 to-black/30 rounded-xl overflow-hidden border border-plum-deep/30 backdrop-blur-sm"
       >
-        <div className="flex justify-between items-center gap-12">
-          {/* Team 1 Cups */}
-          <motion.div
-            animate={gameState.currentTeam === 1 ? { opacity: 1 } : { opacity: 0.6 }}
-            className="transition-opacity"
-          >
-            {renderCups(gameState.team1Cups, false)}
-          </motion.div>
-
-          {/* Center - Throw Button & Timer */}
-          <div className="flex flex-col items-center gap-6">
-            {gameState.gameActive && gameState.turnPhase === "throw" && (
-              <motion.div
-                animate={ballAnimation ? { x: [0, 20, -20, 0], y: [0, -30, -50, 0] } : { x: 0, y: 0 }}
-                transition={{ duration: 0.6 }}
-              >
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleThrow}
-                  disabled={ballAnimation}
-                  className="relative w-20 h-20 rounded-full bg-gradient-to-br from-neon-magenta to-ember-red shadow-lg shadow-neon-magenta/50 hover:shadow-neon-magenta/70 transition-all disabled:opacity-60 flex items-center justify-center text-3xl font-bold"
-                >
-                  {ballAnimation ? "🎯" : "🎱"}
-                </motion.button>
-              </motion.div>
-            )}
-
-            {gameState.turnPhase === "result" && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="text-center"
-              >
-                <p className="text-sm text-muted-foreground mb-1">Next turn in</p>
-                <motion.p
-                  key={timeLeft}
-                  animate={{ scale: [1, 1.2, 1] }}
-                  className="text-4xl font-bold text-neon-magenta"
-                >
-                  {timeLeft}
-                </motion.p>
-              </motion.div>
-            )}
-          </div>
-
-          {/* Team 2 Cups */}
-          <motion.div
-            animate={gameState.currentTeam === 2 ? { opacity: 1 } : { opacity: 0.6 }}
-            className="transition-opacity"
-          >
-            {renderCups(gameState.team2Cups, true)}
-          </motion.div>
-        </div>
+        <canvas ref={canvasRef} className="w-full h-64 cursor-crosshair" onMouseMove={handleAimMove} onMouseUp={handleAimUp} />
       </motion.div>
 
-      {/* Game Over UI */}
-      <AnimatePresence>
-        {!gameState.gameActive && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="flex gap-4"
-          >
+      {/* Controls */}
+      <AnimatePresence mode="wait">
+        {!winner ? (
+          <motion.div key="controls" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full flex flex-col gap-4">
+            {/* Status */}
+            <div className="text-center">
+              {isShooting ? (
+                <motion.p animate={{ scale: [1, 1.1, 1] }} transition={{ repeat: Infinity, duration: 0.8 }} className="text-xl font-bold text-neon-magenta">
+                  🎯 Throwing...
+                </motion.p>
+              ) : lastResult ? (
+                <motion.p className={`text-2xl font-bold ${lastResult === "hit" ? "text-neon-magenta" : "text-muted-foreground"}`}>
+                  {lastResult === "hit" ? "✨ HIT!" : "❌ MISS"}
+                </motion.p>
+              ) : (
+                <p className="text-sm text-muted-foreground">{currentTeam === "team1" ? "🟣 Team 1" : "🔴 Team 2"}'s Turn • Shot #{throwCount + 1}</p>
+              )}
+            </div>
+
+            {/* Aim Control */}
+            <div className="flex items-center gap-4">
+              <span className="text-xs text-muted-foreground w-12">AIM</span>
+              <div
+                className="flex-1 h-8 bg-black/40 rounded-lg border border-neon-magenta/30 cursor-grab active:cursor-grabbing flex items-center justify-center overflow-hidden"
+                onMouseDown={handleAimDown}
+                onMouseMove={handleAimMove}
+                onMouseUp={handleAimUp}
+                onMouseLeave={handleAimUp}
+                onTouchStart={handleAimDown}
+                onTouchMove={handleAimMove}
+                onTouchEnd={handleAimUp}
+              >
+                <motion.div
+                  animate={{ x: `${((aimAngle + 30) / 60) * 100 - 50}%` }}
+                  className="w-1 h-6 bg-neon-magenta rounded-full"
+                />
+              </div>
+              <span className="text-xs text-neon-magenta font-bold w-12 text-right">{aimAngle.toFixed(0)}°</span>
+            </div>
+
+            {/* Power Control */}
+            <div className="flex items-center gap-4">
+              <span className="text-xs text-muted-foreground w-12">POWER</span>
+              <div
+                className="flex-1 h-8 bg-black/40 rounded-lg border border-neon-magenta/30 cursor-grab active:cursor-grabbing"
+                onMouseDown={handlePowerDown}
+                onMouseMove={handlePowerMove}
+                onMouseUp={handlePowerUp}
+                onMouseLeave={handlePowerUp}
+                onTouchStart={handlePowerDown}
+                onTouchMove={handlePowerMove}
+                onTouchEnd={handlePowerUp}
+              >
+                <motion.div
+                  animate={{ width: `${power * 100}%` }}
+                  className="h-full bg-gradient-to-r from-neon-magenta to-ember-red rounded-lg"
+                />
+              </div>
+              <span className="text-xs text-neon-magenta font-bold w-12 text-right">{(power * 100).toFixed(0)}%</span>
+            </div>
+
+            {/* Throw Button */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleShoot}
+              disabled={isShooting}
+              className="w-full p-4 bg-gradient-to-r from-neon-magenta to-ember-red text-white font-bold rounded-lg hover:shadow-lg hover:shadow-neon-magenta/50 disabled:opacity-50 transition-all"
+            >
+              🎱 THROW
+            </motion.button>
+          </motion.div>
+        ) : (
+          <motion.div key="gameover" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="w-full text-center flex flex-col gap-4">
+            <p className="text-3xl font-bold">
+              {winner === "team1" ? "🎉 TEAM 1 WINS! 🎉" : "🎉 TEAM 2 WINS! 🎉"}
+            </p>
             <VelvetButton velvetVariant="neon" onClick={resetGame} size="lg">
               🔄 Play Again
             </VelvetButton>
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Instructions */}
-      {gameState.gameActive && gameState.turnPhase === "throw" && (
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-xs text-muted-foreground text-center max-w-sm"
-        >
-          Click the ball to throw • First team to zero cups wins!
-        </motion.p>
-      )}
     </div>
   );
 }
