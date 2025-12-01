@@ -1,6 +1,7 @@
 import { PromptCard } from "./VelvetCard";
 import { VelvetButton } from "./VelvetButton";
 import { HeatMeter } from "./HeatMeter";
+import { PongGame } from "./PongGame";
 import type { LocalPromptsSession, Game } from "@shared/schema";
 
 // PROMPT-BASED GAMES
@@ -82,17 +83,8 @@ export function MemoryMatchScreen() {
 // PONG GAME
 export function PongScreen() {
   return (
-    <div className="flex flex-col h-full items-center justify-center bg-black/50">
-      <div className="w-full max-w-2xl h-96 bg-gradient-to-b from-plum-deep to-black rounded-lg flex items-center justify-center relative overflow-hidden mb-8">
-        <div className="text-center">
-          <div className="text-6xl font-bold text-neon-magenta mb-4">🏓</div>
-          <p className="text-white text-lg">Emotion Ping-Pong</p>
-          <p className="text-muted-foreground text-sm mt-2">
-            Real-time pong mechanics with prompt triggers
-          </p>
-        </div>
-      </div>
-      <VelvetButton velvetVariant="neon">Start Rally</VelvetButton>
+    <div className="flex flex-col h-full items-center justify-center p-4">
+      <PongGame />
     </div>
   );
 }
