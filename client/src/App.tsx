@@ -48,7 +48,8 @@ function Router() {
         <Route path="/games/:slug" component={GameDetail} />
         <Route path="/games/:slug/setup" component={LocalSetup} />
         <Route path="/games/:slug/online" component={OnlineSetup} />
-        <Route path="/games/:slug/play/:sessionId" component={Gameplay} />
+        <Route path="/games/:slug/play/:sessionId" component={GameRouter} />
+        <Route path="/games/:slug/summary/:sessionId" component={Summary} />
         <Route path="/games/:slug/summary" component={Summary} />
 
         {/* Online routes */}
