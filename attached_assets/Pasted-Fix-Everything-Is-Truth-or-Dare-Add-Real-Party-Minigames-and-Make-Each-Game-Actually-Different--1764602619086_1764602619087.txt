@@ -1,0 +1,335 @@
+Fix “Everything Is Truth or Dare”, Add Real Party Minigames, and Make Each Game Actually Different
+
+You are Replit’s principal full-stack game engineer working in this repo:
+
+https://github.com/jmunuswajobs-lab/Velvetapp_dev
+
+Current problem:
+
+The game catalog shows many different games
+
+But most of them still run on the same Truth/Dare style card engine
+
+Even arcade names like Neon Drift—Couple Mode or Emotion Ping-Pong just show dare cards
+
+The experience is too same-y, mostly romance/kinky, not enough crazy party / drunk / wild / friends vibe.
+
+🎯 Your mission
+
+Stop using the same prompt engine for everything.
+
+Keep a small set of card/prompt games.
+
+Turn the rest into real minigames (Plato / GamePigeon style) that are actually skill/interaction-based, not dare cards.
+
+Add new party-oriented games (friends + couples, fun/wasted/wild) and remove or hide any “fake” games that don’t have real gameplay.
+
+Ensure every game in the catalog is actually realtime playable and clearly different.
+
+You are allowed to delete/merge games that are just clones, as long as the final lineup is tight, fun, and stable.
+
+1️⃣ Re-classify Games by ENGINE (not theme)
+
+Introduce a required field on the Game model (backend + frontend):
+
+type GameEngineType =
+  | "prompt-party"    // Truth or Dare / NHIE / Hot Seat / Would You Rather
+  | "prompt-couple"   // Deep Sync / Temptation Trails / etc (optional subset)
+  | "board-ludo"
+  | "memory-match"
+  | "pong"
+  | "racer"
+  | "tap-duel"
+  | "guessing"
+  | "rhythm"
+  | "roulette"
+  | "tool-randomizer"; // Spin the Bottle, etc.
+
+
+For each entry returned by GET /api/games:
+
+Assign a single correct engineType.
+
+Example:
+
+Truth or Dare → prompt-party
+
+Never Have I Ever → prompt-party
+
+Hot Seat → prompt-party
+
+Couples Challenge, Deep Sync, Temptation Trails, Dare or Devotion → prompt-couple
+
+Velvet Ludo → board-ludo
+
+Velvet Memory Flip → memory-match
+
+Emotion Ping-Pong → pong
+
+Neon Drift—Couple Mode → racer
+
+Couples Duel Arena → tap-duel
+
+Neon Guessing Game → guessing
+
+Duo Rhythm Sync → rhythm
+
+Spin the Bottle / Velvet Roulette → roulette or tool-randomizer
+
+Expose engineType in all game APIs and client types.
+
+2️⃣ Prune & Merge Prompt Games
+
+There are too many “slightly renamed Truth or Dare” games.
+
+Keep only ~4 core prompt-based games, e.g.:
+
+Truth or Dare (party)
+
+Never Have I Ever (party)
+
+Would You Rather (party)
+
+ONE couples intimacy game (e.g. Deep Sync or Couples Challenge)
+
+For the rest of the “card” games that are basically prompts (Temptation Trails, Dare or Devotion, Heat Check, etc.):
+
+Either:
+
+Merge their prompts into packs / modes of the above core games, OR
+
+Hide them from the catalog until there is a genuinely different rule set.
+
+Do not leave 10 different tiles that all open the same “truth/dare/confession/vote” UI.
+
+Make sure card games are clearly tagged for:
+
+audience: "friends" | "couple" | "both"
+
+vibe: "party" | "romantic" | "intense" | "wild"
+
+3️⃣ Make Arcade / Board / Puzzle Games REAL Minigames (No Dares Inside)
+
+The following games must stop using dare cards as the core gameplay:
+
+Velvet Ludo
+
+Velvet Memory Flip
+
+Emotion Ping-Pong
+
+Neon Drift—Couple Mode
+
+Couples Duel Arena
+
+Neon Guessing Game
+
+Duo Rhythm Sync
+
+Truth Bomb Run
+
+For each of these:
+
+Engine first, dares optional:
+
+The primary loop is interactive: moving pieces, matching cards, hitting a ball, tapping, racing, etc.
+
+Dares/prompts are optional consequences, shown at specific triggers (e.g., loser chooses a card, landing on special tile, etc.), not the default screen every turn.
+
+Implement simple but real gameplay, inspired by Plato / party minigames:
+
+Velvet Ludo (board-ludo)
+
+Proper Ludo board, dice rolls, moves, captures, win.
+
+Optional: landing on certain tiles triggers a party prompt (not every move).
+
+Velvet Memory Flip (memory-match)
+
+Real memory match grid.
+
+On match: fun “sweet or spicy” choice, but core is matching.
+
+Emotion Ping-Pong (pong)
+
+Actual pong: paddles + ball + scoring to N points.
+
+Winner can trigger a category of prompt or drinking consequence, but not every rally.
+
+Neon Drift—Couple Mode (racer)
+
+Simple 1v1 lane or track racer: avoid obstacles, collect boosts.
+
+Optionally: loser draws from a dare pool, but again, gameplay is driving.
+
+Couples Duel Arena (tap-duel)
+
+Real-time tap/charge/defend combat with HP or score, quick rounds.
+
+“Consequence card” only at end of round if desired.
+
+Neon Guessing Game (guessing)
+
+Party / couples guessing: one player answers secretly, others guess.
+
+Could be like “Who did this?” or “What would X choose?” type game.
+
+Duo Rhythm Sync (rhythm)
+
+Tap in time with beat or visual prompts.
+
+Score streaks; higher score wins.
+
+Truth Bomb Run (runner) (you can define engineType if you like)
+
+Simple endless runner/obstacle course; gates reveal truth categories.
+
+Prompt is shown only when hitting gates, not as the whole game.
+
+If any of those cannot be implemented fully right now, remove them from the catalog until they have at least a minimal but functional engine. No fake tiles.
+
+4️⃣ Add New Party / Drunk / Wild Minigames (Friends + Couples)
+
+Add 2–4 new minigames inspired by Plato / GamePigeon that are clearly party / wasted / wild:
+
+Examples (you decide exact design, but they MUST be skill-based, not pure prompt lists):
+
+Shot Roulette (tool-randomizer / roulette)
+
+Spin wheel with segments: “you sip”, “they sip”, “group vote”, “wild card”, etc.
+
+Never encourage dangerous consumption: treat “shots” as “drinks / sips” and keep language light.
+
+Button Mash Brawl (tap-duel)
+
+1v1 mashing race. First to fill bar wins, loser gets consequence.
+
+Flip Clash / Coin Flip King (tool-randomizer)
+
+Coin flip predictions; winner assigns a fun party task.
+
+Stacked Reactions (party-guessing)
+
+Show prompt, everyone secretly chooses an emoji reaction, then reveal / compare.
+
+These should be fun for groups of friends and couples, not strictly romance.
+
+Make sure all “drunk/wasted/party” language is playful and does not promote dangerous behavior.
+
+5️⃣ Engine Routing: Backend + Frontend
+
+Backend (sessions):
+
+When start_game is triggered:
+
+Look up game by id/slug.
+
+Use engineType to:
+
+Create the correct initial state (createLudoState, createPongState, createRacerState, etc.).
+
+Store session.engineType and session.gameSlug.
+
+Route incoming WebSocket actions by session.engineType.
+
+Frontend (Gameplay screen):
+
+Load session.engineType and use a switch to render the right component:
+
+switch (session.engineType) {
+  case "prompt-party":
+  case "prompt-couple":
+    return <PromptGameScreen ... />;
+  case "board-ludo":
+    return <VelvetLudoScreen ... />;
+  case "memory-match":
+    return <MemoryFlipScreen ... />;
+  case "pong":
+    return <EmotionPongScreen ... />;
+  case "racer":
+    return <NeonDriftScreen ... />;
+  case "tap-duel":
+    return <DuelArenaScreen ... />;
+  case "guessing":
+    return <GuessingGameScreen ... />;
+  case "rhythm":
+    return <RhythmSyncScreen ... />;
+  case "roulette":
+  case "tool-randomizer":
+    return <RouletteToolScreen ... />;
+  default:
+    return <UnknownGameFallback ... />;
+}
+
+
+PromptGameScreen should be used ONLY for prompt-party / prompt-couple engines, never for pong/racer/etc.
+
+6️⃣ Distinguish Game Types in the UI
+
+Update the catalog UI:
+
+Show clear badges:
+
+“CARD GAME”, “BOARD GAME”, “ARCADE”, “RACE”, “MEMORY”, etc.
+
+“PARTY”, “COUPLE”, “BOTH”
+
+“LOCAL”, “ONLINE”
+
+Filter options:
+
+“Party (friends)”
+
+“Couples”
+
+“Arcade/Skill”
+
+“Card Games”
+
+This makes it obvious that different games are genuinely different.
+
+7️⃣ Testing: Make Sure No Arcade Game Shows Dare Cards as Main UI
+
+Before you’re done, test:
+
+Start Truth or Dare (prompt-party) → should show card prompts.
+
+Start Never Have I Ever → still card-based but with NHIE flavour.
+
+Start Velvet Ludo → MUST show Ludo board, not cards.
+
+Start Velvet Memory Flip → MUST show grid for matching.
+
+Start Emotion Ping-Pong → MUST show pong paddles + ball.
+
+Start Neon Drift—Couple Mode → MUST show racing UI.
+
+Start Couples Duel Arena → MUST show duel UI (buttons, bars), not cards.
+
+Any new party minigames: verify interactive behaviour, scoring, and clear win/end conditions.
+
+In none of these arcade/board/puzzle games should the main screen be “Truth/Dare/Confession/Vote”.
+
+Also ensure:
+
+WebSockets stay connected
+
+Local + online modes both work (online with shared state)
+
+No red errors in browser console
+
+8️⃣ Final Clean-up
+
+Remove/hide games from the catalog that are incomplete or still secretly using the prompt engine as their main logic.
+
+Only keep tiles for games that are fully playable.
+
+Summarize in your response:
+
+Which games are now prompt-based
+
+Which are arcade/board/puzzle
+
+Which new party games were added
+
+Files changed and where engine routing lives
