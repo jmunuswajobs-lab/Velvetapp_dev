@@ -111,20 +111,9 @@ export default function Lobby() {
       setConnected(false);
     };
 
-    websocketRef.current = socket;
-
-    // Cleanup function
-    return () => {
-      isCleanedUp = true;
-      if (reconnectTimeout !== null) {
-        clearTimeout(reconnectTimeout);
-      }
-      if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
-        socket.close(1000, "Component unmounted");
-      }
-      websocketRef.current = null;
-    };
-  }, [roomId, playerId, setConnected, updatePlayers, setGameSlug, initGameState, setGameStarted, gameSlug, toast, setLocation]);
+    // Don't close on cleanup - connection persists across navigation
+    return () => {};
+  }, [roomId, playerId, setConnected, updatePlayers, setGameSlug, initGameState, setGameStarted, gameSlug, toast, setLocation, ws, setWebSocket, setRoomAndPlayerId]);
 
   const copyCode = useCallback(() => {
     if (!joinCode) return;
@@ -141,20 +130,19 @@ export default function Lobby() {
   }, [joinCode, toast]);
 
   const toggleReady = useCallback(() => {
-    const currentWs = websocketRef.current;
     // Re-fetch playerId from localStorage to ensure it's up-to-date
     const currentPlayerId = localStorage.getItem(`playerId_${roomId}`);
 
-    if (currentWs?.readyState === WebSocket.OPEN && roomId && currentPlayerId) {
+    if (ws?.readyState === WebSocket.OPEN && roomId && currentPlayerId) {
       console.log("Toggling ready state for player:", currentPlayerId, "in room:", roomId);
-      currentWs.send(JSON.stringify({
+      ws.send(JSON.stringify({
         type: "toggle_ready",
         roomId,
         playerId: currentPlayerId
       }));
     } else {
       console.error("Cannot toggle ready - WebSocket not ready or missing data", {
-        wsState: currentWs?.readyState,
+        wsState: ws?.readyState,
         playerId: currentPlayerId,
         roomId
       });
@@ -164,13 +152,12 @@ export default function Lobby() {
         variant: "destructive",
       });
     }
-  }, [roomId, toast]); // Dependencies
+  }, [roomId, toast, ws]); // Dependencies
 
   const startGame = useCallback(() => {
-    const currentWs = websocketRef.current;
-    if (currentWs?.readyState === WebSocket.OPEN && roomId) {
+    if (ws?.readyState === WebSocket.OPEN && roomId) {
       console.log("Starting game in room:", roomId);
-      currentWs.send(JSON.stringify({
+      ws.send(JSON.stringify({
         type: "start_game",
         roomId,
         playerId: localStorage.getItem(`playerId_${roomId}`), // Ensure playerId is included
@@ -183,7 +170,7 @@ export default function Lobby() {
       }, 500);
     } else {
       console.error("Cannot start game - WebSocket not ready or missing roomId", {
-        wsState: currentWs?.readyState,
+        wsState: ws?.readyState,
         roomId
       });
       toast({
@@ -192,7 +179,7 @@ export default function Lobby() {
         variant: "destructive",
       });
     }
-  }, [roomId, toast, setLocation, gameSlug]);
+  }, [roomId, toast, setLocation, gameSlug, ws]);
 
 
   const allReady = players.length >= 2 && players.every((p) => p.isReady || p.isHost);
