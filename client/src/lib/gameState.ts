@@ -171,8 +171,33 @@ export const useLocalGame = create(() => ({
   resetGame: () => {},
 }));
 
-// Online room state (unchanged for now, will migrate later)
-export const useOnlineRoom = create(() => ({
+// Online room state
+interface OnlineRoomState {
+  roomId: string | null;
+  joinCode: string | null;
+  gameSlug: string | null;
+  isHost: boolean;
+  isConnected: boolean;
+  players: Array<{ id: string; nickname: string; avatarColor: string; isHost: boolean; isReady: boolean }>;
+  gameStarted: boolean;
+  gameState: any;
+  setRoom: (roomId: string, joinCode: string, isHost: boolean) => void;
+  setGameSlug: (slug: string) => void;
+  setConnected: (connected: boolean) => void;
+  updatePlayers: (players: any[]) => void;
+  setGameStarted: (started: boolean) => void;
+  initGameState: (prompts: any[], players: any[]) => void;
+  nextPrompt: () => null;
+  previousPrompt: () => null;
+  skipPrompt: () => void;
+  updateHeatLevel: (delta: number) => void;
+  advanceTurn: () => void;
+  endGame: () => {};
+  resetGame: () => void;
+  reset: () => void;
+}
+
+export const useOnlineRoom = create<OnlineRoomState>((set) => ({
   roomId: null,
   joinCode: null,
   gameSlug: null,
@@ -181,12 +206,12 @@ export const useOnlineRoom = create(() => ({
   players: [],
   gameStarted: false,
   gameState: null,
-  setRoom: () => {},
-  setGameSlug: () => {},
-  setConnected: () => {},
-  updatePlayers: () => {},
-  setGameStarted: () => {},
-  initGameState: () => {},
+  setRoom: (roomId: string, joinCode: string, isHost: boolean) => set({ roomId, joinCode, isHost }),
+  setGameSlug: (gameSlug: string) => set({ gameSlug }),
+  setConnected: (isConnected: boolean) => set({ isConnected }),
+  updatePlayers: (players: any[]) => set({ players }),
+  setGameStarted: (gameStarted: boolean) => set({ gameStarted }),
+  initGameState: (gameState: any) => set({ gameState }),
   nextPrompt: () => null,
   previousPrompt: () => null,
   skipPrompt: () => {},
@@ -194,5 +219,5 @@ export const useOnlineRoom = create(() => ({
   advanceTurn: () => {},
   endGame: () => ({}),
   resetGame: () => {},
-  reset: () => {},
+  reset: () => set({ roomId: null, joinCode: null, gameSlug: null, isHost: false, isConnected: false, players: [], gameStarted: false, gameState: null }),
 }));

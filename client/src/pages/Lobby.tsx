@@ -47,7 +47,7 @@ export default function Lobby() {
     console.log('Connecting to WebSocket:', wsUrl, 'with playerId:', playerId);
     const socket = new WebSocket(wsUrl);
     let isCleanedUp = false;
-    let reconnectTimeout: NodeJS.Timeout;
+    let reconnectTimeout: NodeJS.Timeout | null = null;
 
     socket.onopen = () => {
       if (isCleanedUp) return;
@@ -110,7 +110,7 @@ export default function Lobby() {
     // Cleanup function
     return () => {
       isCleanedUp = true;
-      if (reconnectTimeout) {
+      if (reconnectTimeout !== null) {
         clearTimeout(reconnectTimeout);
       }
       if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
@@ -118,7 +118,7 @@ export default function Lobby() {
       }
       websocketRef.current = null;
     };
-  }, [roomId, playerId]); // Removed functions from dependencies to prevent reconnections
+  }, [roomId, playerId, setConnected, updatePlayers, setGameSlug, initGameState, setGameStarted, gameSlug, toast, setLocation]);
 
   const copyCode = useCallback(() => {
     if (!joinCode) return;
