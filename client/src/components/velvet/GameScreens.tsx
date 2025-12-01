@@ -1,7 +1,7 @@
 import { PromptCard } from "./VelvetCard";
 import { VelvetButton } from "./VelvetButton";
 import { HeatMeter } from "./HeatMeter";
-import { PongGame } from "./PongGame";
+import { BeerPongGame } from "./BeerPongGame";
 import type { LocalPromptsSession, Game } from "@shared/schema";
 
 // PROMPT-BASED GAMES
@@ -80,11 +80,11 @@ export function MemoryMatchScreen() {
   );
 }
 
-// PONG GAME
+// BEER PONG GAME
 export function PongScreen() {
   return (
     <div className="flex flex-col h-full items-center justify-center p-4">
-      <PongGame />
+      <BeerPongGame />
     </div>
   );
 }
