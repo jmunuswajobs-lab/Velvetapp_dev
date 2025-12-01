@@ -1,0 +1,361 @@
+Advanced Couples 18+ Card Packs + Importer + Weighting + UI + Abstract “Position” Backgrounds
+
+You are Replit’s senior full-stack engineer and content designer working inside this project.
+Your job is to implement the entire cards system upgrade end-to-end:
+
+Generate high-quality 18+ couples-only prompt packs (flirty, spicy, daring, kinky-tease, indoor).
+
+Add:
+
+A pack importer script (for JSON packs → database/seed)
+
+Auto-balanced spice tiers logic
+
+A weighted prompt selection engine
+
+A real card UI stylesheet with visual variations
+
+Implement abstract, two-tone background illustrations for any cards tagged as “position-themed”, inspired by the provided silhouette examples (flat vector couples shapes), but:
+
+Keep them stylized and minimalist
+
+No explicit sexual detail, no genitals, no explicit acts, no graphic content.
+
+All work must be production-ready, with no placeholders and no broken references.
+
+1️⃣ Content Rules for ALL New Card Packs
+
+Create new prompts for couples 18+ that are:
+
+For couples only (isCoupleOnly: true)
+
+PG-17: flirty, spicy, daring, intimate, kink-tease, but:
+
+No explicit description of sexual acts
+
+No graphic anatomy
+
+No violence, degradation, or non-consensual behavior
+
+No minors, no illegal behavior
+
+Indoor & private friendly
+
+Not basic – explicitly avoid:
+
+“Text your ex”
+
+“Name your crush”
+
+“Who in this room…”
+
+Schoolyard dares or childish content
+
+Each prompt object must conform to the existing schema (adapt to repo, but conceptually):
+
+{
+  id: string;
+  text: string;
+  type: "truth" | "dare" | "challenge" | "question" | "fantasy-tease";
+  spiceLevel: 1 | 2 | 3 | 4 | 5;
+  isCoupleOnly: true;
+  safeForRemote: boolean;
+  tags: string[]; // e.g. ["flirty","kinky-tease","indoor","emotional"]
+  packId: string;
+}
+
+
+Replit must generate real content, not placeholders, with checks to avoid duplicates and cringe.
+
+2️⃣ Packs to Implement (Content Generation)
+
+Create these packs and populate them with 40–60 prompts each (total ~200–300 cards):
+
+Velvet Heat (Spice 4)
+
+Tone: spicy, bold, teasing, intimate, kink-flavored but still non-explicit.
+
+Tags leaning to: ["flirty","bold","kinky-tease","steamy","indoor"].
+
+Dare of Devotion (Spice 3–4)
+
+Tone: indoor dares that mix playful challenge + tenderness.
+
+Physical/romantic actions described in suggestive but non-graphic language.
+
+Kink Tease Signals (Spice 5)
+
+Tone: power-play tease, symbolic control, obedience games, light kink themes.
+
+Always emphasize consent, safe words, and boundaries.
+
+Intimate Confessions (Spice 2–3)
+
+Tone: emotional intimacy, deep questions, “soft but charged” vulnerability.
+
+Spontaneous Sparks (Spice 3)
+
+Tone: creative, fun indoor dares and micro-experiences, spontaneous & playful.
+
+All prompts must be stored in pack JSON files or a structured TS module under a clear path, e.g.:
+
+content/packs/velvetHeat.json, etc.
+
+3️⃣ Pack Importer Script
+
+Create a Node/TS script in the repo, for example:
+
+tools/importPacks.ts
+
+Responsibilities:
+
+Read all pack JSON files from content/packs/*.json.
+
+Validate each entry:
+
+Required fields present
+
+spiceLevel ∈ [1..5]
+
+isCoupleOnly === true
+
+Option A (depending on repo):
+
+Seed into the database (e.g., SQLite/Postgres/Firestore)
+OR
+
+Build a single compiled allPrompts.json / bundled TS export consumed by the app.
+
+Provide CLI usage, e.g.:
+
+npm run import:packs
+# which runs: ts-node tools/importPacks.ts
+
+
+Log:
+
+Packs loaded
+
+Total prompts
+
+Any validation errors (fail fast if any invalid prompt exists).
+
+This script must be idempotent: running multiple times should not duplicate entries in the DB / storage.
+
+4️⃣ Auto-Balanced Spice Tier Logic
+
+Implement a small utility module, e.g.:
+
+src/lib/spiceBalancer.ts
+
+Functions:
+
+calculateSpiceDistribution(prompts: Prompt[]): SpiceStats
+Returns counts per spiceLevel.
+
+normalizeSpiceLevels(prompts: Prompt[]): Prompt[]
+Optionally nudges overly skewed packs:
+
+If one pack has almost all 5’s, downgrade some borderline prompts to 4, etc.
+
+This can be rule-based: don’t use AI at runtime; use heuristics like tag weights.
+
+getRecommendedSpiceLevel(couplePref: number, history: History): number
+For selecting the right spice level based on user preference and prior play (avoid always hitting extremes).
+
+Use this in the prompt engine to:
+
+Respect couple’s configured spice level
+
+Occasionally mix in slightly lower/higher cards with low probability (e.g. 70% at target level, 20% ±1, 10% as special).
+
+All functions must be pure, unit-testable.
+
+5️⃣ Weighted Prompt Selection Engine
+
+Create module src/lib/promptEngine.ts that:
+
+Accepts filters:
+
+interface PromptFilter {
+  packIds?: string[];
+  minSpice?: number;
+  maxSpice?: number;
+  tagsInclude?: string[];
+  tagsExclude?: string[];
+  alreadyUsedIds?: string[];
+}
+
+
+Returns the next prompt using weighted randomness, not uniform:
+
+Weight factors:
+
+Spice proximity to target spice level
+
+Variety of type (truth/dare/etc.)
+
+Avoid recently used prompts (alreadyUsedIds)
+
+Tags: bonus for matching couple’s mood (romantic, kinky-tease, emotional, etc.)
+
+Expose main function:
+
+getNextPrompt(
+  allPrompts: Prompt[],
+  filter: PromptFilter,
+  options?: { targetSpice?: number }
+): Prompt | null;
+
+
+Ensure no infinite loops, and return null gracefully if no prompt fits filter.
+
+Write minimal tests (or at least basic validation) to verify:
+
+You don’t get repeat cards until pack is nearly exhausted.
+
+Spice distribution roughly follows target spice.
+
+6️⃣ UI: Card Variation Stylesheet
+
+Create a dedicated card styling system:
+
+Either as a Tailwind plugin/config extension OR as a TS module + classnames.
+
+File example: src/styles/cardThemes.ts or src/components/cards/Card.tsx.
+
+Card types:
+
+type === "truth" → cooler tones (violet/blue) with subtle glows.
+
+type === "dare" → warmer tones (magenta/red/orange).
+
+type === "challenge" → neon accents, energetic border.
+
+type === "fantasy-tease" → gradient mixes, soft blur, subtle motion.
+
+spiceLevel influences intensity:
+
+Level 1–2: softer gradients, smaller glow.
+
+Level 3–4: more vivid neon.
+
+Level 5: bold contrasts and animated accent (small pulse, not annoying).
+
+Each card:
+
+Uses Framer Motion (if present) for:
+
+entry fade/slide
+
+minor hover/press scale
+
+Is responsive: full-width on mobile, grid layout on desktop.
+
+Make sure no card uses unstyled raw HTML.
+
+7️⃣ Abstract “Position-Themed” Backgrounds (Illustration Layer)
+
+For prompts tagged with something like "position", "pose", or "body-dynamics":
+
+Add new tag class: "position-themed".
+
+Implement background variants:
+
+Create an SVG / CSS illustration set of abstract two-tone silhouettes:
+
+Simple flat shapes of two bodies
+
+Solid limited palette (e.g., red/pink, teal/mint, etc.)
+
+Minimal details (no genitals, no explicit acts)
+
+Similar to the provided examples in style, but not copied and not explicit.
+
+Store as:
+
+Inline SVG components (PositionBackgroundA/B/C)
+OR
+
+Background images in public/assets/positions/*.svg.
+
+In the Card component, if tags include "position-themed":
+
+Overlay one of these backgrounds using a small theme function:
+
+const bg = getPositionBackgroundVariant(prompt.id);
+
+
+where getPositionBackgroundVariant consistently maps card → one of the abstract SVGs.
+
+Ensure accessibility:
+
+Text remains readable over the background (use overlay, gradient scrims, etc.).
+
+Provide alt text like "abstract couple silhouette" (non-explicit wording).
+
+Explicitly do NOT:
+
+Draw genitals, graphic body detail, or explicit positions.
+
+Name positions or describe mechanics on UI.
+
+Backgrounds must stay suggestive and artistic, not explicit.
+
+8️⃣ Wiring Everything Into the App
+
+Replit must:
+
+Wire importer into package.json scripts:
+
+"scripts": {
+  "import:packs": "tsx tools/importPacks.ts"
+}
+
+
+Update the card game(s) (e.g. Truth or Dare, Couples Challenge, etc.) to use:
+
+promptEngine.getNextPrompt
+
+Spice settings from couple preferences
+
+New tags & packs
+
+Ensure the front-end state correctly:
+
+Tracks used prompts per session
+
+Handles skip / next / back logic
+
+Plays nice with online (WebSocket) or local mode.
+
+Test with:
+
+Local game session: cards rotate correctly, no repeats too soon.
+
+Remote session: both clients see same card + background.
+
+9️⃣ Validation & Clean-Up
+
+Before stopping, Replit must:
+
+Ensure TypeScript builds successfully.
+
+Ensure there are no runtime errors in the browser console for card flow.
+
+Validate all packs via the importer (fail build if invalid).
+
+Remove any leftover placeholder packs or mock data.
+
+Provide a short summary in this chat:
+
+Packs added
+
+Files created/updated
+
+How to run import:packs
+
+How the weighting + spice logic is used in the main game flow.
+
+Execute all of the above in this repo.
+No mockups, no placeholders — fully working packs, importer, weighting engine, and card UI with abstract position-style backgrounds.

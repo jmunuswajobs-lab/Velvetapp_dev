@@ -1,0 +1,149 @@
+{
+  "id": "pack-spontaneous-sparks",
+  "name": "Spontaneous Sparks",
+  "description": "Creative, fun indoor dares and micro-experiences. Spontaneous, playful, and designed for immediate action.",
+  "gameId": "truth-or-dare",
+  "intensity": 3,
+  "prompts": [
+    {
+      "id": "ss-001",
+      "text": "Build a pillow fort together and take 10 minutes to just relax inside.",
+      "type": "dare",
+      "intensity": 1,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": false, "requiresMovement": true }
+    },
+    {
+      "id": "ss-002",
+      "text": "What's something you want to do with your partner that you've never tried?",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "ss-003",
+      "text": "Cook a meal together where you feed each other bites and rate each other's cooking.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": false, "requiresMovement": true }
+    },
+    {
+      "id": "ss-004",
+      "text": "What's the most spontaneous thing you've done together that you loved?",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "ss-005",
+      "text": "Create an indoor picnic with snacks, music, and candles. Take 15 minutes to enjoy it together.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": false, "requiresMovement": true }
+    },
+    {
+      "id": "ss-006",
+      "text": "What activity makes you both laugh the hardest together?",
+      "type": "truth",
+      "intensity": 1,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "ss-007",
+      "text": "Challenge each other to a fun game—board game, video game, or cards—loser picks next activity.",
+      "type": "dare",
+      "intensity": 1,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "ss-008",
+      "text": "When was the last time you did something adventurous together?",
+      "type": "truth",
+      "intensity": 1,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "ss-009",
+      "text": "Have a photo shoot together—dress up or get creative, then look through the pictures together.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": false, "requiresMovement": true }
+    },
+    {
+      "id": "ss-010",
+      "text": "What's your favorite way to spend a lazy Sunday together?",
+      "type": "truth",
+      "intensity": 1,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "ss-011",
+      "text": "Create a signature cocktail or mocktail together and give it a romantic name.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": false, "requiresMovement": true }
+    },
+    {
+      "id": "ss-012",
+      "text": "What's the most fun date idea you haven't suggested yet?",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "ss-013",
+      "text": "Have an indoor treasure hunt where you hide love notes or small gifts around your space.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": false, "requiresMovement": true }
+    },
+    {
+      "id": "ss-014",
+      "text": "What adventure do you want to go on with your partner?",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "ss-015",
+      "text": "Create a playlist together of songs that mean something to your relationship.",
+      "type": "dare",
+      "intensity": 1,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "ss-016",
+      "text": "What's the most spontaneous date you'd love your partner to plan for you?",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "ss-017",
+      "text": "Put on a fashion show for each other—try on different outfits and rate each other honestly.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": false, "requiresMovement": true }
+    },
+    {
+      "id": "ss-018",
+      "text": "What's the most memorable date you've had together?",
+      "type": "truth",
+      "intensity": 1,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "ss-019",
+      "text": "Teach each other something you're good at—cooking, dancing, a skill, anything.",
+      "type": "dare",
+      "intensity": 1,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": false, "requiresMovement": true }
+    },
+    {
+      "id": "ss-020",
+      "text": "What's something new you'd like to try together?",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    }
+  ]
+}

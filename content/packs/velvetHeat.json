@@ -1,0 +1,184 @@
+{
+  "id": "pack-velvet-heat",
+  "name": "Velvet Heat",
+  "description": "Spicy, bold, teasing, and intimate prompts that turn up the temperature. Kink-flavored but always consensual and non-explicit.",
+  "gameId": "truth-or-dare",
+  "intensity": 4,
+  "prompts": [
+    {
+      "id": "vh-001",
+      "text": "Show your partner exactly where you want to be touched right now without using your hands.",
+      "type": "dare",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": false, "requiresMovement": true }
+    },
+    {
+      "id": "vh-002",
+      "text": "What fantasy have you never admitted to your partner?",
+      "type": "truth",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "vh-003",
+      "text": "Take turns kissing each other's neck for 30 seconds without breaking contact.",
+      "type": "dare",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "requiresMovement": true, "isCoupleExclusive": true, "safeForRemote": false }
+    },
+    {
+      "id": "vh-004",
+      "text": "Describe the most intense moment you've had together in explicit detail.",
+      "type": "truth",
+      "intensity": 5,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "isNSFW": true }
+    },
+    {
+      "id": "vh-005",
+      "text": "Give your partner a slow, deliberate massage on their inner thigh for 60 seconds.",
+      "type": "dare",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": false, "requiresMovement": true }
+    },
+    {
+      "id": "vh-006",
+      "text": "What part of your partner's body drives you absolutely wild?",
+      "type": "truth",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "vh-007",
+      "text": "Whisper something naughty in your partner's ear that makes them blush.",
+      "type": "dare",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "requiresMovement": true }
+    },
+    {
+      "id": "vh-008",
+      "text": "Have you ever fantasized about your partner with someone else?",
+      "type": "truth",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "vh-009",
+      "text": "Stare into your partner's eyes and tell them exactly what you want to do to them right now.",
+      "type": "dare",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "requiresMovement": true }
+    },
+    {
+      "id": "vh-010",
+      "text": "What's your biggest turn-on that you've never told anyone?",
+      "type": "truth",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "vh-011",
+      "text": "Blindfold your partner and trace a path across their skin while they guess what you're tracing.",
+      "type": "dare",
+      "intensity": 4,
+      "flags": { "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": false, "requiresMovement": true }
+    },
+    {
+      "id": "vh-012",
+      "text": "When was the last time you felt completely desired by your partner?",
+      "type": "truth",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "vh-013",
+      "text": "Take a piece of ice and slowly run it down your partner's arm, watching their reaction.",
+      "type": "dare",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": false, "requiresMovement": true }
+    },
+    {
+      "id": "vh-014",
+      "text": "What would make you feel more sexually confident with your partner?",
+      "type": "truth",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "vh-015",
+      "text": "Create a sexy playlist together, describing why each song reminds you of them.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "vh-016",
+      "text": "Have you ever role-played or wanted to?",
+      "type": "truth",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "vh-017",
+      "text": "Kiss your partner for 60 full seconds, focused entirely on enjoying the moment.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": false, "requiresMovement": true }
+    },
+    {
+      "id": "vh-018",
+      "text": "What's one thing you wish your partner would do more often?",
+      "type": "truth",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "vh-019",
+      "text": "Send your partner a flirty text from across the room describing what you see.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": true }
+    },
+    {
+      "id": "vh-020",
+      "text": "Describe your first time together in explicit detail.",
+      "type": "truth",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "isNSFW": true }
+    },
+    {
+      "id": "vh-021",
+      "text": "What's a boundary you've never considered crossing with your partner?",
+      "type": "truth",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "vh-022",
+      "text": "Undress your partner one item at a time, kissing each newly exposed area.",
+      "type": "dare",
+      "intensity": 5,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": false, "requiresMovement": true, "isNSFW": true }
+    },
+    {
+      "id": "vh-023",
+      "text": "What would your dream date night look like?",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "vh-024",
+      "text": "Whisper your most scandalous confession in your partner's ear.",
+      "type": "dare",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "requiresMovement": true }
+    },
+    {
+      "id": "vh-025",
+      "text": "Rate your partner's kiss on a scale of 1-10 and explain why.",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    }
+  ]
+}

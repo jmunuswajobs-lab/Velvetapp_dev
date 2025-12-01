@@ -1,0 +1,149 @@
+{
+  "id": "pack-dare-devotion",
+  "name": "Dare of Devotion",
+  "description": "Playful challenges that blend romantic intimacy with suggestive physical dares. Mix tenderness with teasing.",
+  "gameId": "truth-or-dare",
+  "intensity": 3,
+  "prompts": [
+    {
+      "id": "dod-001",
+      "text": "Create a 'pleasure map' by having your partner point to three places they'd like you to kiss them.",
+      "type": "dare",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": false, "requiresMovement": true }
+    },
+    {
+      "id": "dod-002",
+      "text": "What's something romantic your partner did that still makes you smile?",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "dod-003",
+      "text": "Feed each other chocolate or fruit sensually, making eye contact the entire time.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": false, "requiresMovement": true }
+    },
+    {
+      "id": "dod-004",
+      "text": "When did you first realize you were attracted to your partner?",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "dod-005",
+      "text": "Give your partner a full-body massage focusing on their shoulders, back, and lower back.",
+      "type": "dare",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": false, "requiresMovement": true }
+    },
+    {
+      "id": "dod-006",
+      "text": "What's the most vulnerable thing you've shared with your partner?",
+      "type": "truth",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "dod-007",
+      "text": "Dance together slowly for one full song, maintaining close contact.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": false, "requiresMovement": true }
+    },
+    {
+      "id": "dod-008",
+      "text": "Describe how your partner makes you feel when they look at you with desire.",
+      "type": "truth",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "dod-009",
+      "text": "Take turns removing one piece of clothing and complimenting what's revealed.",
+      "type": "dare",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": false, "requiresMovement": true }
+    },
+    {
+      "id": "dod-010",
+      "text": "What's your favorite memory of the two of you together?",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "dod-011",
+      "text": "Shower or bathe together and take time to gently wash each other.",
+      "type": "dare",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": false, "requiresMovement": true }
+    },
+    {
+      "id": "dod-012",
+      "text": "When was the last time your partner made you feel truly seen and appreciated?",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "dod-013",
+      "text": "Create a love letter to each other that you read aloud while making eye contact.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "dod-014",
+      "text": "What small gesture from your partner melts your heart every time?",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "dod-015",
+      "text": "Slow dance with your partner and whisper sweet nothings in their ear.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": false, "requiresMovement": true }
+    },
+    {
+      "id": "dod-016",
+      "text": "Describe what you love most about your partner's body.",
+      "type": "truth",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "dod-017",
+      "text": "Take turns doing something your partner loves—cook together, light candles, create ambiance.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "dod-018",
+      "text": "When was the first time you felt truly loved by your partner?",
+      "type": "truth",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "dod-019",
+      "text": "Exchange a long, meaningful kiss while your hands explore each other's back and sides.",
+      "type": "dare",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": false, "requiresMovement": true }
+    },
+    {
+      "id": "dod-020",
+      "text": "What's something your partner does that makes you feel sexy and desired?",
+      "type": "truth",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    }
+  ]
+}

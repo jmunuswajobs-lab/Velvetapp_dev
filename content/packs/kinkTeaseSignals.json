@@ -1,0 +1,149 @@
+{
+  "id": "pack-kink-tease",
+  "name": "Kink Tease Signals",
+  "description": "Power-play tease, symbolic control, obedience games, and light kink themes. Always emphasize consent and boundaries.",
+  "gameId": "truth-or-dare",
+  "intensity": 5,
+  "prompts": [
+    {
+      "id": "kts-001",
+      "text": "Establish a safe word together right now, then have your partner give you a teasing command you must follow.",
+      "type": "dare",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": false, "requiresMovement": true }
+    },
+    {
+      "id": "kts-002",
+      "text": "What's a power dynamic that intrigues you in the bedroom?",
+      "type": "truth",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "isNSFW": true }
+    },
+    {
+      "id": "kts-003",
+      "text": "Assign your partner three 'commands' to follow throughout the rest of the game (nothing extreme—just teasing).",
+      "type": "dare",
+      "intensity": 4,
+      "flags": { "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": false, "requiresMovement": true }
+    },
+    {
+      "id": "kts-004",
+      "text": "Have you ever wanted to tie up or be tied up by your partner?",
+      "type": "truth",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "isNSFW": true }
+    },
+    {
+      "id": "kts-005",
+      "text": "Gently restrain your partner's wrists with your hands or a silk tie while you tease them with kisses.",
+      "type": "dare",
+      "intensity": 5,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": false, "requiresMovement": true, "isNSFW": true }
+    },
+    {
+      "id": "kts-006",
+      "text": "What's a kink or fantasy you've never mentioned but have always been curious about?",
+      "type": "truth",
+      "intensity": 5,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "isNSFW": true }
+    },
+    {
+      "id": "kts-007",
+      "text": "Take turns spanking each other lightly—establish comfort and rhythm as you go.",
+      "type": "dare",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": false, "requiresMovement": true }
+    },
+    {
+      "id": "kts-008",
+      "text": "Describe your ideal submissive or dominant scenario in detail.",
+      "type": "truth",
+      "intensity": 5,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "isNSFW": true }
+    },
+    {
+      "id": "kts-009",
+      "text": "Tell your partner to close their eyes, then slowly undress while describing exactly what you're doing.",
+      "type": "dare",
+      "intensity": 5,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": false, "requiresMovement": true, "isNSFW": true }
+    },
+    {
+      "id": "kts-010",
+      "text": "Have you ever fantasized about exhibitionism or voyeurism?",
+      "type": "truth",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "isNSFW": true }
+    },
+    {
+      "id": "kts-011",
+      "text": "Create a 'command list' together—simple teasing commands you can use with each other.",
+      "type": "dare",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "kts-012",
+      "text": "What role-play scenario turns you on the most?",
+      "type": "truth",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "isNSFW": true }
+    },
+    {
+      "id": "kts-013",
+      "text": "Tell your partner to stand still while you slowly kiss and touch them for 2 minutes without them touching you back.",
+      "type": "dare",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": false, "requiresMovement": true }
+    },
+    {
+      "id": "kts-014",
+      "text": "Would you ever try bondage, and if so, what appeals to you about it?",
+      "type": "truth",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "isNSFW": true }
+    },
+    {
+      "id": "kts-015",
+      "text": "Have a 5-minute conversation about your boundaries and limits together—what's off-limits and why?",
+      "type": "dare",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "kts-016",
+      "text": "What's the most daring thing you'd be willing to try with your partner?",
+      "type": "truth",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "kts-017",
+      "text": "Playfully 'punish' your partner by teasing them with touch while they must stay still.",
+      "type": "dare",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": false, "requiresMovement": true }
+    },
+    {
+      "id": "kts-018",
+      "text": "Have you ever had a humiliation fantasy, and would you share it with your partner?",
+      "type": "truth",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "isNSFW": true }
+    },
+    {
+      "id": "kts-019",
+      "text": "Take control—lead your partner by the hand to the bedroom and set the mood however you see fit.",
+      "type": "dare",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true, "safeForRemote": false, "requiresMovement": true }
+    },
+    {
+      "id": "kts-020",
+      "text": "What's something you've always wanted to ask your partner but were too shy?",
+      "type": "truth",
+      "intensity": 4,
+      "flags": { "isFlirty": true, "isKinkyTease": true, "isCoupleExclusive": true }
+    }
+  ]
+}

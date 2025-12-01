@@ -1,0 +1,149 @@
+{
+  "id": "pack-intimate-confessions",
+  "name": "Intimate Confessions",
+  "description": "Emotional intimacy, deep questions, and soft but charged vulnerability. Build connection through honest conversation.",
+  "gameId": "truth-or-dare",
+  "intensity": 2,
+  "prompts": [
+    {
+      "id": "ic-001",
+      "text": "What's something you've never told anyone about yourself?",
+      "type": "truth",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isConfession": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "ic-002",
+      "text": "Write a love note to your partner describing how they've changed your life.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "ic-003",
+      "text": "When did you first realize you were in love with your partner?",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isConfession": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "ic-004",
+      "text": "Hold your partner's hands while looking into their eyes and share a fear you've never mentioned.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true, "safeForRemote": false, "requiresMovement": true }
+    },
+    {
+      "id": "ic-005",
+      "text": "What insecurity do you have that your partner helps you overcome?",
+      "type": "truth",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isConfession": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "ic-006",
+      "text": "Tell your partner three things you love about them that have nothing to do with their appearance.",
+      "type": "dare",
+      "intensity": 1,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "ic-007",
+      "text": "What's something your partner does that makes you feel truly loved and appreciated?",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isConfession": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "ic-008",
+      "text": "Ask your partner for their biggest dream and listen without judgment or advice.",
+      "type": "dare",
+      "intensity": 1,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "ic-009",
+      "text": "What moment with your partner do you replay in your mind when you need comfort?",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isConfession": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "ic-010",
+      "text": "Describe exactly how you felt the first time your partner said 'I love you.'",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isConfession": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "ic-011",
+      "text": "Admit one way you've grown or changed because of your relationship.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "ic-012",
+      "text": "What's something you've been afraid to tell your partner about your past?",
+      "type": "truth",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isConfession": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "ic-013",
+      "text": "Share a moment when you felt your partner truly understood you.",
+      "type": "dare",
+      "intensity": 1,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "ic-014",
+      "text": "What's your biggest hope for your future with your partner?",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isConfession": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "ic-015",
+      "text": "Tell your partner something vulnerable about how they make you feel.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "ic-016",
+      "text": "When do you feel most connected to your partner?",
+      "type": "truth",
+      "intensity": 1,
+      "flags": { "isFlirty": true, "isConfession": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "ic-017",
+      "text": "Create a 'why I love you' list together and take turns sharing items from it.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "ic-018",
+      "text": "What quality of your partner do you wish you had more of?",
+      "type": "truth",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isConfession": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "ic-019",
+      "text": "Describe a moment when you felt truly vulnerable with your partner and what happened.",
+      "type": "dare",
+      "intensity": 2,
+      "flags": { "isFlirty": true, "isCoupleExclusive": true }
+    },
+    {
+      "id": "ic-020",
+      "text": "What's the deepest fear you have about your relationship?",
+      "type": "truth",
+      "intensity": 3,
+      "flags": { "isFlirty": true, "isConfession": true, "isCoupleExclusive": true }
+    }
+  ]
+}
