@@ -82,7 +82,7 @@ export function PositionBackgroundC({ className }: PositionBackgroundProps) {
       <polygon points="140,120 120,60 100,120" fill="#C71585" opacity="0.15" />
 
       {/* Connecting diamond shape - suggests union */}
-      <diamond cx="100" cy="90" rx="15" ry="20" fill="none" stroke="#FF6B9D" opacity="0.15" strokeWidth="1.5" />
+      <ellipse cx="100" cy="90" rx="15" ry="20" fill="none" stroke="#FF6B9D" opacity="0.15" strokeWidth="1.5" />
     </svg>
   );
 }
