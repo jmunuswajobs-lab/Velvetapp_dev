@@ -9,9 +9,9 @@ interface VelvetLogoProps {
 
 export function VelvetLogo({ size = "md", showText = true, className = "" }: VelvetLogoProps) {
   const sizes = {
-    sm: { container: "w-8 h-8", text: "text-sm" },
-    md: { container: "w-10 h-10", text: "text-lg" },
-    lg: { container: "w-16 h-16", text: "text-3xl" },
+    sm: { container: "w-8 h-8", text: "text-xs" },
+    md: { container: "w-10 h-10", text: "text-sm" },
+    lg: { container: "w-14 h-14", text: "text-lg" },
   };
 
   const s = sizes[size];
@@ -19,48 +19,74 @@ export function VelvetLogo({ size = "md", showText = true, className = "" }: Vel
   return (
     <Link href="/">
       <motion.div
-        className={`flex items-center gap-3 cursor-pointer ${className}`}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+        className={`flex items-center gap-2 sm:gap-3 cursor-pointer ${className}`}
+        whileHover={{ scale: 1.03 }}
+        whileTap={{ scale: 0.98 }}
       >
-        {/* Logo circle with gradient and glow */}
-        <motion.div
-          className={`${s.container} rounded-full flex items-center justify-center relative`}
+        {/* Velvet logo - elegant intertwined hearts forming a V */}
+        <motion.svg
+          className={`${s.container} flex-shrink-0`}
+          viewBox="0 0 100 100"
+          xmlns="http://www.w3.org/2000/svg"
           style={{
-            background: "linear-gradient(135deg, #FF008A 0%, #B00F2F 60%, #5A1A8C 100%)",
-            boxShadow: "0 0 30px rgba(255, 0, 138, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.1)",
+            filter: "drop-shadow(0 0 10px rgba(255, 0, 138, 0.6))",
           }}
-          animate={{
-            boxShadow: [
-              "0 0 30px rgba(255, 0, 138, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.1)",
-              "0 0 40px rgba(255, 0, 138, 0.8), inset 0 0 25px rgba(255, 255, 255, 0.2)",
-              "0 0 30px rgba(255, 0, 138, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.1)",
-            ],
-          }}
-          transition={{ duration: 3, repeat: Infinity }}
         >
-          {/* Inner flame icon */}
-          <motion.svg
-            className={`${s.text} text-white fill-white`}
-            viewBox="0 0 24 24"
-            animate={{ rotate: [0, 5, -5, 0] }}
-            transition={{ duration: 4, repeat: Infinity }}
-          >
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z" />
-          </motion.svg>
-        </motion.div>
+          {/* Define gradient */}
+          <defs>
+            <linearGradient id="velvetGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style={{ stopColor: "#FF008A", stopOpacity: 1 }} />
+              <stop offset="50%" style={{ stopColor: "#B00F2F", stopOpacity: 1 }} />
+              <stop offset="100%" style={{ stopColor: "#5A1A8C", stopOpacity: 1 }} />
+            </linearGradient>
+            <filter id="velvetBlur">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="0.5" />
+            </filter>
+          </defs>
+
+          {/* Outer luxurious glow */}
+          <circle cx="50" cy="50" r="48" fill="none" stroke="url(#velvetGradient)" strokeWidth="1.5" opacity="0.4" />
+
+          {/* Left heart (top-left of V) */}
+          <path
+            d="M 35 45 Q 25 35, 25 28 Q 25 18, 32 18 Q 38 18, 42 25 Q 46 18, 52 18 Q 59 18, 59 28 Q 59 35, 49 45"
+            fill="url(#velvetGradient)"
+            opacity="0.9"
+          />
+
+          {/* Right heart (top-right of V) */}
+          <path
+            d="M 65 45 Q 55 35, 55 28 Q 55 18, 62 18 Q 68 18, 72 25 Q 76 18, 82 18 Q 89 18, 89 28 Q 89 35, 79 45"
+            fill="url(#velvetGradient)"
+            opacity="0.9"
+          />
+
+          {/* Connecting V shape at bottom */}
+          <path
+            d="M 42 45 L 50 75 L 58 45"
+            stroke="url(#velvetGradient)"
+            strokeWidth="3"
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+
+          {/* Inner shine accent */}
+          <circle cx="50" cy="30" r="8" fill="white" opacity="0.15" />
+        </motion.svg>
 
         {showText && (
           <div className="flex flex-col leading-tight">
             <motion.span
               className={`${s.text} font-display font-bold bg-gradient-to-r from-neon-magenta via-ember-red to-plum-deep bg-clip-text text-transparent`}
-              animate={{ opacity: [1, 0.8, 1] }}
-              transition={{ duration: 3, repeat: Infinity }}
+              initial={{ opacity: 0.8 }}
+              whileHover={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
             >
               VelvetPlay
             </motion.span>
-            <span className="text-xs text-neon-magenta/60 font-semibold tracking-widest">
-              18+ PREMIUM
+            <span className="text-xs text-neon-magenta/60 font-semibold tracking-wider hidden sm:block">
+              PREMIUM
             </span>
           </div>
         )}

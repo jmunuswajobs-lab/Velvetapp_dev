@@ -81,48 +81,60 @@ export default function Home() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Animated background with multiple layers */}
+      {/* Base background - static, high performance */}
       <div
         className="fixed inset-0 -z-20"
         style={{
           background: `
-            radial-gradient(ellipse at 20% 50%, rgba(90, 26, 140, 0.4) 0%, transparent 50%),
-            radial-gradient(ellipse at 80% 80%, rgba(176, 15, 47, 0.3) 0%, transparent 50%),
-            radial-gradient(ellipse at 40% 0%, rgba(255, 0, 138, 0.2) 0%, transparent 60%),
             linear-gradient(180deg, #050509 0%, #0A0A12 50%, #0F0515 100%)
           `,
         }}
       />
       
-      {/* Animated gradient orbs */}
+      {/* Subtle fixed gradient overlays - low performance cost */}
+      <div
+        className="fixed inset-0 -z-20 pointer-events-none"
+        style={{
+          background: `
+            radial-gradient(ellipse 80% 80% at 20% 50%, rgba(90, 26, 140, 0.25) 0%, transparent 60%),
+            radial-gradient(ellipse 80% 80% at 80% 80%, rgba(176, 15, 47, 0.2) 0%, transparent 60%)
+          `,
+        }}
+      />
+      
+      {/* Animated gradient orbs - optimized with GPU acceleration */}
       <motion.div
-        className="fixed w-96 h-96 rounded-full blur-3xl opacity-20 -z-10"
+        className="fixed w-96 h-96 rounded-full -z-10 pointer-events-none"
         style={{
           background: "linear-gradient(135deg, #FF008A 0%, #B00F2F 100%)",
           top: "-200px",
           left: "-200px",
+          willChange: "transform",
+          filter: "blur(80px)",
         }}
         animate={{
-          x: [0, 100, 0],
-          y: [0, 50, 0],
+          x: [0, 80, 0],
+          y: [0, 40, 0],
         }}
-        transition={{ duration: 20, repeat: Infinity }}
+        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
-        className="fixed w-96 h-96 rounded-full blur-3xl opacity-20 -z-10"
+        className="fixed w-96 h-96 rounded-full -z-10 pointer-events-none"
         style={{
           background: "linear-gradient(135deg, #5A1A8C 0%, #FF008A 100%)",
           bottom: "-200px",
           right: "-200px",
+          willChange: "transform",
+          filter: "blur(80px)",
         }}
         animate={{
-          x: [0, -100, 0],
-          y: [0, -50, 0],
+          x: [0, -80, 0],
+          y: [0, -40, 0],
         }}
-        transition={{ duration: 25, repeat: Infinity }}
+        transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      <EmberParticles count={20} />
+      <EmberParticles count={15} />
 
       {/* Header */}
       <header className="sticky top-0 z-40 glass border-b border-plum-deep/30 backdrop-blur-xl">
@@ -168,23 +180,21 @@ export default function Home() {
               className="absolute inset-0 -z-10"
               style={{
                 background: `
-                  radial-gradient(ellipse at 50% 0%, rgba(255, 0, 138, 0.3) 0%, transparent 60%),
-                  linear-gradient(180deg, rgba(90, 26, 140, 0.2) 0%, rgba(176, 15, 47, 0.1) 100%)
+                  radial-gradient(ellipse at 50% 0%, rgba(255, 0, 138, 0.2) 0%, transparent 60%),
+                  linear-gradient(180deg, rgba(90, 26, 140, 0.15) 0%, rgba(176, 15, 47, 0.05) 100%)
                 `,
               }}
             />
 
             <div className="glass-card rounded-3xl p-8 md:p-16 relative overflow-hidden">
-              {/* Animated background grid */}
-              <motion.div
-                className="absolute inset-0 opacity-10"
+              {/* Subtle static gradient instead of animated grid */}
+              <div
+                className="absolute inset-0 opacity-5"
                 style={{
                   backgroundImage:
-                    "linear-gradient(0deg, transparent 24%, rgba(255, 0, 138, 0.05) 25%, rgba(255, 0, 138, 0.05) 26%, transparent 27%, transparent 74%, rgba(255, 0, 138, 0.05) 75%, rgba(255, 0, 138, 0.05) 76%, transparent 77%, transparent)",
+                    "linear-gradient(0deg, transparent 24%, rgba(255, 0, 138, 0.1) 25%, rgba(255, 0, 138, 0.1) 26%, transparent 27%, transparent 74%, rgba(255, 0, 138, 0.1) 75%, rgba(255, 0, 138, 0.1) 76%, transparent 77%, transparent)",
                   backgroundSize: "50px 50px",
                 }}
-                animate={{ backgroundPosition: ["0px 0px", "50px 50px"] }}
-                transition={{ duration: 20, repeat: Infinity, repeatType: "loop" }}
               />
 
               <div className="relative z-10">
