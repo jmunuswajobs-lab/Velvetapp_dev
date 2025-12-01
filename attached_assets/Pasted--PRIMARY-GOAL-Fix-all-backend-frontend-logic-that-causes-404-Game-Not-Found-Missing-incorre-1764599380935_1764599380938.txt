@@ -1,0 +1,278 @@
+🔥 PRIMARY GOAL
+
+Fix all backend + frontend logic that causes:
+
+404: Game Not Found
+
+Missing/incorrect game slug resolution
+
+Game not loading after pressing Start Game
+
+WebSocket disconnect immediately after start_game
+
+Gameplay route crashes (/play/:sessionId, /room/:roomId/game/...)
+
+Frontend failing to find a game by slug or ID
+
+Mismatched game slugs between backend & frontend
+
+Wrong API endpoint being called
+
+State wiped before navigation
+
+Session created with empty or null gameId
+
+Room not updated with currentGameId
+
+Missing packs or promptCount causing component crashes
+
+Post-start navigation landing on a nonexistent route
+
+🎯 WHAT REPLIT MUST DO (DETAILED OBJECTIVES)
+1️⃣ Backend: Repair Game Fetching
+Fix these issues:
+
+The Express route GET /api/games/:slug must ALWAYS resolve games by:
+
+slug (preferred)
+
+OR id (fallback)
+
+OR alias map if needed
+
+Confirm:
+
+slug exists in DB
+
+Slug is unique
+
+Returned object includes:
+
+packs: []
+
+promptCount
+
+Add logging to show EXACT reason for 404:
+
+slug not found
+
+database empty
+
+model mismatch
+
+wrong query
+
+2️⃣ Backend: Fix Start Game Flow
+
+When client triggers start_game:
+
+Validate roomId
+
+Validate game slug or gameId
+
+Create GameSession with full initial state
+
+Update Room with currentGameId and currentSessionId
+
+Broadcast updated room state
+
+Do NOT close the WebSocket
+
+Do NOT send malformed packets
+
+3️⃣ WebSocket Fixes
+
+Fix:
+
+WS closing immediately after start_game
+
+WS sending unexpected payload shapes
+
+WS race conditions
+
+Add:
+
+Strong validation
+
+Proper session creation
+
+Broadcast updated state correctly
+
+4️⃣ Frontend: Fix Game Loading
+Fix:
+
+/api/games/:slug fetch calls
+
+Slug mismatches:
+
+backend uses "truth-or-dare"
+
+frontend maybe expects "truth_or_dare"
+
+Where frontend maps slugs → components
+
+Confirm:
+
+Correct import paths
+
+Dynamic routes:
+
+/game/:slug
+
+/room/:roomId/game
+
+/play/:sessionId
+
+Fix navigation:
+
+When selecting game → ALWAYS populate:
+
+selectedGame
+
+room.currentGameId
+
+room.currentGameSlug
+
+If state missing → fallback screen must NOT throw.
+
+5️⃣ Frontend: Fix Start Game Navigation Flow
+
+Fix race conditions where:
+
+State is set but React navigates before it exists
+
+Zustand/Context state lost on refresh
+
+Session is created but page loads before API returns data
+
+Required fix:
+
+Load session by sessionId before rendering game component
+
+Add loading guard
+
+Add fallback if session not ready
+
+Retry fetching rather than crashing
+
+🛠️ REPLIT MUST EDIT THESE FILES (BUT NOT LIMITED TO):
+Backend:
+server/index.ts
+server/routes/games.ts
+server/routes/rooms.ts
+server/services/gameService.ts
+server/services/sessionService.ts
+server/websocket/handlers.ts
+
+Frontend:
+client/src/pages/GameDetail.tsx
+client/src/pages/RoomLobby.tsx
+client/src/pages/Play.tsx
+client/src/pages/LocalSetup.tsx
+client/src/state/gameState.ts
+client/src/state/roomState.ts
+client/src/utils/api.ts
+client/src/App.tsx
+
+🧪 REQUIRED TESTS BEFORE FINISHING
+
+Replit must test the following inside the running environment:
+
+✔ API
+
+GET /api/games returns full list
+
+GET /api/games/:slug returns correct game
+
+No empties, no missing fields
+
+✔ Room Flow
+
+Create room
+
+Join room with second browser
+
+Select game
+
+Press Start
+
+WS stays connected
+
+Room updates correctly
+
+✔ Gameplay
+
+Both clients navigate to the session
+
+The game interface loads
+
+No 404s
+
+No missing game components
+
+No undefined state
+
+✔ Console Check
+
+Fix all frontend and backend errors
+
+Fix PostCSS warning if related
+
+🚀 FINAL: EXACT PROMPT FOR REPLIT TO EXECUTE
+
+Here is the final, ready-to-paste prompt:
+
+✅ REPLIT ASSISTANT PROMPT
+
+You are Replit’s senior full-stack engineer.
+Fix the "404 Game Not Found" and ALL related game-loading problems in this repo:
+
+👉 https://github.com/jmunuswajobs-lab/Velvetapp_dev
+
+Your tasks:
+
+Inspect all backend game routes, especially GET /api/games/:slug.
+
+Fix slug matching logic so the backend always returns a game, never 404 unless truly invalid.
+
+Ensure frontend uses the same slug format as backend.
+
+Fix state synchronization: room.currentGameId, room.currentGameSlug, newly created GameSession.
+
+Repair start_game WebSocket flow, preventing immediate WS disconnect.
+
+Ensure GameSession is created correctly and passed to frontend.
+
+Fix all navigation routes for /play/:sessionId, /game/:slug, /room/:roomId/game.
+
+Add proper loading states instead of crashing when data missing.
+
+Ensure all games in /api/games map to actual frontend components.
+
+Resolve all race conditions where game state is reset or not loaded in time.
+
+Test full flow end-to-end:
+
+Create Room
+
+Join Room
+
+Select Game
+
+Start Game
+
+Load Gameplay screen
+
+Verify no 404 and no component crash
+
+Print a summary of ALL changes you applied and confirm that:
+
+Game can start
+
+Sessions load
+
+WS stays connected
+
+No 404s
+
+Interface does not break
